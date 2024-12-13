@@ -10,7 +10,7 @@ int main()
     double Lx = 1;
     double Ly = 1;
     double Lz = 1;
-    int nx = 20;
+    int nx = 10;
     int ny = 1;
     int nz = 1;
 
@@ -37,7 +37,7 @@ int main()
 
     SimulationParams params;
     params.n_particles = 10000;
-    params.max_steps = 10000;
+    params.max_steps = 1000;
 
     std::vector<double> density(n_cells);
     for (int i = 0; i < n_cells; i++) {

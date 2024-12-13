@@ -39,6 +39,11 @@ class Mesh {
      * Note: this may be very slow for unstructured meshes.
      */
     virtual int get_cell_index(Vec3 position) const = 0;
+
+    /**
+     * @brief Return the volume of a given cell
+     */
+    virtual double get_volume(int cell_index) const = 0;
 };
 
 }  // namespace eiron2

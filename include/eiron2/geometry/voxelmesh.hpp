@@ -94,6 +94,11 @@ class VoxelMesh : public Mesh {
      */
     bool is_in_cell(Vec3 p, int cell_index) const;
 
+    /**
+     * @brief Return the volume of a given cell
+     */
+    double get_volume(int cell_index) const;
+
    private:
     // Member variables
     double Lx = 0.;  // Length of the mesh in x direction

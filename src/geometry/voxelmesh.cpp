@@ -31,6 +31,10 @@ bool VoxelMesh::is_in_cell(Vec3 p, int cell_index) const{
 
 Vec3 VoxelMesh::cell_size() const { return Vec3(dx, dy, dz); }
 
+double VoxelMesh::get_volume(int) const {
+    return dx * dy * dz;
+}
+
 int VoxelMesh::get_cell_index(Vec3 p) const
 {
     Index3D ind;
@@ -122,8 +126,6 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
     }
 
     return CellCrossing(pos_new, t, triplet_to_linear(next_ind), -1);
-
-    // TODO: handle out of bounds
 }
 
 }  // namespace eiron2

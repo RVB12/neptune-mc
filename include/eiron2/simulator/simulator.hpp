@@ -42,13 +42,16 @@ void simulate(Mesh& mesh,
     std::normal_distribution<double> r_normal(0, 1);
 
     // History based simulation (because its easy)
-    for (int i_particle; i_particle < params.n_particles; i_particle++) {
+    for (int i_particle = 0; i_particle < params.n_particles; i_particle++) {
         // By basing the generator seed on the particle id, we can get
         // consistent results even if we parallelize.
-        std::mt19937 gen{i_particle};
+        std::random_device rd;
+        std::mt19937 gen{rd()};
 
         // Generate a new particle
         Particle particle;
+
+        particle.weight = 1.0;
 
         // Currently, these are just some ad hoc initial conditions
         // I should look into simulating a more realistic line source
@@ -56,16 +59,18 @@ void simulate(Mesh& mesh,
         particle.geometry.position.z = r_unif(gen);
         particle.geometry.position.y = r_unif(gen);
 
-        particle.geometry.cell_id = mesh.get_cell_index(particle.geometry.position);
+        particle.geometry.cell_id =
+            mesh.get_cell_index(particle.geometry.position);
 
         particle.geometry.velocity.x = 0.5 + 0.25 * r_unif(gen);
         particle.geometry.velocity.y = 0.25 * r_normal(gen);
         particle.geometry.velocity.z = 0.25 * r_normal(gen);
 
         // Full simulation loop
-        for (int i_step; i_step < params.max_steps; i_step++) {
+        for (int i_step = 0; i_step < params.max_steps; i_step++) {
             int cell_id =
                 particle.geometry.cell_id;  // Current cell id of the particle
+            double weight_old = particle.weight;
 
             // random number to determine time till collision
             double eps = r_unif(gen);
@@ -130,13 +135,19 @@ void simulate(Mesh& mesh,
             }
 
             // Ionisation
-            particle.weight = particle.weight * std::exp(-dt*Ki*background.plasma_dens[cell_id]);
+            particle.weight =
+                particle.weight *
+                std::exp(-dt * Ki * background.plasma_dens[cell_id]);
 
             particle.t += dt;
 
-            density[cell_id] += dt * particle.weight;
+            double v = mesh.get_volume(cell_id);
+            density[cell_id] += dt * (weight_old + particle.weight) / 2 / v /
+                                params.n_particles;
 
-            if (particle.weight < 0.0001) break;
+            if (particle.weight < 0.000000001) {
+                break;
+            }
         }
     }
 }
