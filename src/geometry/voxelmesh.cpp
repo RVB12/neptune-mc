@@ -19,6 +19,18 @@ int VoxelMesh::triplet_to_linear(Index3D index) const
     return index.i + index.j * nx + index.k * nx * ny;
 }
 
+bool VoxelMesh::is_in_cell(Vec3 p, int cell_index) const{
+    Index3D ind = linear_to_triplet(cell_index);
+
+    if(p.x < ind.i * dx || p.x > (ind.i + 1) * dx) return false;
+    if(p.y < ind.j * dy || p.y > (ind.j + 1) * dy) return false;
+    if(p.z < ind.k * dz || p.z > (ind.k + 1) * dz) return false;
+
+    return true;
+}
+
+Vec3 VoxelMesh::cell_size() const { return Vec3(dx, dy, dz); }
+
 int VoxelMesh::find_cell(Vec3 p) const
 {
     Index3D ind;
@@ -59,10 +71,10 @@ CellCrossing VoxelMesh::get_next_crossing(Particle& p) const
 
     double tz;  // Time till collision with boundary in z direction
     if (p.velocity.z >= 0) {
-        tz = ((ind.k + 1) * dy - p.position.y) / p.velocity.z;
+        tz = ((ind.k + 1) * dz - p.position.z) / p.velocity.z;
     }
     else {
-        tz = ((ind.k) * dy - p.position.y) / p.velocity.z;
+        tz = ((ind.k) * dz - p.position.z) / p.velocity.z;
     }
 
     //

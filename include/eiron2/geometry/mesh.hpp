@@ -30,6 +30,11 @@ class Mesh {
     virtual CellCrossing get_next_crossing(Particle& p) const = 0;
 
     /**
+     * Check if a given position is inside of the cell with the given index
+     */
+    virtual bool is_in_cell(Vec3 p, int cell_index) const = 0;
+
+    /**
      * Find the cell index corresponding to a given position.
      *
      * @param p

@@ -73,6 +73,16 @@ class VoxelMesh : public Mesh {
      */
     int find_cell(Vec3 position) const;
 
+    /**
+     * @brief Return the size of the cell in each direction
+     */
+    Vec3 cell_size() const;
+
+    /**
+     * Check if a given position is inside of the cell with the given index
+     */
+    bool is_in_cell(Vec3 p, int cell_index) const;
+
    private:
     // Member variables
     double Lx = 0.;  // Length of the mesh in x direction
