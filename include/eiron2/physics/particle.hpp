@@ -1,0 +1,29 @@
+#ifndef EIRON2_PARTICLE_HPP
+#define EIRON2_PARTICLE_HPP
+
+#include <cassert>
+
+#include "eiron2/geometry/particlegeometry.hpp"
+#include "eiron2/geometry/vec3.hpp"
+
+namespace eiron2 {
+
+/**
+ * @brief Class containing all the information of a particle
+ */
+class Particle {
+   public:
+    // Contructors
+    Particle() = default;
+    Particle(ParticleGeometry geometry_) : geometry(geometry_) {}
+
+    // Member variables
+    ParticleGeometry geometry;
+    int id = -1;          // (unique) id of the particle
+    double t = 0;         // Time
+    double weight = 1.0;  // Weight (used for continuous ionisation)
+};
+
+}  // namespace eiron2
+
+#endif

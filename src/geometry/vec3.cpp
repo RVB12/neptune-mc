@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cassert>
 
-#include "eiron2/utils.hpp"
+#include "eiron2/common/utils.hpp"
 #include "eiron2/geometry/vec3.hpp"
 
 namespace eiron2 {
@@ -98,6 +98,12 @@ Vec3& Vec3::operator/=(double s)
     y /= s;
     z /= s;
     return *this;
+}
+
+
+Vec3 Vec3::operator-()
+{
+    return Vec3(-x,-y,-z);
 }
 
 double Vec3::dot(Vec3 other) const { return x * other.x + y * other.y + z * other.z; }

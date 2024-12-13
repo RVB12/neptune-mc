@@ -34,7 +34,7 @@ class Vec3 {
     Vec3& operator*=(double);
     Vec3& operator/=(double);
 
-    Vec3& operator-();
+    Vec3 operator-();
 
     // Calculate the dot product of two vectors
     double dot(Vec3) const;

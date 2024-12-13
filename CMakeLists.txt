@@ -25,6 +25,12 @@ add_library(eiron2 ${eiron2_SOURCES})
 
 target_include_directories(eiron2 PUBLIC include)
 
+# The executables
+add_executable(simple_test examples/simple_test.cpp)
+target_link_libraries(simple_test PRIVATE eiron2)
+
+
+# Tests
 find_package(Catch2 3 REQUIRED)
 add_subdirectory(tests)
 
