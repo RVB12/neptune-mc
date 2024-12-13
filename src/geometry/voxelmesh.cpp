@@ -31,7 +31,7 @@ bool VoxelMesh::is_in_cell(Vec3 p, int cell_index) const{
 
 Vec3 VoxelMesh::cell_size() const { return Vec3(dx, dy, dz); }
 
-int VoxelMesh::find_cell(Vec3 p) const
+int VoxelMesh::get_cell_index(Vec3 p) const
 {
     Index3D ind;
     assert(p.x >= 0 && p.x <= Lx);
@@ -45,7 +45,7 @@ int VoxelMesh::find_cell(Vec3 p) const
     return triplet_to_linear(ind);
 }
 
-CellCrossing VoxelMesh::get_next_crossing(Particle& p) const
+CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
 {
     Index3D ind = linear_to_triplet(p.cell_id);
 
@@ -101,7 +101,27 @@ CellCrossing VoxelMesh::get_next_crossing(Particle& p) const
     // Calculate new position
     Vec3 pos_new = p.position + p.velocity * t;
 
-    return CellCrossing(pos_new, triplet_to_linear(next_ind), t);
+    // Check for boundary crossings
+    if(next_ind.i < 0){
+        return CellCrossing(pos_new, t, -1, 0);
+    }
+    if(next_ind.j < 0){
+        return CellCrossing(pos_new, t, -1, 1);
+    }
+    if(next_ind.k < 0){
+        return CellCrossing(pos_new, t, -1, 2);
+    }
+    if(next_ind.i >= nx){
+        return CellCrossing(pos_new, t, -1, 3);
+    }
+    if(next_ind.j >= ny){
+        return CellCrossing(pos_new, t, -1, 4);
+    }
+    if(next_ind.k >= nz){
+        return CellCrossing(pos_new, t, -1, 5);
+    }
+
+    return CellCrossing(pos_new, t, triplet_to_linear(next_ind), -1);
 
     // TODO: handle out of bounds
 }

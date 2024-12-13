@@ -6,7 +6,7 @@
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/mesh.hpp"
 #include "eiron2/geometry/vec3.hpp"
-#include "eiron2/physics/particle.hpp"
+#include "eiron2/geometry/particlegeometry.hpp"
 
 namespace eiron2 {
 
@@ -36,8 +36,19 @@ class Index3D {
 };
 
 /**
- * @brief A structured mesh consisting of rectangular voxels
+ * @brief A structured rectangular mesh consisting of rectangular voxels
  *
+ * The mesh is of size (Lx x Ly x Lz) and is split into (nx x ny x nz) cells.
+ * The cells are ordered sequentially in the x, then the y and then the z direction.
+ * 
+ * The boundaries are numbered as:
+ * 0 -> x == 0
+ * 1 -> y == 0
+ * 2 -> z == 0
+ * 3 -> x == Lx
+ * 4 -> y == Ly
+ * 5 -> z == Lz
+ * 
  */
 class VoxelMesh : public Mesh {
    public:
@@ -56,7 +67,7 @@ class VoxelMesh : public Mesh {
 
     int n_cells() const;
 
-    CellCrossing get_next_crossing(Particle& p) const;
+    CellCrossing get_next_crossing(ParticleGeometry& p) const;
 
     /**
      * @brief Convert a linear index to triplet index
@@ -71,7 +82,7 @@ class VoxelMesh : public Mesh {
     /**
      * @brief Return the id of the cell that a given position is in.
      */
-    int find_cell(Vec3 position) const;
+    int get_cell_index(Vec3 position) const;
 
     /**
      * @brief Return the size of the cell in each direction

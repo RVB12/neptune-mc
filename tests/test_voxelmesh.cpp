@@ -45,7 +45,7 @@ TEST_CASE("check the cell crossings with some manually verified examples",
     VoxelMesh mesh(1., 1., 1., 10, 5, 2);
     Vec3 cell_size = mesh.cell_size();
 
-    Index3D ind(3, 2, 1);
+    Index3D ind(3, 2, 0);
     Vec3 pos_in_cell(0.05, 0.04, 0.03);
     Vec3 pos_edge(ind.i * cell_size.x, ind.j * cell_size.y,
                   ind.k * cell_size.z);
@@ -55,7 +55,7 @@ TEST_CASE("check the cell crossings with some manually verified examples",
     SECTION("vel 1")
     {
         Vec3 vel(0.1, 0.1, 0.1);
-        Particle p(pos, vel, mesh.triplet_to_linear(ind));
+        ParticleGeometry p(pos, vel, mesh.triplet_to_linear(ind));
         auto crossing = mesh.get_next_crossing(p);
 
         double t_expected = 0.5;
@@ -74,7 +74,7 @@ TEST_CASE("check the cell crossings with some manually verified examples",
     SECTION("vel 2")
     {
         Vec3 vel(-0.2, -0.8, 0.3);
-        Particle p(pos, vel, mesh.triplet_to_linear(ind));
+        ParticleGeometry p(pos, vel, mesh.triplet_to_linear(ind));
         auto crossing = mesh.get_next_crossing(p);
 
         double t_expected = 0.05;
@@ -93,7 +93,7 @@ TEST_CASE("check the cell crossings with some manually verified examples",
     SECTION("vel 3")
     {
         Vec3 vel(-0.1, 0.1, 1);
-        Particle p(pos, vel, mesh.triplet_to_linear(ind));
+        ParticleGeometry p(pos, vel, mesh.triplet_to_linear(ind));
         auto crossing = mesh.get_next_crossing(p);
 
         double t_expected = 0.47;
@@ -108,4 +108,6 @@ TEST_CASE("check the cell crossings with some manually verified examples",
 
         CHECK(mesh.is_in_cell(crossing.position, crossing.next_cell_id));
     }
+
+    // TODO: check the boundary crossings
 }

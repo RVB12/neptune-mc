@@ -3,7 +3,7 @@
 
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/vec3.hpp"
-#include "eiron2/physics/particle.hpp"
+#include "eiron2/geometry/particlegeometry.hpp"
 
 namespace eiron2 {
 
@@ -27,7 +27,7 @@ class Mesh {
      *
      * @param p
      */
-    virtual CellCrossing get_next_crossing(Particle& p) const = 0;
+    virtual CellCrossing get_next_crossing(ParticleGeometry& p) const = 0;
 
     /**
      * Check if a given position is inside of the cell with the given index
@@ -36,10 +36,9 @@ class Mesh {
 
     /**
      * Find the cell index corresponding to a given position.
-     *
-     * @param p
+     * Note: this may be very slow for unstructured meshes.
      */
-    // virtual int get_cell_index(Vec3 position) const = 0;
+    virtual int get_cell_index(Vec3 position) const = 0;
 };
 
 }  // namespace eiron2

@@ -8,13 +8,15 @@
 namespace eiron2 {
 
 /**
- * @brief Class containing basic info of a particle, position and velocity
+ * @brief Class containing geometric information about a particle,
+ * this consists of the particle's position, its velocity and
+ * the id of the cell the particle is in.
  */
-class Particle {
+class ParticleGeometry {
    public:
     // Contructors
-    Particle() = default;
-    Particle(Vec3 position_, Vec3 velocity_, int cell_id_)
+    ParticleGeometry() = default;
+    ParticleGeometry(Vec3 position_, Vec3 velocity_, int cell_id_)
         : position(position_), velocity(velocity_), cell_id(cell_id_)
     {}
 
@@ -22,7 +24,6 @@ class Particle {
     Vec3 position;     // Current position
     Vec3 velocity;     // Current velocity
     int cell_id = -1;  // id of the cell the particle is in
-    int id = -1;       // id of the particle
 };
 
 }  // namespace eiron2
