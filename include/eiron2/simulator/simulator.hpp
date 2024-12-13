@@ -56,6 +56,8 @@ void simulate(Mesh& mesh,
         particle.geometry.position.z = r_unif(gen);
         particle.geometry.position.y = r_unif(gen);
 
+        particle.geometry.cell_id = mesh.get_cell_index(particle.geometry.position);
+
         particle.geometry.velocity.x = 0.5 + 0.25 * r_unif(gen);
         particle.geometry.velocity.y = 0.25 * r_normal(gen);
         particle.geometry.velocity.z = 0.25 * r_normal(gen);
@@ -134,7 +136,7 @@ void simulate(Mesh& mesh,
 
             density[cell_id] += dt * particle.weight;
 
-            if (particle.weight < 0.00001) break;
+            if (particle.weight < 0.0001) break;
         }
     }
 }
