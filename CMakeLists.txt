@@ -59,8 +59,9 @@ target_link_libraries(simple_test PRIVATE eiron2)
 #
 # Tests
 #
-find_package(Catch2 3 REQUIRED)
+find_package(Catch2 3)
 
+if(Catch2)
 add_executable(all_tests tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp)
 target_link_libraries(all_tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(all_tests PRIVATE eiron2)
@@ -68,3 +69,4 @@ target_link_libraries(all_tests PRIVATE eiron2)
 include(CTest)
 include(Catch)
 catch_discover_tests(all_tests)
+endif()
