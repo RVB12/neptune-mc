@@ -10,7 +10,7 @@ int main()
     double Lx = 1;
     double Ly = 1;
     double Lz = 1;
-    int nx = 10;
+    int nx = 100;
     int ny = 1;
     int nz = 1;
 
@@ -36,7 +36,8 @@ int main()
                                 plasma_vel_y, plasma_vel_z};
 
     SimulationParams params;
-    params.n_particles = 10000;
+    int particles_per_cell = 100;
+    params.n_particles = n_cells * particles_per_cell;
     params.max_steps = 1000;
 
     std::vector<double> density(n_cells);

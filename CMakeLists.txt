@@ -18,7 +18,9 @@ endif()
 
 list(APPEND eiron2_SOURCES
     src/geometry/vec3.cpp
-    src/geometry/voxelmesh.cpp)
+    src/geometry/voxelmesh.cpp
+    src/simulator/simulator.cpp
+)
 
 # Define the library
 add_library(eiron2 ${eiron2_SOURCES})
@@ -28,7 +30,7 @@ target_include_directories(eiron2 PUBLIC include)
 # The executables
 add_executable(simple_test examples/simple_test.cpp)
 target_link_libraries(simple_test PRIVATE eiron2)
-target_compile_options(simple_test PRIVATE -D_GLIBCXX_DEBUG)
+# target_compile_options(simple_test PRIVATE -D_GLIBCXX_DEBUG)
 
 
 # Tests
