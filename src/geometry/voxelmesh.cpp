@@ -86,7 +86,7 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
     //
 
     Index3D next_ind = ind;
-    double t;
+    double t = 0;
     // Note that because of the < checks, it is not possible
     // for multiple of these branches to occur
     if (tx <= ty and tx <= tz) {

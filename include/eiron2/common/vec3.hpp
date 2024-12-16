@@ -10,7 +10,6 @@ namespace eiron2 {
  */
 class Vec3 {
    public:
-
     // Contructors
     Vec3() = default;
     Vec3(double x_, double y_, double z_) : x(x_), y(y_), z(z_){};
@@ -65,13 +64,9 @@ inline Vec3 operator-(double s, Vec3 a) { return a -= s; }
 inline Vec3 operator*(double s, Vec3 a) { return a *= s; }
 inline Vec3 operator/(double s, Vec3 a) { return a /= s; }
 
-inline double dot(Vec3 a, Vec3 b){
-    return a.dot(b);
-}
+inline double dot(Vec3 a, Vec3 b) { return a.dot(b); }
 
-inline double dist(Vec3 a, Vec3 b){
-    return a.dist(b);
-}
+inline double dist(Vec3 a, Vec3 b) { return a.dist(b); }
 
 }  // namespace eiron2
 

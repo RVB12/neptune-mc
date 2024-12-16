@@ -4,7 +4,7 @@ namespace eiron2 {
 
 void simulate(Mesh& mesh,
               PlasmaBackground& background,
-              std::vector<double>& density,
+              vectorview<double> density,
               SimulationParams params)
 {
     double Kcx = 0.1;

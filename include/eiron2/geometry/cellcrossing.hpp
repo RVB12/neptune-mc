@@ -3,7 +3,7 @@
 
 #include <cassert>
 
-#include "vec3.hpp"
+#include "eiron2/common/vec3.hpp"
 
 namespace eiron2 {
 

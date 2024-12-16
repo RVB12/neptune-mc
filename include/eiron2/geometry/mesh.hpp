@@ -2,8 +2,8 @@
 #define EIRON2_MESH_HPP
 
 #include "eiron2/geometry/cellcrossing.hpp"
-#include "eiron2/geometry/vec3.hpp"
 #include "eiron2/geometry/particlegeometry.hpp"
+#include "eiron2/common/vec3.hpp"
 
 namespace eiron2 {
 

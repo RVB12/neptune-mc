@@ -3,25 +3,38 @@
 
 #include <cstdint>
 #include <random>
-#include <vector>
 
+#include "eiron2/common/vector.hpp"
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/mesh.hpp"
 #include "eiron2/physics/particle.hpp"
 
 namespace eiron2 {
 
-struct PlasmaBackground {
-    std::vector<double>& plasma_dens;
-    std::vector<double>& plasma_temp;
-    std::vector<double>& plasma_vel_x;
-    std::vector<double>& plasma_vel_y;
-    std::vector<double>& plasma_vel_z;
+class PlasmaBackground {
+   public:
+    PlasmaBackground(vectorview<double> plasma_dens_,
+                     vectorview<double> plasma_temp_,
+                     vectorview<double> plasma_vel_x_,
+                     vectorview<double> plasma_vel_y_,
+                     vectorview<double> plasma_vel_z_)
+        : plasma_dens(plasma_dens_),
+          plasma_temp(plasma_temp_),
+          plasma_vel_x(plasma_vel_x_),
+          plasma_vel_y(plasma_vel_y_),
+          plasma_vel_z(plasma_vel_z_)
+    {}
+
+    vectorview<double> plasma_dens;
+    vectorview<double> plasma_temp;
+    vectorview<double> plasma_vel_x;
+    vectorview<double> plasma_vel_y;
+    vectorview<double> plasma_vel_z;
 };
 
 struct SimulationParams {
     int64_t seed = 0;
-    int n_particles = -1;
+    int n_particles = 1000;
     int max_steps = 100000;
 };
 
@@ -32,7 +45,7 @@ struct SimulationParams {
  */
 void simulate(Mesh& mesh,
               PlasmaBackground& background,
-              std::vector<double>& density,
+              vectorview<double> density,
               SimulationParams params);
 
 }  // namespace eiron2
