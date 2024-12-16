@@ -1,5 +1,4 @@
 #include "eiron2/simulator/simulator.hpp"
-
 namespace eiron2 {
 
 void simulate(Mesh& mesh,
@@ -7,18 +6,22 @@ void simulate(Mesh& mesh,
               vectorview<double> density,
               SimulationParams params)
 {
-    double Kcx = 0.1;
-    double Ki = 1;
-
-    std::uniform_real_distribution<double> r_unif(0, 1);
-    std::normal_distribution<double> r_normal(0, 1);
+    double T_i = 40;
+    double T_e = T_i;
+    double T_n = T_i;
+    double K_cx = 3.2e-15 * std::sqrt(T_i / 0.026);
+    double K_i = 2.0e-13 / (6.0 + (T_e / 13.6)) *
+                           std::sqrt(T_e / 13.6) * std::exp(-13.6 / T_e);
 
     // History based simulation (because its easy)
+    #pragma omp parallel for num_threads(4)
     for (int i_particle = 0; i_particle < params.n_particles; i_particle++) {
+        std::uniform_real_distribution<double> r_unif(0, 1);
+        std::normal_distribution<double> r_normal(0, 1);
+
         // By basing the generator seed on the particle id, we can get
         // consistent results even if we parallelize.
-        std::random_device rd;
-        std::mt19937 gen{rd()};
+        std::mt19937 gen(i_particle);
 
         // Generate a new particle
         Particle particle;
@@ -48,7 +51,7 @@ void simulate(Mesh& mesh,
             double eps = r_unif(gen);
             // time till collision
             double tc =
-                -std::log(eps) / (Kcx * background.plasma_dens[cell_id]);
+                -std::log(eps) / (K_cx * background.plasma_dens[cell_id]);
 
             // Calculate the next cell crossing
             CellCrossing crossing = mesh.get_next_crossing(particle.geometry);
@@ -109,15 +112,16 @@ void simulate(Mesh& mesh,
             // Ionisation
             particle.weight =
                 particle.weight *
-                std::exp(-dt * Ki * background.plasma_dens[cell_id]);
+                std::exp(-dt * K_i * background.plasma_dens[cell_id]);
 
             particle.t += dt;
 
+            double sfn = 0.5 * background.plasma_dens[0] * 0.1 * 1.0e4 / params.n_particles;
             double v = mesh.get_volume(cell_id);
             // Note, this interpolation is not in the literature, make sure
             // it doesn't cause issues.
-            density[cell_id] += dt * (weight_old + particle.weight) / 2 / v /
-                                params.n_particles;
+            #pragma omp atomic
+            density[cell_id] += dt * (weight_old + particle.weight) / 2 / v * sfn;
 
             if (particle.weight < 0.000000001) {
                 break;
