@@ -31,7 +31,6 @@ void simulate(Mesh& mesh,
         // Currently, these are just some ad hoc initial conditions
         // I should look into simulating a more realistic line source
         particle.geometry.position.x = 0;
-        particle.geometry.position.z = r_unif(gen);
         particle.geometry.position.y = r_unif(gen);
 
         particle.geometry.cell_id =
@@ -39,7 +38,6 @@ void simulate(Mesh& mesh,
 
         particle.geometry.velocity.x = 0.5 + 0.25 * r_unif(gen);
         particle.geometry.velocity.y = 0.25 * r_normal(gen);
-        particle.geometry.velocity.z = 0.25 * r_normal(gen);
 
         // Full simulation loop
         for (int i_step = 0; i_step < params.max_steps; i_step++) {
@@ -67,10 +65,8 @@ void simulate(Mesh& mesh,
                     background.plasma_vel_x[cell_id], stddev);
                 std::normal_distribution<double> dist_vy(
                     background.plasma_vel_y[cell_id], stddev);
-                std::normal_distribution<double> dist_vz(
-                    background.plasma_vel_z[cell_id], stddev);
                 particle.geometry.velocity =
-                    Vec3(dist_vx(gen), dist_vy(gen), dist_vz(gen));
+                    Vec2(dist_vx(gen), dist_vy(gen));
 
                 dt = tc;
             }
@@ -91,16 +87,11 @@ void simulate(Mesh& mesh,
                             -particle.geometry.velocity.x;
                     }
                     else if (crossing.boundary_id == 1 ||
-                             crossing.boundary_id == 4) {
+                             crossing.boundary_id == 3) {
                         particle.geometry.velocity.y =
                             -particle.geometry.velocity.y;
                     }
-                    else if (crossing.boundary_id == 2 ||
-                             crossing.boundary_id == 5) {
-                        particle.geometry.velocity.z =
-                            -particle.geometry.velocity.z;
-                    }
-                    else if (crossing.boundary_id == 3) {
+                    else if (crossing.boundary_id == 2) {
                         particle.weight = 0;
                     }
                     else {

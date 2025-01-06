@@ -17,7 +17,6 @@ plasma_dens = np.zeros(ncells, dtype=np.float64)
 plasma_temp = np.zeros(ncells, dtype=np.float64)
 plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
-plasma_vel_z = np.zeros(ncells, dtype=np.float64)
 
 for i in range(ncells):
     plasma_dens[i] = 1.0e13
@@ -28,14 +27,13 @@ for i in range(ncells):
 for i in range(ncells):
     plasma_vel_x[i] = 1.0e2
 
-mesh = eiron2.VoxelMesh(Lx, Ly, Lz, nx, ny, nz)
+mesh = eiron2.VoxelMesh(Lx, Ly, nx, ny)
 
 background = eiron2.PlasmaBackground(
     eiron2.VectorDouble(plasma_dens),
     eiron2.VectorDouble(plasma_temp),
     eiron2.VectorDouble(plasma_vel_x),
-    eiron2.VectorDouble(plasma_vel_y),
-    eiron2.VectorDouble(plasma_vel_z)
+    eiron2.VectorDouble(plasma_vel_y)
 )
 
 params = eiron2.SimulationParams()

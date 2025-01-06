@@ -3,7 +3,7 @@
 
 #include <cassert>
 
-#include "eiron2/common/vec3.hpp"
+#include "eiron2/common/vec2.hpp"
 
 namespace eiron2 {
 
@@ -17,7 +17,7 @@ class CellCrossing {
    public:
     // Contructors
     CellCrossing() = default;
-    CellCrossing(Vec3 position_, double t_, int next_cell_id_, int boundary_id_)
+    CellCrossing(Vec2 position_, double t_, int next_cell_id_, int boundary_id_)
         : position(position_),
           next_cell_id(next_cell_id_),
           boundary_id(boundary_id_),
@@ -25,7 +25,7 @@ class CellCrossing {
     {}
 
     // Member variables
-    Vec3 position;  // The position of the crossing
+    Vec2 position;  // The position of the crossing
     int next_cell_id =
         -1;  // the id of the next cell, -1 if it is a boundary crossing
     int boundary_id =

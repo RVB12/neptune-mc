@@ -2,56 +2,51 @@
 
 namespace eiron2 {
 
-int VoxelMesh::n_cells() const { return nx * ny * nz; }
+int VoxelMesh::n_cells() const { return nx * ny; }
 
-Index3D VoxelMesh::linear_to_triplet(int index) const
+Index2D VoxelMesh::linear_to_tuple(int index) const
 {
-    int k = index / (nx * ny);
-    int remainder = index % (nx * ny);
-    int j = remainder / nx;
-    int i = remainder % nx;
+    int j = index / nx;
+    int i = index % nx;
 
-    return Index3D(i, j, k);
+    return Index2D(i, j);
 }
 
-int VoxelMesh::triplet_to_linear(Index3D index) const
+int VoxelMesh::tuple_to_linear(Index2D index) const
 {
-    return index.i + index.j * nx + index.k * nx * ny;
+    return index.i + index.j * nx;
 }
 
-bool VoxelMesh::is_in_cell(Vec3 p, int cell_index) const{
-    Index3D ind = linear_to_triplet(cell_index);
+bool VoxelMesh::is_in_cell(Vec2 p, int cell_index) const{
+    Index2D ind = linear_to_tuple(cell_index);
 
     if(p.x < ind.i * dx || p.x > (ind.i + 1) * dx) return false;
     if(p.y < ind.j * dy || p.y > (ind.j + 1) * dy) return false;
-    if(p.z < ind.k * dz || p.z > (ind.k + 1) * dz) return false;
 
     return true;
 }
 
-Vec3 VoxelMesh::cell_size() const { return Vec3(dx, dy, dz); }
+Vec2 VoxelMesh::cell_size() const { return Vec2(dx, dy); }
 
 double VoxelMesh::get_volume(int) const {
-    return dx * dy * dz;
+    return dx * dy;
 }
 
-int VoxelMesh::get_cell_index(Vec3 p) const
+int VoxelMesh::get_cell_index(Vec2 p) const
 {
-    Index3D ind;
+    Index2D ind;
     assert(p.x >= 0 && p.x <= Lx);
     assert(p.y >= 0 && p.y <= Ly);
-    assert(p.z >= 0 && p.z <= Lz);
 
     ind.i = p.x / dx;
     ind.j = p.y / dy;
-    ind.k = p.z / dz;
 
-    return triplet_to_linear(ind);
+    return tuple_to_linear(ind);
 }
 
 CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
 {
-    Index3D ind = linear_to_triplet(p.cell_id);
+    Index2D ind = linear_to_tuple(p.cell_id);
 
     //
     // Calculate the time until collision for each surface
@@ -73,37 +68,22 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
         ty = ((ind.j) * dy - p.position.y) / p.velocity.y;
     }
 
-    double tz;  // Time till collision with boundary in z direction
-    if (p.velocity.z >= 0) {
-        tz = ((ind.k + 1) * dz - p.position.z) / p.velocity.z;
-    }
-    else {
-        tz = ((ind.k) * dz - p.position.z) / p.velocity.z;
-    }
-
     //
     // Calculate the next cell index
     //
 
-    Index3D next_ind = ind;
+    Index2D next_ind = ind;
     double t = 0;
-    // Note that because of the < checks, it is not possible
-    // for multiple of these branches to occur
-    if (tx <= ty and tx <= tz) {
+    if (tx <= ty) {
         t = tx;
         next_ind.i += (p.velocity.x >= 0) ? 1 : -1;
-    }
-    if (ty < tx and ty <= tz) {
+    } else {
         t = ty;
         next_ind.j += (p.velocity.y >= 0) ? 1 : -1;
     }
-    if (tz < tx and tz < ty) {
-        t = tz;
-        next_ind.k += (p.velocity.z >= 0) ? 1 : -1;
-    }
 
     // Calculate new position
-    Vec3 pos_new = p.position + p.velocity * t;
+    Vec2 pos_new = p.position + p.velocity * t;
 
     // Check for boundary crossings
     if(next_ind.i < 0){
@@ -112,20 +92,14 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
     if(next_ind.j < 0){
         return CellCrossing(pos_new, t, -1, 1);
     }
-    if(next_ind.k < 0){
+    if(next_ind.i >= nx){
         return CellCrossing(pos_new, t, -1, 2);
     }
-    if(next_ind.i >= nx){
+    if(next_ind.j >= ny){
         return CellCrossing(pos_new, t, -1, 3);
     }
-    if(next_ind.j >= ny){
-        return CellCrossing(pos_new, t, -1, 4);
-    }
-    if(next_ind.k >= nz){
-        return CellCrossing(pos_new, t, -1, 5);
-    }
 
-    return CellCrossing(pos_new, t, triplet_to_linear(next_ind), -1);
+    return CellCrossing(pos_new, t, tuple_to_linear(next_ind), -1);
 }
 
 }  // namespace eiron2

@@ -17,6 +17,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Main library
 #
 list(APPEND eiron2_SOURCES
+    src/geometry/vec2.cpp
     src/geometry/vec3.cpp
     src/geometry/voxelmesh.cpp
     src/simulator/simulator.cpp
@@ -61,12 +62,12 @@ target_link_libraries(simple_test PRIVATE eiron2)
 #
 find_package(Catch2 3)
 
-if(Catch2)
-add_executable(all_tests tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp)
+# if(Catch2)
+add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp)
 target_link_libraries(all_tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(all_tests PRIVATE eiron2)
 
 include(CTest)
 include(Catch)
 catch_discover_tests(all_tests)
-endif()
+# endif()

@@ -9,12 +9,10 @@ int main()
 {
     double Lx = 1;
     double Ly = 1;
-    double Lz = 1;
     int nx = 100;
     int ny = 1;
-    int nz = 1;
 
-    VoxelMesh mesh(Lx, Ly, Lz, nx, ny, nz);
+    VoxelMesh mesh(Lx, Ly, nx, ny);
 
     int n_cells = mesh.n_cells();
 
@@ -22,18 +20,16 @@ int main()
     vector<double> plasma_temp(n_cells);
     vector<double> plasma_vel_x(n_cells);
     vector<double> plasma_vel_y(n_cells);
-    vector<double> plasma_vel_z(n_cells);
 
     for (int i = 0; i < n_cells; i++) {
         plasma_dens[i] = 1.0;
         plasma_temp[i] = 1.0;
         plasma_vel_x[i] = 0;
         plasma_vel_y[i] = 0;
-        plasma_vel_z[i] = 0;
     }
 
     PlasmaBackground background(plasma_dens, plasma_temp, plasma_vel_x,
-                                plasma_vel_y, plasma_vel_z);
+                                plasma_vel_y);
 
     SimulationParams params;
     int particles_per_cell = 100;

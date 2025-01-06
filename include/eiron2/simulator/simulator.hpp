@@ -16,20 +16,17 @@ class PlasmaBackground {
     PlasmaBackground(vectorview<double> plasma_dens_,
                      vectorview<double> plasma_temp_,
                      vectorview<double> plasma_vel_x_,
-                     vectorview<double> plasma_vel_y_,
-                     vectorview<double> plasma_vel_z_)
+                     vectorview<double> plasma_vel_y_)
         : plasma_dens(plasma_dens_),
           plasma_temp(plasma_temp_),
           plasma_vel_x(plasma_vel_x_),
-          plasma_vel_y(plasma_vel_y_),
-          plasma_vel_z(plasma_vel_z_)
+          plasma_vel_y(plasma_vel_y_)
     {}
 
     vectorview<double> plasma_dens;
     vectorview<double> plasma_temp;
     vectorview<double> plasma_vel_x;
     vectorview<double> plasma_vel_y;
-    vectorview<double> plasma_vel_z;
 };
 
 struct SimulationParams {

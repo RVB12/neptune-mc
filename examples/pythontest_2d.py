@@ -5,19 +5,16 @@ import math
 
 Lx = 1
 Ly = 1
-Lz = 1
 
 nx = 400
 ny = 400
-nz = 1
 
-ncells = nx * ny * nz
+ncells = nx * ny
 
 plasma_dens = np.zeros(ncells, dtype=np.float64)
 plasma_temp = np.zeros(ncells, dtype=np.float64)
 plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
-plasma_vel_z = np.zeros(ncells, dtype=np.float64)
 
 for i in range(nx):
     for j in range(ny):
@@ -31,14 +28,13 @@ for i in range(ncells):
 for i in range(ncells):
     plasma_temp[i] = 0.25
 
-mesh = eiron2.VoxelMesh(Lx, Ly, Lz, nx, ny, nz)
+mesh = eiron2.VoxelMesh(Lx, Ly, nx, ny)
 
 background = eiron2.PlasmaBackground(
     eiron2.VectorDouble(plasma_dens),
     eiron2.VectorDouble(plasma_temp),
     eiron2.VectorDouble(plasma_vel_x),
-    eiron2.VectorDouble(plasma_vel_y),
-    eiron2.VectorDouble(plasma_vel_z)
+    eiron2.VectorDouble(plasma_vel_y)
 )
 
 params = eiron2.SimulationParams()
@@ -51,7 +47,7 @@ eiron2.simulate(mesh, background, eiron2.VectorDouble(neutral_density), params)
 
 neutral_density_reshaped = np.reshape(neutral_density, (nx, ny))
 
-c = plt.imshow(np.log10(neutral_density_reshaped + 1.0e-16), extent=[0, 1, 0, 1])
+c = plt.imshow(neutral_density_reshaped, extent=[0, 1, 0, 1])
 plt.title("Neutral particle density (log)")
 plt.colorbar(c)
 plt.xlabel("x")

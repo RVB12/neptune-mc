@@ -3,7 +3,7 @@
 
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/particlegeometry.hpp"
-#include "eiron2/common/vec3.hpp"
+#include "eiron2/common/vec2.hpp"
 
 namespace eiron2 {
 
@@ -32,13 +32,13 @@ class Mesh {
     /**
      * Check if a given position is inside of the cell with the given index
      */
-    virtual bool is_in_cell(Vec3 p, int cell_index) const = 0;
+    virtual bool is_in_cell(Vec2 p, int cell_index) const = 0;
 
     /**
      * Find the cell index corresponding to a given position.
      * Note: this may be very slow for unstructured meshes.
      */
-    virtual int get_cell_index(Vec3 position) const = 0;
+    virtual int get_cell_index(Vec2 position) const = 0;
 
     /**
      * @brief Return the volume of a given cell

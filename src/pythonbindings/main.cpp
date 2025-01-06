@@ -46,16 +46,16 @@ void bind_mesh(py::module& m)
     py::class_<eiron2::Mesh>(m, "Mesh");
 
     py::class_<eiron2::VoxelMesh, eiron2::Mesh>(m, "VoxelMesh")
-        .def(py::init<double, double, double, int, int, int>());
+        .def(py::init<double, double, int, int>());
 }
 
 // bind the Cpp plasmabackground class to the python plasmabackground class
 void bind_background(py::module& m)
 {
     py::class_<eiron2::PlasmaBackground>(m, "PlasmaBackground")
-        .def(py::init<eiron2::vectorview<double>, eiron2::vectorview<double>,
-                      eiron2::vectorview<double>, eiron2::vectorview<double>,
-                      eiron2::vectorview<double>>());
+        .def(
+            py::init<eiron2::vectorview<double>, eiron2::vectorview<double>,
+                     eiron2::vectorview<double>, eiron2::vectorview<double>>());
 }
 
 void bind_params(py::module& m)

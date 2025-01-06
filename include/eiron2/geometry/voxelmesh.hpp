@@ -6,33 +6,30 @@
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/mesh.hpp"
 #include "eiron2/geometry/particlegeometry.hpp"
-#include "eiron2/common/vec3.hpp"
+#include "eiron2/common/vec2.hpp"
 
 namespace eiron2 {
 
-class Index3D {
+class Index2D {
    public:
-    Index3D(){};
-    Index3D(int i_, int j_, int k_) : i(i_), j(j_), k(k_) {}
+    Index2D(){};
+    Index2D(int i_, int j_) : i(i_), j(j_) {}
 
     inline int& operator[](int ind)
     {
         assert(ind >= 0);
-        assert(ind < 3);
+        assert(ind < 2);
         switch (ind) {
             case 0:
                 return i;
             case 1:
                 return j;
-            case 2:
-                return k;
         }
     }
 
     // Member variables
     int i = -1;
     int j = -1;
-    int k = -1;
 };
 
 /**
@@ -53,17 +50,14 @@ class Index3D {
  */
 class VoxelMesh : public Mesh {
    public:
-    VoxelMesh(double Lx_, double Ly_, double Lz_, int nx_, int ny_, int nz_)
+    VoxelMesh(double Lx_, double Ly_, int nx_, int ny_)
         : Mesh(),
           Lx(Lx_),
           Ly(Ly_),
-          Lz(Lz_),
           nx(nx_),
           ny(ny_),
-          nz(nz_),
           dx(Lx / nx),
-          dy(Ly / ny),
-          dz(Lz / nz)
+          dy(Ly / ny)
     {}
 
     int n_cells() const;
@@ -73,27 +67,27 @@ class VoxelMesh : public Mesh {
     /**
      * @brief Convert a linear index to triplet index
      */
-    Index3D linear_to_triplet(int index) const;
+    Index2D linear_to_tuple(int index) const;
 
     /**
      * @brief Convert a triplet index to linear index
      */
-    int triplet_to_linear(Index3D ijk) const;
+    int tuple_to_linear(Index2D ij) const;
 
     /**
      * @brief Return the id of the cell that a given position is in.
      */
-    int get_cell_index(Vec3 position) const;
+    int get_cell_index(Vec2 position) const;
 
     /**
      * @brief Return the size of the cell in each direction
      */
-    Vec3 cell_size() const;
+    Vec2 cell_size() const;
 
     /**
      * Check if a given position is inside of the cell with the given index
      */
-    bool is_in_cell(Vec3 p, int cell_index) const;
+    bool is_in_cell(Vec2 p, int cell_index) const;
 
     /**
      * @brief Return the volume of a given cell
@@ -104,13 +98,10 @@ class VoxelMesh : public Mesh {
     // Member variables
     double Lx = 0.;  // Length of the mesh in x direction
     double Ly = 0.;  // Length of the mesh in y direction
-    double Lz = 0.;  // Length of the mesh in z direction
     int nx = 0;      // Number of cells in the x direction
     int ny = 0;      // Number of cells in the y direction
-    int nz = 0;      // Number of cells in the z direction
     double dx = 0.;  // Size of a cell in x direction
     double dy = 0.;  // Size of a cell in y direction
-    double dz = 0.;  // Size of a cell in z direction
 };
 
 }  // namespace eiron2
