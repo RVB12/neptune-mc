@@ -10,13 +10,8 @@
 
 namespace eiron2 {
 
-// This defines a vector as an abstract concept.
-// You can safely ignore this until you have learned about concepts.
-template <typename T>
-concept Scalar = std::is_arithmetic<T>::value;
-
 // Forward declaration of the vectorview class
-template <Scalar T = double>
+template <typename T = double>
 class vectorview;
 
 /**
@@ -27,7 +22,7 @@ class vectorview;
  * @tparam T this is a template parameter that specifies the type of the
  *           elements of the vector.
  */
-template <Scalar T = double>
+template <typename T = double>
 class vector {
     friend class vectorview<T>;
 
@@ -65,6 +60,14 @@ class vector {
         for (int i = 0; i < _n; ++i) {
             _data[i] = value;
         }
+    }
+
+    /**
+     * @brief Construct a new vector from an initializer list
+     */
+    vector(std::initializer_list<T> list) : _n(list.size()), _data(new T[_n])
+    {
+        std::copy(list.begin(), list.end(), _data.get());
     }
 
     // Destructor
@@ -269,7 +272,7 @@ class vector {
  * @tparam T this is a template parameter that specifies the type of the
  *           elements of the vector.
  */
-template <Scalar T>
+template <typename T>
 class vectorview {
    public:
     typedef T val_t;

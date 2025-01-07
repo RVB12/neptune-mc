@@ -21,6 +21,7 @@ list(APPEND eiron2_SOURCES
     src/geometry/vec3.cpp
     src/geometry/voxelmesh.cpp
     src/simulator/simulator.cpp
+    src/geometry/trianglemesh.cpp
 )
 
 add_library(eiron2 ${eiron2_SOURCES})
@@ -63,7 +64,7 @@ target_link_libraries(simple_test PRIVATE eiron2)
 find_package(Catch2 3)
 
 # if(Catch2)
-add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp)
+add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp tests/cpp/test_trianglemesh.cpp)
 target_link_libraries(all_tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(all_tests PRIVATE eiron2)
 

@@ -37,6 +37,8 @@ class Mesh {
     /**
      * Find the cell index corresponding to a given position.
      * Note: this may be very slow for unstructured meshes.
+     * 
+     * returns -1 if no cell was found.
      */
     virtual int get_cell_index(Vec2 position) const = 0;
 

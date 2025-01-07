@@ -1,8 +1,6 @@
 #ifndef EIRON2_VOXELMESH_HPP
 #define EIRON2_VOXELMESH_HPP
 
-#include <tuple>
-
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/mesh.hpp"
 #include "eiron2/geometry/particlegeometry.hpp"
