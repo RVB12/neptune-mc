@@ -2,6 +2,7 @@
 #define EIRON2_Vec2_HPP
 
 #include <cassert>
+#include <ostream>
 
 namespace eiron2 {
 
@@ -46,6 +47,8 @@ class Vec2 {
     // Calculate the squared norm of the vector
     double norm2() const;
 };
+
+std::ostream& operator<<(std::ostream& os, Vec2 const& v);
 
 // Define some wrappers around the operators
 inline Vec2 operator+(Vec2 a, Vec2 b) { return a += b; }

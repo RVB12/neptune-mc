@@ -34,7 +34,7 @@ TEST_CASE("TriangleMesh::get_cell_index", "[TriangleMesh]") {
     REQUIRE(mesh.get_cell_index(Vec2(0.9, 0.9)) == 1);
     REQUIRE(mesh.get_cell_index(Vec2(0.5, 0.1)) == 0);
     REQUIRE(mesh.get_cell_index(Vec2(0.1, 0.5)) == 0);
-    REQUIRE(mesh.get_cell_index(Vec2(0.9, 0.1)) == 1);
+    REQUIRE(mesh.get_cell_index(Vec2(0.9, 0.12)) == 1);
     REQUIRE(mesh.get_cell_index(Vec2(0.1, 0.9)) == 1);
     REQUIRE(mesh.get_cell_index(Vec2(0.5, 0.9)) == 1);
     REQUIRE(mesh.get_cell_index(Vec2(0.9, 0.5)) == 1);

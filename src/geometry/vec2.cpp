@@ -109,4 +109,10 @@ double Vec2::norm() const {
     return std::sqrt(norm2());    
 }
 
+std::ostream& operator<<(std::ostream& os, Vec2 const& v)
+{
+    os << "[2]" "](" << v.x << ", " << v.y << ")";
+    return os;
+}
+
 }  // namespace eiron2

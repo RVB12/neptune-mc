@@ -2,6 +2,7 @@
 #define EIRON2_VEC3_HPP
 
 #include <cassert>
+#include <ostream>
 
 namespace eiron2 {
 

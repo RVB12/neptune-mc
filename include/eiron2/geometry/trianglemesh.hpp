@@ -31,6 +31,7 @@ class Triangle{
  */
 class TriangleMesh : public Mesh {
    public:
+
     TriangleMesh(vector<Vec2>& vertices_, vector<Triangle>& triangles_)
         : Mesh(),
          vertices(vertices_),
@@ -46,6 +47,21 @@ class TriangleMesh : public Mesh {
          triangles(triangles_),
          neighbors(neighbors_)
     {
+        make_neighborlist();
+    }
+
+    TriangleMesh(vectorview<double> vertices_, vectorview<int> triangles_)
+        : Mesh(),
+         vertices(vertices_.size() / 2),
+         triangles(triangles_.size() / 3),
+         neighbors(3*triangles_.size())
+    {
+        for (int i = 0; i < vertices.size(); i++) {
+            vertices[i] = Vec2(vertices_[2*i], vertices_[2*i+1]);
+        }
+        for(int i = 0; i < triangles.size(); i++) {
+            triangles[i] = Triangle(triangles_[3*i], triangles_[3*i+1], triangles_[3*i+2]);
+        }
         make_neighborlist();
     }
 

@@ -6,8 +6,8 @@ import math
 Lx = 1
 Ly = 1
 
-nx = 400
-ny = 400
+nx = 1000
+ny = 1000
 
 ncells = nx * ny
 

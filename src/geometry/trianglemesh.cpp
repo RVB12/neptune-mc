@@ -104,17 +104,26 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     double t2 = find_edge_intersection(p2, p3, p.position, p.velocity);
     double t3 = find_edge_intersection(p3, p1, p.position, p.velocity);
 
+    std::cout << "position is in cell? " << is_in_cell(p.position, p.cell_id) << std::endl;
+    std::cout << "position: " << p.position << std::endl;
+    std::cout << "velocity: " << p.velocity << std::endl;
+    std::cout << "cell_id: " << p.cell_id << std::endl;
+    std::cout << "found cell id: " << get_cell_index(p.position) << std::endl;
+    std::cout << "t1: " << t1 << std::endl;
+    std::cout << "t2: " << t2 << std::endl;
+    std::cout << "t3: " << t3 << std::endl;
+
     double t_new;
     int id_new;
-    if (t1 > 1.0e-8 and t1 >= t2 and t1 >= t3) {
+    if (t1 > 0 and t1 >= t2 and t1 >= t3) {
         t_new = t1;
         id_new = neighbors[3 * p.cell_id];
     }
-    else if (t2 > 1.0e-8 and t2 >= t1 and t2 >= t3) {
+    else if (t2 > 0 and t2 >= t1 and t2 >= t3) {
         t_new = t2;
         id_new = neighbors[3 * p.cell_id + 1];
     }
-    else if (t3 > 1.0e-8 and t3 >= t1 and t3 >= t2) {
+    else if (t3 > 0 and t3 >= t1 and t3 >= t2) {
         t_new = t3;
         id_new = neighbors[3 * p.cell_id + 2];
     }
@@ -129,6 +138,8 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
         boundary_id = -id_new;
         id_new = -1;
     }
+
+    std::cout << "id_new: " << id_new << std::endl;
 
     return CellCrossing(pos_new, t_new, id_new, boundary_id);
 }

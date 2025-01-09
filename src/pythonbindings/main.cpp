@@ -3,6 +3,7 @@
 #include <eiron2/common/vector.hpp>
 #include <eiron2/geometry/mesh.hpp>
 #include <eiron2/geometry/voxelmesh.hpp>
+#include <eiron2/geometry/trianglemesh.hpp>
 #include <eiron2/simulator/simulator.hpp>
 #include <string>
 
@@ -47,6 +48,9 @@ void bind_mesh(py::module& m)
 
     py::class_<eiron2::VoxelMesh, eiron2::Mesh>(m, "VoxelMesh")
         .def(py::init<double, double, int, int>());
+
+    py::class_<eiron2::TriangleMesh, eiron2::Mesh>(m, "TriangleMesh")
+        .def(py::init<eiron2::vectorview<double>, eiron2::vectorview<int>>());
 }
 
 // bind the Cpp plasmabackground class to the python plasmabackground class

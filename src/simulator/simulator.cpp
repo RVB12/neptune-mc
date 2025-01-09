@@ -30,8 +30,10 @@ void simulate(Mesh& mesh,
 
         // Currently, these are just some ad hoc initial conditions
         // I should look into simulating a more realistic line source
-        particle.geometry.position.x = 0;
-        particle.geometry.position.y = r_unif(gen);
+        // particle.geometry.position.x = 0;
+        // particle.geometry.position.y = r_unif(gen);
+        particle.geometry.position.x = 0.5;
+        particle.geometry.position.y = 0.5;
 
         particle.geometry.cell_id =
             mesh.get_cell_index(particle.geometry.position);
@@ -81,6 +83,10 @@ void simulate(Mesh& mesh,
                     // Boundary crossing
                     // For now, we just reflect particles at boundaries
                     // 0,1,2,3,4 and absorb particles at boundary 3 (x == Xl)
+
+                    // Todo: Implement proper boundary conditions
+                    // maybe implement surface norm in the mesh
+
                     particle.geometry.position = crossing.position;
                     if (crossing.boundary_id == 0) {
                         particle.geometry.velocity.x =
@@ -112,7 +118,8 @@ void simulate(Mesh& mesh,
             // Note, this interpolation is not in the literature, make sure
             // it doesn't cause issues.
             #pragma omp atomic
-            density[cell_id] += dt * (weight_old + particle.weight) / 2 / v * sfn;
+            density[cell_id] += dt * weight_old / v * sfn;
+            // density[cell_id] += dt * (weight_old + particle.weight) / 2 / v * sfn;
 
             if (particle.weight < 0.000000001) {
                 break;
