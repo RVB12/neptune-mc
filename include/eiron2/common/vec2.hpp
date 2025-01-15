@@ -7,7 +7,7 @@
 namespace eiron2 {
 
 /**
- * @brief Simple class that represents a 3D vector
+ * @brief Simple class that represents a 2D vector
  */
 class Vec2 {
    public:

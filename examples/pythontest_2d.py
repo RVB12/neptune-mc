@@ -6,8 +6,8 @@ import math
 Lx = 1
 Ly = 1
 
-nx = 1000
-ny = 1000
+nx = 4
+ny = 20
 
 ncells = nx * ny
 
@@ -19,7 +19,7 @@ plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 for i in range(nx):
     for j in range(ny):
         # plasma_dens[i + j*nx] = 100*(1.0+np.sin(j/100*2*math.pi))
-        plasma_dens[i + j*nx] = 1.0e13
+        plasma_dens[i * ny + j] = 1.0e13
 
 for i in range(ncells):
     plasma_vel_x[i] = 10
@@ -47,7 +47,7 @@ eiron2.simulate(mesh, background, eiron2.VectorDouble(neutral_density), params)
 
 neutral_density_reshaped = np.reshape(neutral_density, (nx, ny))
 
-c = plt.imshow(neutral_density_reshaped, extent=[0, 1, 0, 1])
+c = plt.imshow(np.transpose(neutral_density_reshaped), extent=[0, 1, 0, 1])
 plt.title("Neutral particle density (log)")
 plt.colorbar(c)
 plt.xlabel("x")

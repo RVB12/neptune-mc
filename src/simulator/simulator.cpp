@@ -30,10 +30,10 @@ void simulate(Mesh& mesh,
 
         // Currently, these are just some ad hoc initial conditions
         // I should look into simulating a more realistic line source
-        // particle.geometry.position.x = 0;
-        // particle.geometry.position.y = r_unif(gen);
-        particle.geometry.position.x = 0.5;
-        particle.geometry.position.y = 0.5;
+        particle.geometry.position.x = 0;
+        particle.geometry.position.y = r_unif(gen);
+        // particle.geometry.position.x = 0.5;
+        // particle.geometry.position.y = 0.5;
 
         particle.geometry.cell_id =
             mesh.get_cell_index(particle.geometry.position);

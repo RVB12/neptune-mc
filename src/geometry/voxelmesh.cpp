@@ -6,15 +6,19 @@ int VoxelMesh::n_cells() const { return nx * ny; }
 
 Index2D VoxelMesh::linear_to_tuple(int index) const
 {
-    int j = index / nx;
-    int i = index % nx;
+    // int j = index / nx;
+    // int i = index % nx;
+
+    int i = index / ny;
+    int j = index % ny;
 
     return Index2D(i, j);
 }
 
 int VoxelMesh::tuple_to_linear(Index2D index) const
 {
-    return index.i + index.j * nx;
+    // return index.i + index.j * nx;
+    return index.i * ny + index.j;
 }
 
 bool VoxelMesh::is_in_cell(Vec2 p, int cell_index) const{
