@@ -2,26 +2,26 @@
 
 namespace eiron2 {
 
-int VoxelMesh::n_cells() const { return nx * ny; }
+index_t VoxelMesh::n_cells() const { return nx * ny; }
 
-Index2D VoxelMesh::linear_to_tuple(int index) const
+Index2D VoxelMesh::linear_to_tuple(index_t index) const
 {
-    // int j = index / nx;
-    // int i = index % nx;
+    // index_t j = index / nx;
+    // index_t i = index % nx;
 
-    int i = index / ny;
-    int j = index % ny;
+    index_t i = index / ny;
+    index_t j = index % ny;
 
     return Index2D(i, j);
 }
 
-int VoxelMesh::tuple_to_linear(Index2D index) const
+index_t VoxelMesh::tuple_to_linear(Index2D index) const
 {
     // return index.i + index.j * nx;
     return index.i * ny + index.j;
 }
 
-bool VoxelMesh::is_in_cell(Vec2 p, int cell_index) const{
+bool VoxelMesh::is_in_cell(Vec2 p, index_t cell_index) const{
     Index2D ind = linear_to_tuple(cell_index);
 
     if(p.x < ind.i * dx || p.x > (ind.i + 1) * dx) return false;
@@ -32,11 +32,11 @@ bool VoxelMesh::is_in_cell(Vec2 p, int cell_index) const{
 
 Vec2 VoxelMesh::cell_size() const { return Vec2(dx, dy); }
 
-double VoxelMesh::get_volume(int) const {
+real_t VoxelMesh::get_volume(index_t) const {
     return dx * dy;
 }
 
-int VoxelMesh::get_cell_index(Vec2 p) const
+index_t VoxelMesh::get_cell_index(Vec2 p) const
 {
     Index2D ind;
     assert(p.x >= 0 && p.x <= Lx);
@@ -56,7 +56,7 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
     // Calculate the time until collision for each surface
     //
 
-    double tx;  // Time till collision with boundary in x direction
+    real_t tx;  // Time till collision with boundary in x direction
     if (p.velocity.x >= 0) {
         tx = ((ind.i + 1) * dx - p.position.x) / p.velocity.x;
     }
@@ -64,7 +64,7 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
         tx = ((ind.i) * dx - p.position.x) / p.velocity.x;
     }
 
-    double ty;  // Time till collision with boundary in y direction
+    real_t ty;  // Time till collision with boundary in y direction
     if (p.velocity.y >= 0) {
         ty = ((ind.j + 1) * dy - p.position.y) / p.velocity.y;
     }
@@ -77,7 +77,7 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
     //
 
     Index2D next_ind = ind;
-    double t = 0;
+    real_t t = 0;
     if (tx <= ty) {
         t = tx;
         next_ind.i += (p.velocity.x >= 0) ? 1 : -1;

@@ -8,10 +8,12 @@
 #include <memory>
 #include <random>
 
+#include "eiron2/common/utils.hpp"
+
 namespace eiron2 {
 
 // Forward declaration of the vectorview class
-template <typename T = double>
+template <typename T = real_t>
 class vectorview;
 
 /**
@@ -22,7 +24,7 @@ class vectorview;
  * @tparam T this is a template parameter that specifies the type of the
  *           elements of the vector.
  */
-template <typename T = double>
+template <typename T = real_t>
 class vector {
     friend class vectorview<T>;
 
@@ -35,11 +37,11 @@ class vector {
      * @param n  integer
      *           Number of elements of the vector
      */
-    vector(int n) : _n(n), _data(new T[_n])
+    vector(index_t n) : _n(n), _data(new T[_n])
     {
 #ifndef NDEBUG
         if constexpr (std::is_floating_point<T>::value) {
-            for (int i = 0; i < _n; ++i) {
+            for (index_t i = 0; i < _n; ++i) {
                 _data[i] = std::nan("1");
             }
         }
@@ -55,9 +57,9 @@ class vector {
      * @param value T
      *              Value to initialize the vector with
      */
-    vector(int n, T value) : _n(n), _data(new T[_n])
+    vector(index_t n, T value) : _n(n), _data(new T[_n])
     {
-        for (int i = 0; i < _n; ++i) {
+        for (index_t i = 0; i < _n; ++i) {
             _data[i] = value;
         }
     }
@@ -85,7 +87,7 @@ class vector {
      */
     vector(const vector& v) : _n(v.size()), _data(new T[_n])
     {
-        for (int i = 0; i < _n; ++i) {
+        for (index_t i = 0; i < _n; ++i) {
             _data[i] = v[i];
         }
     }
@@ -102,7 +104,7 @@ class vector {
      */
     vector(const vectorview<T>& v) : _n(v.size()), _data(new T[_n])
     {
-        for (int i = 0; i < _n; ++i) {
+        for (index_t i = 0; i < _n; ++i) {
             _data[i] = v[i];
         }
     }
@@ -129,7 +131,7 @@ class vector {
     vector& operator=(const vector& v)
     {
         assert(v.size() == _n);
-        for (int i = 0; i < _n; ++i) {
+        for (index_t i = 0; i < _n; ++i) {
             _data[i] = v[i];
         }
         return *this;
@@ -148,7 +150,7 @@ class vector {
     vector& operator=(const vectorview<T>& v)
     {
         assert(v.size() == _n);
-        for (int i = 0; i < _n; ++i) {
+        for (index_t i = 0; i < _n; ++i) {
             _data[i] = v[i];
         }
         return *this;
@@ -171,7 +173,7 @@ class vector {
     }
 
     // Returns the size of the vector
-    inline int size() const { return _n; }
+    inline index_t size() const { return _n; }
 
     /**
      * @brief Access the i-th element of the vector
@@ -181,7 +183,7 @@ class vector {
      * @return  const T&
      *          Because this vector is const, we return a const reference.
      */
-    inline const T& operator[](const int i) const
+    inline const T& operator[](const index_t i) const
     {
         assert(i < _n);
         assert(i >= 0);
@@ -195,7 +197,7 @@ class vector {
      *          index
      * @return  T&
      */
-    inline T& operator[](const int i)
+    inline T& operator[](const index_t i)
     {
         assert(i < _n);
         assert(i >= 0);
@@ -220,7 +222,7 @@ class vector {
      * though the returned object is not const. Solving this problem would
      * require either an inefficient or a more complex design.
      */
-    inline vectorview<T> subvector(int start, int end, int stride = 1) const
+    inline vectorview<T> subvector(index_t start, index_t end, index_t stride = 1) const
     {
         assert(start >= 0);
         assert(end <= _n);
@@ -260,7 +262,7 @@ class vector {
     inline const T* cend() const { return _data.get() + _n; }
 
    private:
-    const int _n;
+    const index_t _n;
     std::unique_ptr<T[]> _data;
 };
 
@@ -282,7 +284,7 @@ class vectorview {
         : _n(0), _stride(1), _data(nullptr)
     {}
 
-    vectorview(int n, T* data, int stride = 1)
+    vectorview(index_t n, T* data, index_t stride = 1)
         : _n(n), _stride(stride), _data(data)
     {}
 
@@ -358,10 +360,10 @@ class vectorview {
     }
 
     // Returns the size of the vector
-    inline int size() const { return _n; }
+    inline index_t size() const { return _n; }
 
     // Returns the stride of the vector
-    inline int stride() const { return _stride; }
+    inline index_t stride() const { return _stride; }
 
     /**
      * @brief Access the i-th element of the vector
@@ -371,7 +373,7 @@ class vectorview {
      * @return  const T&
      *          Because this vector is const, we return a const reference.
      */
-    inline const T& operator[](const int i) const
+    inline const T& operator[](const index_t i) const
     {
         assert(i < _n);
         assert(i >= 0);
@@ -385,7 +387,7 @@ class vectorview {
      *          index
      * @return  T&
      */
-    inline T& operator[](const int i)
+    inline T& operator[](const index_t i)
     {
         assert(i < _n);
         assert(i >= 0);
@@ -410,7 +412,7 @@ class vectorview {
      * though the returned object is not const. Solving this problem would
      * require either an inefficient or a more complex design.
      */
-    inline vectorview subvector(int start, int end, int stride = 1) const
+    inline vectorview subvector(index_t start, index_t end, index_t stride = 1) const
     {
         assert(start >= 0);
         assert(end <= _n);
@@ -430,8 +432,8 @@ class vectorview {
     inline T* data() { return _data; }
 
    private:
-    int _n;
-    int _stride;
+    index_t _n;
+    index_t _stride;
     T* _data;
 };
 

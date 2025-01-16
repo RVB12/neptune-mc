@@ -6,8 +6,8 @@ import math
 Lx = 1
 Ly = 1
 
-nx = 4
-ny = 20
+nx = 1000
+ny = 500
 
 ncells = nx * ny
 
@@ -31,10 +31,10 @@ for i in range(ncells):
 mesh = eiron2.VoxelMesh(Lx, Ly, nx, ny)
 
 background = eiron2.PlasmaBackground(
-    eiron2.VectorDouble(plasma_dens),
-    eiron2.VectorDouble(plasma_temp),
-    eiron2.VectorDouble(plasma_vel_x),
-    eiron2.VectorDouble(plasma_vel_y)
+    eiron2.VectorReal(plasma_dens),
+    eiron2.VectorReal(plasma_temp),
+    eiron2.VectorReal(plasma_vel_x),
+    eiron2.VectorReal(plasma_vel_y)
 )
 
 params = eiron2.SimulationParams()
@@ -43,7 +43,7 @@ params.max_steps = 10000000
 
 neutral_density = np.zeros(ncells, dtype=np.float64)
 
-eiron2.simulate(mesh, background, eiron2.VectorDouble(neutral_density), params)
+eiron2.simulate(mesh, background, eiron2.VectorReal(neutral_density), params)
 
 neutral_density_reshaped = np.reshape(neutral_density, (nx, ny))
 

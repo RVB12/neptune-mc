@@ -6,6 +6,7 @@
 #include "eiron2/geometry/particlegeometry.hpp"
 #include "eiron2/common/vec2.hpp"
 #include "eiron2/common/vector.hpp"
+#include "eiron2/common/utils.hpp"
 
 namespace eiron2 {
 
@@ -15,9 +16,9 @@ namespace eiron2 {
  */
 class Triangle{
     public:
-    int ind1;
-    int ind2;
-    int ind3;
+    index_t ind1;
+    index_t ind2;
+    index_t ind3;
 };
 
 /**
@@ -41,7 +42,7 @@ class TriangleMesh : public Mesh {
         make_neighborlist();
     }
 
-    TriangleMesh(vector<Vec2>& vertices_, vector<Triangle>& triangles_, vector<int>& neighbors_)
+    TriangleMesh(vector<Vec2>& vertices_, vector<Triangle>& triangles_, vector<index_t>& neighbors_)
         : Mesh(),
          vertices(vertices_),
          triangles(triangles_),
@@ -50,44 +51,44 @@ class TriangleMesh : public Mesh {
         make_neighborlist();
     }
 
-    TriangleMesh(vectorview<double> vertices_, vectorview<int> triangles_)
+    TriangleMesh(vectorview<real_t> vertices_, vectorview<index_t> triangles_)
         : Mesh(),
          vertices(vertices_.size() / 2),
          triangles(triangles_.size() / 3),
          neighbors(3*triangles_.size())
     {
-        for (int i = 0; i < vertices.size(); i++) {
+        for (index_t i = 0; i < vertices.size(); i++) {
             vertices[i] = Vec2(vertices_[2*i], vertices_[2*i+1]);
         }
-        for(int i = 0; i < triangles.size(); i++) {
+        for(index_t i = 0; i < triangles.size(); i++) {
             triangles[i] = Triangle(triangles_[3*i], triangles_[3*i+1], triangles_[3*i+2]);
         }
         make_neighborlist();
     }
 
-    int n_cells() const;
+    index_t n_cells() const;
 
     CellCrossing get_next_crossing(ParticleGeometry& p) const;
 
     /**
      * @brief Return the id of the cell that a given position is in.
      */
-    int get_cell_index(Vec2 position) const;
+    index_t get_cell_index(Vec2 position) const;
 
     /**
      * @brief Return the triangle corresponding to the given index
      */
-    Triangle get_triangle(int cell_index) const;
+    Triangle get_triangle(index_t cell_index) const;
 
     /**
      * Check if a given position is inside of the cell with the given index
      */
-    bool is_in_cell(Vec2 p, int cell_index) const;
+    bool is_in_cell(Vec2 p, index_t cell_index) const;
 
     /**
      * @brief Return the volume of a given cell
      */
-    double get_volume(int cell_index) const;
+    real_t get_volume(index_t cell_index) const;
 
    private:
     // Go through all the triangles and construct the neighborlist
@@ -96,7 +97,7 @@ class TriangleMesh : public Mesh {
     // Member variables
     vector<Vec2> vertices; // List of all the triangles in the mesh
     vector<Triangle> triangles; // List of all the triangles in the mesh
-    vector<int> neighbors; // Map of the shared edges of the triangles
+    vector<index_t> neighbors; // Map of the shared edges of the triangles
 };
 
 }  // namespace eiron2

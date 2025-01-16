@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include "eiron2/common/vec2.hpp"
+#include "eiron2/common/utils.hpp"
 
 namespace eiron2 {
 
@@ -17,7 +18,7 @@ class CellCrossing {
    public:
     // Contructors
     CellCrossing() = default;
-    CellCrossing(Vec2 position_, double t_, int next_cell_id_, int boundary_id_)
+    CellCrossing(Vec2 position_, real_t t_, index_t next_cell_id_, index_t boundary_id_)
         : position(position_),
           next_cell_id(next_cell_id_),
           boundary_id(boundary_id_),
@@ -26,11 +27,11 @@ class CellCrossing {
 
     // Member variables
     Vec2 position;  // The position of the crossing
-    int next_cell_id =
+    index_t next_cell_id =
         -1;  // the id of the next cell, -1 if it is a boundary crossing
-    int boundary_id =
+    index_t boundary_id =
         -1;    // the id of the boundary, -1 if it is a cell crossing
-    double t;  // Time until the crossing
+    real_t t;  // Time until the crossing
 };
 
 }  // namespace eiron2

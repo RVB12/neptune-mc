@@ -5,15 +5,16 @@
 #include "eiron2/geometry/mesh.hpp"
 #include "eiron2/geometry/particlegeometry.hpp"
 #include "eiron2/common/vec2.hpp"
+#include "eiron2/common/utils.hpp"
 
 namespace eiron2 {
 
 class Index2D {
    public:
     Index2D(){};
-    Index2D(int i_, int j_) : i(i_), j(j_) {}
+    Index2D(index_t i_, index_t j_) : i(i_), j(j_) {}
 
-    inline int& operator[](int ind)
+    inline index_t& operator[](index_t ind)
     {
         assert(ind >= 0);
         assert(ind < 2);
@@ -26,8 +27,8 @@ class Index2D {
     }
 
     // Member variables
-    int i = -1;
-    int j = -1;
+    index_t i = -1;
+    index_t j = -1;
 };
 
 /**
@@ -48,7 +49,7 @@ class Index2D {
  */
 class VoxelMesh : public Mesh {
    public:
-    VoxelMesh(double Lx_, double Ly_, int nx_, int ny_)
+    VoxelMesh(real_t Lx_, real_t Ly_, index_t nx_, index_t ny_)
         : Mesh(),
           Lx(Lx_),
           Ly(Ly_),
@@ -58,24 +59,24 @@ class VoxelMesh : public Mesh {
           dy(Ly / ny)
     {}
 
-    int n_cells() const;
+    index_t n_cells() const;
 
     CellCrossing get_next_crossing(ParticleGeometry& p) const;
 
     /**
      * @brief Convert a linear index to triplet index
      */
-    Index2D linear_to_tuple(int index) const;
+    Index2D linear_to_tuple(index_t index) const;
 
     /**
      * @brief Convert a triplet index to linear index
      */
-    int tuple_to_linear(Index2D ij) const;
+    index_t tuple_to_linear(Index2D ij) const;
 
     /**
      * @brief Return the id of the cell that a given position is in.
      */
-    int get_cell_index(Vec2 position) const;
+    index_t get_cell_index(Vec2 position) const;
 
     /**
      * @brief Return the size of the cell in each direction
@@ -85,21 +86,21 @@ class VoxelMesh : public Mesh {
     /**
      * Check if a given position is inside of the cell with the given index
      */
-    bool is_in_cell(Vec2 p, int cell_index) const;
+    bool is_in_cell(Vec2 p, index_t cell_index) const;
 
     /**
      * @brief Return the volume of a given cell
      */
-    double get_volume(int cell_index) const;
+    real_t get_volume(index_t cell_index) const;
 
    private:
     // Member variables
-    double Lx = 0.;  // Length of the mesh in x direction
-    double Ly = 0.;  // Length of the mesh in y direction
-    int nx = 0;      // Number of cells in the x direction
-    int ny = 0;      // Number of cells in the y direction
-    double dx = 0.;  // Size of a cell in x direction
-    double dy = 0.;  // Size of a cell in y direction
+    real_t Lx = 0.;  // Length of the mesh in x direction
+    real_t Ly = 0.;  // Length of the mesh in y direction
+    index_t nx = 0;      // Number of cells in the x direction
+    index_t ny = 0;      // Number of cells in the y direction
+    real_t dx = 0.;  // Size of a cell in x direction
+    real_t dy = 0.;  // Size of a cell in y direction
 };
 
 }  // namespace eiron2

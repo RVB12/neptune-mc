@@ -2,14 +2,14 @@
 
 namespace eiron2 {
 
-int TriangleMesh::n_cells() const { return triangles.size(); }
+index_t TriangleMesh::n_cells() const { return triangles.size(); }
 
-Triangle TriangleMesh::get_triangle(int cell_index) const
+Triangle TriangleMesh::get_triangle(index_t cell_index) const
 {
     return triangles[cell_index];
 }
 
-inline double triangle_sign_helper(const Vec2& p1,
+inline real_t triangle_sign_helper(const Vec2& p1,
                                    const Vec2& p2,
                                    const Vec2& p3)
 {
@@ -17,8 +17,8 @@ inline double triangle_sign_helper(const Vec2& p1,
 }
 
 // Source:
-// https://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle
-bool TriangleMesh::is_in_cell(Vec2 pos, int cell_index) const
+// https://stackoverflow.com/questions/2049582/how-to-determine-if-a-poindex_t-is-in-a-2d-triangle
+bool TriangleMesh::is_in_cell(Vec2 pos, index_t cell_index) const
 {
     Triangle t = triangles[cell_index];
     Vec2 p1 = vertices[t.ind1];
@@ -26,9 +26,9 @@ bool TriangleMesh::is_in_cell(Vec2 pos, int cell_index) const
     Vec2 p3 = vertices[t.ind3];
 
     // Half-plane checks
-    double d1 = triangle_sign_helper(pos, p1, p2);
-    double d2 = triangle_sign_helper(pos, p2, p3);
-    double d3 = triangle_sign_helper(pos, p3, p1);
+    real_t d1 = triangle_sign_helper(pos, p1, p2);
+    real_t d2 = triangle_sign_helper(pos, p2, p3);
+    real_t d3 = triangle_sign_helper(pos, p3, p1);
 
     // Check if the point is on the same side of all triangle edges
     bool has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
@@ -37,12 +37,12 @@ bool TriangleMesh::is_in_cell(Vec2 pos, int cell_index) const
     return !(has_neg && has_pos);
 }
 
-int TriangleMesh::get_cell_index(Vec2 pos) const
+index_t TriangleMesh::get_cell_index(Vec2 pos) const
 {
     // For now, this is really stupid, we're just manually going through all the
     // triangles and checking which one the position is in. A kd tree would
     // massively speed this up
-    for (int i = 0; i < n_cells(); i++) {
+    for (index_t i = 0; i < n_cells(); i++) {
         if (is_in_cell(pos, i)) {
             return i;
         }
@@ -51,7 +51,7 @@ int TriangleMesh::get_cell_index(Vec2 pos) const
     return -1;
 }
 
-double TriangleMesh::get_volume(int cell_index) const
+real_t TriangleMesh::get_volume(index_t cell_index) const
 {
     Triangle t = triangles[cell_index];
     Vec2 p1 = vertices[t.ind1];
@@ -67,21 +67,21 @@ double TriangleMesh::get_volume(int cell_index) const
 // velocity vel with an edge defined by points p1 and p2. Note, this function
 // does not verify whether the returned time is positive or whether the
 // intersection lies between the two points. This will be implicitly done later.
-inline double find_edge_intersection(const Vec2& p1,
+inline real_t find_edge_intersection(const Vec2& p1,
                                      const Vec2& p2,
                                      const Vec2& pos,
                                      const Vec2& vel)
 {
     // Construct 2x2 matrix equation to find the intersection
-    double a00 = p2.x - p1.x;
-    double a10 = p2.y - p1.y;
-    double a01 = -vel.x;
-    double a11 = -vel.y;
+    real_t a00 = p2.x - p1.x;
+    real_t a10 = p2.y - p1.y;
+    real_t a01 = -vel.x;
+    real_t a11 = -vel.y;
 
-    double b0 = pos.x - p1.x;
-    double b1 = pos.y - p1.y;
+    real_t b0 = pos.x - p1.x;
+    real_t b1 = pos.y - p1.y;
 
-    double determinant = a00 * a11 - a01 * a10;
+    real_t determinant = a00 * a11 - a01 * a10;
 
     if (std::abs(determinant) < 1.0e-8) {
         // matrix is singular, no intersection
@@ -100,9 +100,9 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];
 
-    double t1 = find_edge_intersection(p1, p2, p.position, p.velocity);
-    double t2 = find_edge_intersection(p2, p3, p.position, p.velocity);
-    double t3 = find_edge_intersection(p3, p1, p.position, p.velocity);
+    real_t t1 = find_edge_intersection(p1, p2, p.position, p.velocity);
+    real_t t2 = find_edge_intersection(p2, p3, p.position, p.velocity);
+    real_t t3 = find_edge_intersection(p3, p1, p.position, p.velocity);
 
     std::cout << "position is in cell? " << is_in_cell(p.position, p.cell_id) << std::endl;
     std::cout << "position: " << p.position << std::endl;
@@ -113,8 +113,8 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     std::cout << "t2: " << t2 << std::endl;
     std::cout << "t3: " << t3 << std::endl;
 
-    double t_new;
-    int id_new;
+    real_t t_new;
+    index_t id_new;
     if (t1 > 0 and t1 >= t2 and t1 >= t3) {
         t_new = t1;
         id_new = neighbors[3 * p.cell_id];
@@ -133,7 +133,7 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
 
     Vec2 pos_new = p.position + p.velocity * t_new;
 
-    int boundary_id = -1;
+    index_t boundary_id = -1;
     if (id_new < 0) {
         boundary_id = -id_new;
         id_new = -1;
@@ -148,7 +148,7 @@ void TriangleMesh::make_neighborlist()
 {
     // For now, this is really stupid, we're just manually going through all the
     // triangles and checking the edges
-    for (int i = 0; i < n_cells(); i++) {
+    for (index_t i = 0; i < n_cells(); i++) {
         Triangle t1 = triangles[i];
 
         // Initialize to -1, both to keep track if all neighbors of this triangle have been found,
@@ -157,7 +157,7 @@ void TriangleMesh::make_neighborlist()
         neighbors[3 * i + 1] = -1;
         neighbors[3 * i + 2] = -1;
 
-        for (int j = 0; j < n_cells(); j++) {
+        for (index_t j = 0; j < n_cells(); j++) {
             if (i == j) continue;
 
             Triangle t2 = triangles[j];

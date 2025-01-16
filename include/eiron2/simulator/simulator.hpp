@@ -8,31 +8,32 @@
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/mesh.hpp"
 #include "eiron2/physics/particle.hpp"
+#include "eiron2/common/utils.hpp"
 
 namespace eiron2 {
 
 class PlasmaBackground {
    public:
-    PlasmaBackground(vectorview<double> plasma_dens_,
-                     vectorview<double> plasma_temp_,
-                     vectorview<double> plasma_vel_x_,
-                     vectorview<double> plasma_vel_y_)
+    PlasmaBackground(vectorview<real_t> plasma_dens_,
+                     vectorview<real_t> plasma_temp_,
+                     vectorview<real_t> plasma_vel_x_,
+                     vectorview<real_t> plasma_vel_y_)
         : plasma_dens(plasma_dens_),
           plasma_temp(plasma_temp_),
           plasma_vel_x(plasma_vel_x_),
           plasma_vel_y(plasma_vel_y_)
     {}
 
-    vectorview<double> plasma_dens;
-    vectorview<double> plasma_temp;
-    vectorview<double> plasma_vel_x;
-    vectorview<double> plasma_vel_y;
+    vectorview<real_t> plasma_dens;
+    vectorview<real_t> plasma_temp;
+    vectorview<real_t> plasma_vel_x;
+    vectorview<real_t> plasma_vel_y;
 };
 
 struct SimulationParams {
     int64_t seed = 0;
-    int n_particles = 1000;
-    int max_steps = 100000;
+    index_t n_particles = 1000;
+    index_t max_steps = 100000;
 };
 
 /**
@@ -42,7 +43,7 @@ struct SimulationParams {
  */
 void simulate(Mesh& mesh,
               PlasmaBackground& background,
-              vectorview<double> density,
+              vectorview<real_t> density,
               SimulationParams params);
 
 }  // namespace eiron2

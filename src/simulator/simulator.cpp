@@ -3,21 +3,21 @@ namespace eiron2 {
 
 void simulate(Mesh& mesh,
               PlasmaBackground& background,
-              vectorview<double> density,
+              vectorview<real_t> density,
               SimulationParams params)
 {
-    double T_i = 40;
-    double T_e = T_i;
-    double T_n = T_i;
-    double K_cx = 3.2e-15 * std::sqrt(T_i / 0.026);
-    double K_i = 2.0e-13 / (6.0 + (T_e / 13.6)) *
+    real_t T_i = 40;
+    real_t T_e = T_i;
+    real_t T_n = T_i;
+    real_t K_cx = 3.2e-15 * std::sqrt(T_i / 0.026);
+    real_t K_i = 2.0e-13 / (6.0 + (T_e / 13.6)) *
                            std::sqrt(T_e / 13.6) * std::exp(-13.6 / T_e);
 
     // History based simulation (because its easy)
     #pragma omp parallel for num_threads(4)
-    for (int i_particle = 0; i_particle < params.n_particles; i_particle++) {
-        std::uniform_real_distribution<double> r_unif(0, 1);
-        std::normal_distribution<double> r_normal(0, 1);
+    for (index_t i_particle = 0; i_particle < params.n_particles; i_particle++) {
+        std::uniform_real_distribution<real_t> r_unif(0, 1);
+        std::normal_distribution<real_t> r_normal(0, 1);
 
         // By basing the generator seed on the particle id, we can get
         // consistent results even if we parallelize.
@@ -42,30 +42,30 @@ void simulate(Mesh& mesh,
         particle.geometry.velocity.y = 0.25 * r_normal(gen);
 
         // Full simulation loop
-        for (int i_step = 0; i_step < params.max_steps; i_step++) {
-            int cell_id =
+        for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
+            index_t cell_id =
                 particle.geometry.cell_id;  // Current cell id of the particle
-            double weight_old = particle.weight;
+            real_t weight_old = particle.weight;
 
             // random number to determine time till collision
-            double eps = r_unif(gen);
+            real_t eps = r_unif(gen);
             // time till collision
-            double tc =
+            real_t tc =
                 -std::log(eps) / (K_cx * background.plasma_dens[cell_id]);
 
             // Calculate the next cell crossing
             CellCrossing crossing = mesh.get_next_crossing(particle.geometry);
 
             // Check which one is earlier, charge exchange or cell crossing
-            double dt;
+            real_t dt;
             if (tc < crossing.t) {
                 // Move the particle until the collision
                 particle.geometry.position += tc * particle.geometry.velocity;
                 // Generate new velocity from plasma background (BGK operator)
-                double stddev = std::sqrt(background.plasma_temp[cell_id]);
-                std::normal_distribution<double> dist_vx(
+                real_t stddev = std::sqrt(background.plasma_temp[cell_id]);
+                std::normal_distribution<real_t> dist_vx(
                     background.plasma_vel_x[cell_id], stddev);
-                std::normal_distribution<double> dist_vy(
+                std::normal_distribution<real_t> dist_vy(
                     background.plasma_vel_y[cell_id], stddev);
                 particle.geometry.velocity =
                     Vec2(dist_vx(gen), dist_vy(gen));
@@ -113,8 +113,8 @@ void simulate(Mesh& mesh,
 
             particle.t += dt;
 
-            double sfn = 0.5 * background.plasma_dens[0] * 0.1 * 1.0e4 / params.n_particles;
-            double v = mesh.get_volume(cell_id);
+            real_t sfn = 0.5 * background.plasma_dens[0] * 0.1 * 1.0e4 / params.n_particles;
+            real_t v = mesh.get_volume(cell_id);
             // Note, this interpolation is not in the literature, make sure
             // it doesn't cause issues.
             #pragma omp atomic

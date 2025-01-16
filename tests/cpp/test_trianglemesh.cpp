@@ -68,7 +68,7 @@ TEST_CASE("TriangleMesh::get_volume", "[TriangleMesh]") {
 TEST_CASE("TriangleMesh::get_next_crossing", "[TriangleMesh]") {
     vector<Vec2> vertices = {Vec2(0, 0), Vec2(1, 0), Vec2(0, 1), Vec2(1, 1)};
     vector<Triangle> triangles = {Triangle(0, 1, 2), Triangle(1, 3, 2)};
-    // vector<int> neighbors = {-1, 1, -1, -1, -1, 0};
+    // vector<index_t> neighbors = {-1, 1, -1, -1, -1, 0};
     // TriangleMesh mesh(vertices, triangles, neighbors);
     TriangleMesh mesh(vertices, triangles);
 

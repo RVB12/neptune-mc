@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 
+#include "eiron2/common/utils.hpp"
 #include <eiron2/common/vector.hpp>
 #include <eiron2/geometry/mesh.hpp>
 #include <eiron2/geometry/voxelmesh.hpp>
@@ -9,8 +10,6 @@
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
-
-int add(int i, int j) { return i + j; }
 
 namespace py = pybind11;
 
@@ -47,10 +46,10 @@ void bind_mesh(py::module& m)
     py::class_<eiron2::Mesh>(m, "Mesh");
 
     py::class_<eiron2::VoxelMesh, eiron2::Mesh>(m, "VoxelMesh")
-        .def(py::init<double, double, int, int>());
+        .def(py::init<eiron2::real_t, eiron2::real_t, eiron2::index_t, eiron2::index_t>());
 
     py::class_<eiron2::TriangleMesh, eiron2::Mesh>(m, "TriangleMesh")
-        .def(py::init<eiron2::vectorview<double>, eiron2::vectorview<int>>());
+        .def(py::init<eiron2::vectorview<eiron2::real_t>, eiron2::vectorview<eiron2::index_t>>());
 }
 
 // bind the Cpp plasmabackground class to the python plasmabackground class
@@ -58,8 +57,8 @@ void bind_background(py::module& m)
 {
     py::class_<eiron2::PlasmaBackground>(m, "PlasmaBackground")
         .def(
-            py::init<eiron2::vectorview<double>, eiron2::vectorview<double>,
-                     eiron2::vectorview<double>, eiron2::vectorview<double>>());
+            py::init<eiron2::vectorview<eiron2::real_t>, eiron2::vectorview<eiron2::real_t>,
+                     eiron2::vectorview<eiron2::real_t>, eiron2::vectorview<eiron2::real_t>>());
 }
 
 void bind_params(py::module& m)
@@ -83,8 +82,8 @@ PYBIND11_MODULE(_core, m)
            :toctree: _generate
     )pbdoc";
 
-    bind_vector<double>(m, "Double");
-    bind_vector<int>(m, "Int");
+    bind_vector<eiron2::real_t>(m, "Real");
+    bind_vector<eiron2::index_t>(m, "Int");
     bind_mesh(m);
     bind_background(m);
     bind_params(m);

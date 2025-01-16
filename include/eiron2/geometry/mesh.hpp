@@ -4,6 +4,7 @@
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/particlegeometry.hpp"
 #include "eiron2/common/vec2.hpp"
+#include "eiron2/common/utils.hpp"
 
 namespace eiron2 {
 
@@ -19,7 +20,7 @@ class Mesh {
     /**
      * @brief Return the number of cells in the mesh
      */
-    virtual int n_cells() const = 0;
+    virtual index_t n_cells() const = 0;
 
     /**
      * For a given particle, if it continues at the current velocity,
@@ -32,7 +33,7 @@ class Mesh {
     /**
      * Check if a given position is inside of the cell with the given index
      */
-    virtual bool is_in_cell(Vec2 p, int cell_index) const = 0;
+    virtual bool is_in_cell(Vec2 p, index_t cell_index) const = 0;
 
     /**
      * Find the cell index corresponding to a given position.
@@ -40,12 +41,12 @@ class Mesh {
      * 
      * returns -1 if no cell was found.
      */
-    virtual int get_cell_index(Vec2 position) const = 0;
+    virtual index_t get_cell_index(Vec2 position) const = 0;
 
     /**
      * @brief Return the volume of a given cell
      */
-    virtual double get_volume(int cell_index) const = 0;
+    virtual real_t get_volume(index_t cell_index) const = 0;
 };
 
 }  // namespace eiron2

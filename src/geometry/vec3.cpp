@@ -8,7 +8,7 @@
 
 namespace eiron2 {
 
-double& Vec3::operator[](int i)
+real_t& Vec3::operator[](index_t i)
 {
     assert(i >= 0);
     assert(i < 3);
@@ -19,10 +19,12 @@ double& Vec3::operator[](int i)
             return y;
         case 2:
             return z;
+        default:
+            throw std::runtime_error("Index out of bounds");
     }
 }
 
-const double& Vec3::operator[](int i) const
+const real_t& Vec3::operator[](index_t i) const
 {
     assert(i >= 0);
     assert(i < 3);
@@ -33,6 +35,8 @@ const double& Vec3::operator[](int i) const
             return y;
         case 2:
             return z;
+        default:
+            throw std::runtime_error("Index out of bounds");
     }
 }
 
@@ -68,7 +72,7 @@ Vec3& Vec3::operator/=(Vec3 other)
     return *this;
 }
 
-Vec3& Vec3::operator+=(double s)
+Vec3& Vec3::operator+=(real_t s)
 {
     x += s;
     y += s;
@@ -76,7 +80,7 @@ Vec3& Vec3::operator+=(double s)
     return *this;
 }
 
-Vec3& Vec3::operator-=(double s)
+Vec3& Vec3::operator-=(real_t s)
 {
     x -= s;
     y -= s;
@@ -84,7 +88,7 @@ Vec3& Vec3::operator-=(double s)
     return *this;
 }
 
-Vec3& Vec3::operator*=(double s)
+Vec3& Vec3::operator*=(real_t s)
 {
     x *= s;
     y *= s;
@@ -92,7 +96,7 @@ Vec3& Vec3::operator*=(double s)
     return *this;
 }
 
-Vec3& Vec3::operator/=(double s)
+Vec3& Vec3::operator/=(real_t s)
 {
     x /= s;
     y /= s;
@@ -106,18 +110,18 @@ Vec3 Vec3::operator-()
     return Vec3(-x,-y,-z);
 }
 
-double Vec3::dot(Vec3 other) const { return x * other.x + y * other.y + z * other.z; }
+real_t Vec3::dot(Vec3 other) const { return x * other.x + y * other.y + z * other.z; }
 
-double Vec3::dist(Vec3 other) const {
-    double d2 = square(x - other.x) + square(y - other.y) + square(z - other.z);
+real_t Vec3::dist(Vec3 other) const {
+    real_t d2 = square(x - other.x) + square(y - other.y) + square(z - other.z);
     return std::sqrt(d2);    
 }
 
-double Vec3::norm2() const {
+real_t Vec3::norm2() const {
     return square(x) + square(y) + square(z);
 }
 
-double Vec3::norm() const {
+real_t Vec3::norm() const {
     return std::sqrt(norm2());    
 }
 

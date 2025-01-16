@@ -16,10 +16,10 @@ TEST_CASE("voxelmesh index conversion works for square mesh",
 {
     VoxelMesh mesh(1., 1., 3, 3);
 
-    for (int i = 0; i < mesh.n_cells(); i++) {
+    for (index_t i = 0; i < mesh.n_cells(); i++) {
         Index2D ind = mesh.linear_to_tuple(i);
 
-        int i2 = mesh.tuple_to_linear(ind);
+        index_t i2 = mesh.tuple_to_linear(ind);
 
         CHECK(i == i2);
     }
@@ -30,10 +30,10 @@ TEST_CASE("voxelmesh index conversion works for rectangular mesh",
 {
     VoxelMesh mesh(1., 1., 3, 6);
 
-    for (int i = 0; i < mesh.n_cells(); i++) {
+    for (index_t i = 0; i < mesh.n_cells(); i++) {
         Index2D ind = mesh.linear_to_tuple(i);
 
-        int i2 = mesh.tuple_to_linear(ind);
+        index_t i2 = mesh.tuple_to_linear(ind);
 
         CHECK(i == i2);
     }
@@ -57,7 +57,7 @@ TEST_CASE("check the cell crossings with some manually verified examples",
         ParticleGeometry p(pos, vel, mesh.tuple_to_linear(ind));
         auto crossing = mesh.get_next_crossing(p);
 
-        double t_expected = 0.5;
+        real_t t_expected = 0.5;
         CHECK(std::abs(crossing.t - t_expected) <= 0.0001);
 
         Index2D expected_ind = ind;
@@ -76,7 +76,7 @@ TEST_CASE("check the cell crossings with some manually verified examples",
         ParticleGeometry p(pos, vel, mesh.tuple_to_linear(ind));
         auto crossing = mesh.get_next_crossing(p);
 
-        double t_expected = 0.05;
+        real_t t_expected = 0.05;
         CHECK(std::abs(crossing.t - t_expected) <= 0.0001);
 
         Index2D expected_ind = ind;

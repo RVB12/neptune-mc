@@ -3,6 +3,8 @@
 
 #include <math.h>
 
+#include "eiron2/common/utils.hpp"
+
 namespace eiron2 {
 namespace constants {}  // namespace constants
 
