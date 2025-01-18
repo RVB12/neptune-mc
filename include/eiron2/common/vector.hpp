@@ -32,6 +32,12 @@ class vector {
     typedef T val_t;
 
     /**
+     * @brief Construct an empty vector
+     */
+    vector() : _n(0), _data(nullptr)
+    {}
+
+    /**
      * @brief Construct a new vector
      *
      * @param n  integer

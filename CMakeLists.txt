@@ -22,6 +22,8 @@ list(APPEND eiron2_SOURCES
     src/geometry/voxelmesh.cpp
     src/simulator/simulator.cpp
     src/geometry/trianglemesh.cpp
+    src/physics/linesource.cpp
+    src/physics/source.cpp
 )
 
 add_library(eiron2 ${eiron2_SOURCES})
@@ -33,20 +35,6 @@ target_compile_options(eiron2 PRIVATE -O3 -fPIC)
 # if(OpenMP_CXX_FOUND)
 #     target_link_libraries(eiron2 PUBLIC OpenMP::OpenMP_CXX)
 # endif()
-
-#
-# Python bindings
-#
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-find_package(pybind11 CONFIG REQUIRED)
-
-python_add_library(_core MODULE src/pythonbindings/main.cpp WITH_SOABI)
-target_link_libraries(_core PRIVATE pybind11::headers)
-target_link_libraries(_core PRIVATE eiron2)
-
-# Note, i just copied this install command from the scikit build example
-# this may influence other things, need to check
-install(TARGETS _core DESTINATION eiron2)
 
 #
 # C++ Examples
