@@ -24,6 +24,7 @@ list(APPEND eiron2_SOURCES
     src/geometry/trianglemesh.cpp
     src/physics/linesource.cpp
     src/physics/source.cpp
+    src/physics/update_particle.cpp
 )
 
 add_library(eiron2 ${eiron2_SOURCES})

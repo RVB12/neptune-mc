@@ -34,8 +34,6 @@ Particle LineSource::generate_particle()
     std::chi_squared_distribution<real_t> chi2_dist(3.);
     // todo: scale by sqrt(T/m)
     real_t v_nrm = std::sqrt(chi2_dist(p.rng));
-
-    std::cout << "v_nrm: " << v_nrm << std::endl;
  
     p.geometry.velocity.x = v_nrm * std::cos(angle);
     p.geometry.velocity.y = v_nrm * std::sin(angle);

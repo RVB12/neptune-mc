@@ -17,7 +17,7 @@ namespace eiron2 {
  *
  * @param p
  */
-void update_particle(Mesh& mesh, PlasmaBackground& background, Particle& p);
+void update_particle(const Mesh& mesh, const PlasmaBackground& background, Particle& p);
 
 }  // namespace eiron2
 

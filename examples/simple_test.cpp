@@ -21,9 +21,9 @@ int main()
     PlasmaBackground background(n_cells);
 
     for (index_t i = 0; i < n_cells; i++) {
-        background.plasma_dens[i] = 1.0;
-        background.plasma_temp[i] = 1.0;
-        background.plasma_vel_x[i] = 0;
+        background.plasma_dens[i] = 1.0e13;
+        background.plasma_temp[i] = 1.0e5;
+        background.plasma_vel_x[i] = 1.0e2;
         background.plasma_vel_y[i] = 0;
     }
 
