@@ -2,12 +2,23 @@ import numpy as np
 import eiron2
 from matplotlib import pyplot as plt
 import math
+import json
+
+
+config = {}
 
 Lx = 1
 Ly = 1
-
-nx = 1000
+nx = 500
 ny = 500
+
+config["mesh"] = {
+    "type": "voxel",
+    "Lx": Lx,
+    "Ly": Ly,
+    "nx": nx,
+    "ny": ny
+}
 
 ncells = nx * ny
 
@@ -16,34 +27,50 @@ plasma_temp = np.zeros(ncells, dtype=np.float64)
 plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 
-for i in range(nx):
-    for j in range(ny):
-        # plasma_dens[i + j*nx] = 100*(1.0+np.sin(j/100*2*math.pi))
-        plasma_dens[i * ny + j] = 1.0e13
+for i in range(ncells):
+    plasma_dens[i] = 1.0e13
 
 for i in range(ncells):
-    plasma_vel_x[i] = 10
-    plasma_vel_y[i] = 2
+    plasma_temp[i] = 1
 
 for i in range(ncells):
-    plasma_temp[i] = 0.25
+    plasma_vel_x[i] = 0
 
-mesh = eiron2.VoxelMesh(Lx, Ly, nx, ny)
+for i in range(ncells):
+    plasma_vel_y[i] = 0
 
-background = eiron2.PlasmaBackground(
-    eiron2.VectorReal(plasma_dens),
-    eiron2.VectorReal(plasma_temp),
-    eiron2.VectorReal(plasma_vel_x),
-    eiron2.VectorReal(plasma_vel_y)
-)
+config["background"] = {
+    "plasma_dens": plasma_dens.tolist(),
+    "plasma_temp": plasma_temp.tolist(),
+    "plasma_vel_x": plasma_vel_x.tolist(),
+    "plasma_vel_y": plasma_vel_y.tolist()
+}
 
-params = eiron2.SimulationParams()
-params.n_particles = 100000
-params.max_steps = 10000000
+config["sources"] = [
+    {
+        "type": "line",
+        "pos_a": [0, 0.25],
+        "pos_b": [0, 0.75],
+        "n_particles": 100000,
+        "angle_min": -math.pi/2,
+        "angle_max": math.pi/2,
+    }
+]
 
-neutral_density = np.zeros(ncells, dtype=np.float64)
+config["max_steps"] = 1000
+config["seed"] = 0
 
-eiron2.simulate(mesh, background, eiron2.VectorReal(neutral_density), params)
+inputstring = json.dumps(config)
+
+# write inputstring to file
+with open("input.json", "w") as f:
+    f.write(inputstring)
+
+outputstring = eiron2.simulate(inputstring)
+
+output = json.loads(outputstring)
+
+neutral_density = np.array(output["density"])
 
 neutral_density_reshaped = np.reshape(neutral_density, (nx, ny))
 

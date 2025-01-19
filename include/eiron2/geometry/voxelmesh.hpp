@@ -49,12 +49,7 @@ class Index2D {
  */
 class VoxelMesh : public Mesh {
    public:
-    // Default constructor is needed for json conversion
-    // It should not be used otherwise
-    VoxelMesh()
-        : Mesh()
-    {}
-
+    VoxelMesh() = default;
     VoxelMesh(real_t Lx_, real_t Ly_, index_t nx_, index_t ny_)
         : Mesh(), Lx(Lx_), Ly(Ly_), nx(nx_), ny(ny_), dx(Lx / nx), dy(Ly / ny)
     {}

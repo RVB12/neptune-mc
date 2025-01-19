@@ -13,7 +13,6 @@ namespace eiron2 {
  */
 class Source {
    public:
-    Source() : max_particles_(0) {}
     Source(index_t max_particles) : max_particles_(max_particles) {}
 
     ~Source() = default;

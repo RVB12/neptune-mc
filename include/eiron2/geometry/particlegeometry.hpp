@@ -15,8 +15,8 @@ namespace eiron2 {
  */
 class ParticleGeometry {
    public:
+   ParticleGeometry() = default;
     // Contructors
-    ParticleGeometry() = default;
     ParticleGeometry(Vec2 position_, Vec2 velocity_, index_t cell_id_)
         : position(position_), velocity(velocity_), cell_id(cell_id_)
     {}
