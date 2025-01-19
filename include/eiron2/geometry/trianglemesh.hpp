@@ -90,6 +90,11 @@ class TriangleMesh : public Mesh {
      */
     real_t get_volume(index_t cell_index) const;
 
+    /**
+     * @brief Return the normal of a given surface
+     */
+    Vec2 get_surface_normal(index_t cell_index, index_t surface_id) const;
+
    private:
     // Go through all the triangles and construct the neighborlist
     void make_neighborlist();

@@ -9,6 +9,7 @@ void simulate(Mesh& mesh,
               PlasmaBackground& background,
               vector<std::unique_ptr<Source>>& sources,
               vector<real_t>& density,
+              vector<BoundaryCondition>& boundary_conditions,
               SimulationParams params)
 {
     std::uniform_real_distribution<real_t> r_unif(0, 1);
@@ -38,7 +39,7 @@ void simulate(Mesh& mesh,
                 real_t t_old = particle.t;
                 index_t cell_id_old = particle.geometry.cell_id;
                 // Simulate the particle up to the next event
-                update_particle(mesh, background, particle);
+                update_particle(mesh, background, boundary_conditions, particle);
 
                 // Tally
                 real_t sfn = 0.5 * background.plasma_dens[0] * 0.1 * 1.0e4 /

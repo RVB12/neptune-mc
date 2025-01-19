@@ -56,6 +56,51 @@ void from_json(const nlohmann::json& j, vector<index_t>& v)
     }
 }
 
+void to_json(nlohmann::json& j, const BoundaryCondition& m)
+{
+    switch (m) {
+        case BoundaryCondition::REFLECTIVE:
+            j = "reflective";
+            break;
+        case BoundaryCondition::ABSORBING:
+            j = "absorbing";
+            break;
+        default:
+            throw std::runtime_error("Unknown boundary condition");
+    }
+}
+
+void from_json(const nlohmann::json& j, BoundaryCondition& m)
+{
+    std::string s;
+    j.get_to(s);
+    if (s == "reflective") {
+        m = BoundaryCondition::REFLECTIVE;
+    }
+    else if (s == "absorbing") {
+        m = BoundaryCondition::ABSORBING;
+    }
+    else {
+        throw std::runtime_error("Unknown boundary condition");
+    }
+}
+
+void to_json(nlohmann::json& j, const vector<BoundaryCondition>& v)
+{
+    j = nlohmann::json::array();
+    for (int i = 0; i < v.size(); i++) {
+        j.push_back(v[i]);
+    }
+}
+
+void from_json(const nlohmann::json& j, vector<BoundaryCondition>& v)
+{
+    v.resize(j.size());
+    for (index_t i = 0; i < v.size(); i++) {
+        j.at(i).get_to(v[i]);
+    }
+}
+
 // void to_json(nlohmann::json& j, const LineSource& s)
 // {
 //     j = nlohmann::json{

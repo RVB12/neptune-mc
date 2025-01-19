@@ -104,28 +104,32 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     real_t t2 = find_edge_intersection(p2, p3, p.position, p.velocity);
     real_t t3 = find_edge_intersection(p3, p1, p.position, p.velocity);
 
-    std::cout << "position is in cell? " << is_in_cell(p.position, p.cell_id) << std::endl;
-    std::cout << "position: " << p.position << std::endl;
-    std::cout << "velocity: " << p.velocity << std::endl;
-    std::cout << "cell_id: " << p.cell_id << std::endl;
-    std::cout << "found cell id: " << get_cell_index(p.position) << std::endl;
-    std::cout << "t1: " << t1 << std::endl;
-    std::cout << "t2: " << t2 << std::endl;
-    std::cout << "t3: " << t3 << std::endl;
+    // std::cout << "position is in cell? " << is_in_cell(p.position, p.cell_id) << std::endl;
+    // std::cout << "position: " << p.position << std::endl;
+    // std::cout << "velocity: " << p.velocity << std::endl;
+    // std::cout << "cell_id: " << p.cell_id << std::endl;
+    // std::cout << "found cell id: " << get_cell_index(p.position) << std::endl;
+    // std::cout << "t1: " << t1 << std::endl;
+    // std::cout << "t2: " << t2 << std::endl;
+    // std::cout << "t3: " << t3 << std::endl;
 
     real_t t_new;
     index_t id_new;
+    index_t surface_id;
     if (t1 > 0 and t1 >= t2 and t1 >= t3) {
         t_new = t1;
         id_new = neighbors[3 * p.cell_id];
+        surface_id = 0;
     }
     else if (t2 > 0 and t2 >= t1 and t2 >= t3) {
         t_new = t2;
         id_new = neighbors[3 * p.cell_id + 1];
+        surface_id = 1;
     }
     else if (t3 > 0 and t3 >= t1 and t3 >= t2) {
         t_new = t3;
         id_new = neighbors[3 * p.cell_id + 2];
+        surface_id = 2;
     }
     else {
         throw std::runtime_error("Failed to find next crossing");
@@ -141,7 +145,7 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
 
     std::cout << "id_new: " << id_new << std::endl;
 
-    return CellCrossing(pos_new, t_new, id_new, boundary_id);
+    return CellCrossing(pos_new, t_new, surface_id, id_new, boundary_id);
 }
 
 void TriangleMesh::make_neighborlist()
@@ -185,6 +189,25 @@ void TriangleMesh::make_neighborlist()
                 break;
             }
         }
+    }
+}
+
+Vec2 TriangleMesh::get_surface_normal(index_t cell_index, index_t surface_id) const
+{
+    Triangle t = triangles[cell_index];
+    Vec2 p1 = vertices[t.ind1];
+    Vec2 p2 = vertices[t.ind2];
+    Vec2 p3 = vertices[t.ind3];
+
+    switch (surface_id) {
+        case 0:
+            return Vec2(p2.y - p1.y, p1.x - p2.x);
+        case 1:
+            return Vec2(p3.y - p2.y, p2.x - p3.x);
+        case 2:
+            return Vec2(p1.y - p3.y, p3.x - p1.x);
+        default:
+            throw std::runtime_error("Invalid surface id");
     }
 }
 

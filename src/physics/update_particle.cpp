@@ -2,9 +2,11 @@
 
 namespace eiron2 {
 
-void update_particle(const Mesh& mesh, const PlasmaBackground& background, Particle& p)
+void update_particle(const Mesh& mesh,
+                     const PlasmaBackground& background,
+                     const vector<BoundaryCondition>& boundary_conditions,
+                     Particle& p)
 {
-
     // TODO: Move these constants to a more appropriate place
     real_t T_i = 40;
     real_t T_e = T_i;
@@ -16,8 +18,7 @@ void update_particle(const Mesh& mesh, const PlasmaBackground& background, Parti
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
 
-    index_t cell_id =
-        p.geometry.cell_id;  // Current cell id of the particle
+    index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
     // random number to determine time till collision
     real_t eps = r_unif(p.rng);
@@ -39,8 +40,7 @@ void update_particle(const Mesh& mesh, const PlasmaBackground& background, Parti
             background.plasma_vel_x[cell_id], stddev);
         std::normal_distribution<real_t> dist_vy(
             background.plasma_vel_y[cell_id], stddev);
-        p.geometry.velocity =
-            Vec2(dist_vx(p.rng), dist_vy(p.rng));
+        p.geometry.velocity = Vec2(dist_vx(p.rng), dist_vy(p.rng));
 
         dt = tc;
     }
@@ -54,32 +54,26 @@ void update_particle(const Mesh& mesh, const PlasmaBackground& background, Parti
         }
         else {
             // Boundary crossing
-            // For now, we just reflect particles at boundaries
-            // 0,1,2,3,4 and absorb particles at boundary 3 (x ==
-            // Xl)
-
-            // Todo: Implement proper boundary conditions
-            // maybe implement surface norm in the mesh
-
             p.geometry.position = crossing.position;
-            if (crossing.boundary_id == 0) {
-                p.geometry.velocity.x = -p.geometry.velocity.x;
+            BoundaryCondition bc = boundary_conditions[crossing.boundary_id];
+
+            if (bc == BoundaryCondition::REFLECTIVE) {
+                // Reflect the particle
+                Vec2 normal = mesh.get_surface_normal(cell_id, crossing.surface_id);
+                p.geometry.velocity = p.geometry.velocity - 2 * dot(p.geometry.velocity, normal) * normal;
             }
-            else if (crossing.boundary_id == 1 || crossing.boundary_id == 3) {
-                p.geometry.velocity.y = -p.geometry.velocity.y;
-            }
-            else if (crossing.boundary_id == 2) {
+            else if (bc == BoundaryCondition::ABSORBING) {
+                // Absorb the particle
                 p.weight = 0;
             }
             else {
-                throw std::runtime_error("Unknown boundary id");
+                throw std::runtime_error("Using a boundary condition that is not (yet) implemented");
             }
         }
     }
 
     // Ionisation
-    p.weight =
-        p.weight * std::exp(-dt * K_i * background.plasma_dens[cell_id]);
+    p.weight = p.weight * std::exp(-dt * K_i * background.plasma_dens[cell_id]);
 
     p.t += dt;
 }

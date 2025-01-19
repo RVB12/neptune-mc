@@ -88,6 +88,11 @@ class VoxelMesh : public Mesh {
      */
     real_t get_volume(index_t cell_index) const;
 
+    /**
+     * @brief Return the normal of a given surface
+     */
+    Vec2 get_surface_normal(index_t cell_index, index_t surface_id) const;
+
     // Member variables
     real_t Lx = 0.;  // Length of the mesh in x direction
     real_t Ly = 0.;  // Length of the mesh in y direction

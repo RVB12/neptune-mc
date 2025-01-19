@@ -52,6 +52,13 @@ config["sources"] = [
     }
 ]
 
+config["boundary_conditions"] = [
+    "reflective",
+    "reflective",
+    "absorbing",
+    "reflective"
+]
+
 config["max_steps"] = 1000
 config["seed"] = 0
 

@@ -78,12 +78,15 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
 
     Index2D next_ind = ind;
     real_t t = 0;
+    index_t surface;
     if (tx <= ty) {
         t = tx;
         next_ind.i += (p.velocity.x >= 0) ? 1 : -1;
+        surface = (p.velocity.x >= 0) ? 2 : 0;
     } else {
         t = ty;
         next_ind.j += (p.velocity.y >= 0) ? 1 : -1;
+        surface = (p.velocity.y >= 0) ? 3 : 1;
     }
 
     // Calculate new position
@@ -91,19 +94,35 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
 
     // Check for boundary crossings
     if(next_ind.i < 0){
-        return CellCrossing(pos_new, t, -1, 0);
+        return CellCrossing(pos_new, t, surface, -1, 0);
     }
     if(next_ind.j < 0){
-        return CellCrossing(pos_new, t, -1, 1);
+        return CellCrossing(pos_new, t, surface, -1, 1);
     }
     if(next_ind.i >= nx){
-        return CellCrossing(pos_new, t, -1, 2);
+        return CellCrossing(pos_new, t, surface, -1, 2);
     }
     if(next_ind.j >= ny){
-        return CellCrossing(pos_new, t, -1, 3);
+        return CellCrossing(pos_new, t, surface, -1, 3);
     }
 
-    return CellCrossing(pos_new, t, tuple_to_linear(next_ind), -1);
+    return CellCrossing(pos_new, t, surface, tuple_to_linear(next_ind), -1);
+}
+
+Vec2 VoxelMesh::get_surface_normal(index_t cell_index, index_t surface_id) const
+{
+    switch (surface_id) {
+        case 0:
+            return Vec2(-1, 0);
+        case 1:
+            return Vec2(0, -1);
+        case 2:
+            return Vec2(1, 0);
+        case 3:
+            return Vec2(0, 1);
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
 }
 
 }  // namespace eiron2

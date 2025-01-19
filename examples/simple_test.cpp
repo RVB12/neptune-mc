@@ -1,8 +1,8 @@
-#include <eiron2/geometry/voxelmesh.hpp>
-#include <eiron2/simulator/simulator.hpp>
 #include <eiron2/common/vector.hpp>
-#include <eiron2/physics/source.hpp>
+#include <eiron2/geometry/voxelmesh.hpp>
 #include <eiron2/physics/linesource.hpp>
+#include <eiron2/physics/source.hpp>
+#include <eiron2/simulator/simulator.hpp>
 #include <iostream>
 
 using namespace eiron2;
@@ -31,13 +31,20 @@ int main()
     params.max_steps = 1000;
 
     vector<real_t> density(n_cells);
-    
+
     index_t particles_per_cell = 100;
-    LineSource line = LineSource(n_cells * particles_per_cell, Vec2(0, 0), Vec2(0, 1));
+    LineSource line =
+        LineSource(n_cells * particles_per_cell, Vec2(0, 0), Vec2(0, 1));
     vector<std::unique_ptr<Source>> sources(1);
     sources[0] = std::make_unique<LineSource>(line);
 
-    simulate(mesh, background, sources, density, params);
+    vector<BoundaryCondition> boundary_conditions(4);
+    boundary_conditions[0] = BoundaryCondition::REFLECTIVE;
+    boundary_conditions[1] = BoundaryCondition::ABSORBING;
+    boundary_conditions[2] = BoundaryCondition::REFLECTIVE;
+    boundary_conditions[3] = BoundaryCondition::REFLECTIVE;
+
+    simulate(mesh, background, sources, density, boundary_conditions, params);
 
     std::cout << "calculated density" << std::endl;
 

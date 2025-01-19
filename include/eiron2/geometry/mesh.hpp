@@ -47,6 +47,11 @@ class Mesh {
      * @brief Return the volume of a given cell
      */
     virtual real_t get_volume(index_t cell_index) const = 0;
+
+    /**
+     * @brief Return the normal of a given surface
+     */
+    virtual Vec2 get_surface_normal(index_t cell_index, index_t surface_id) const = 0;
 };
 
 }  // namespace eiron2

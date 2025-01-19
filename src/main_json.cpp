@@ -51,7 +51,10 @@ int main(int argc, char** argv)
 
     vector<real_t> density(mesh_ptr->n_cells());
 
-    simulate(*mesh_ptr, background, sources, density, params);
+    vector<BoundaryCondition> boundary_conditions = j["boundary_conditions"];
+
+    simulate(*mesh_ptr, background, sources, density, boundary_conditions,
+             params);
 
     nlohmann::json output;
 

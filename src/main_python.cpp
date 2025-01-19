@@ -22,7 +22,9 @@ std::string simulate_json(std::string jsonstring){
     params.max_steps = j["max_steps"];
     params.seed = j["seed"];
     vector<real_t> density(mesh_ptr->n_cells());
-    simulate(*mesh_ptr, background, sources, density, params);
+    // TODO: read boundary conditions from json
+    vector<BoundaryCondition> boundary_conditions = j["boundary_conditions"];
+    simulate(*mesh_ptr, background, sources, density, boundary_conditions, params);
     nlohmann::json output;
     output["density"] = density;
     return output.dump(4);

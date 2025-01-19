@@ -11,6 +11,7 @@
 #include "eiron2/physics/particle.hpp"
 #include "eiron2/physics/source.hpp"
 #include "eiron2/common/utils.hpp"
+#include "eiron2/physics/boundarycondition.hpp"
 
 namespace eiron2 {
 
@@ -45,6 +46,7 @@ void simulate(Mesh& mesh,
               PlasmaBackground& background,
               vector<std::unique_ptr<Source>>& sources,
               vector<real_t>& density,
+              vector<BoundaryCondition>& boundary_conditions,
               SimulationParams params);
 
 }  // namespace eiron2

@@ -9,8 +9,8 @@ config = {}
 
 Lx = 1
 Ly = 1
-nx = 500
-ny = 500
+nx = 200
+ny = 100
 
 config["mesh"] = {
     "type": "voxel",
@@ -55,6 +55,13 @@ config["sources"] = [
         "angle_min": -math.pi/2,
         "angle_max": math.pi/2,
     }
+]
+
+config["boundary_conditions"] = [
+    "reflective",
+    "reflective",
+    "absorbing",
+    "reflective"
 ]
 
 config["max_steps"] = 1000
