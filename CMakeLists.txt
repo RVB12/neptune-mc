@@ -25,17 +25,32 @@ list(APPEND eiron2_SOURCES
     src/physics/linesource.cpp
     src/physics/source.cpp
     src/physics/update_particle.cpp
+    src/common/json_conversions.cpp
 )
 
 add_library(eiron2 ${eiron2_SOURCES})
 target_include_directories(eiron2 PUBLIC include)
-target_compile_options(eiron2 PRIVATE -O3 -fPIC)
+# target_compile_options(eiron2 PRIVATE -O3)
+target_compile_options(eiron2 PRIVATE -fPIC)
+
+# JSON
+include(FetchContent)
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
+target_link_libraries(eiron2 PUBLIC nlohmann_json::nlohmann_json)
 
 
 # find_package(OpenMP)
 # if(OpenMP_CXX_FOUND)
 #     target_link_libraries(eiron2 PUBLIC OpenMP::OpenMP_CXX)
 # endif()
+
+# Main runner
+
+add_executable(main_runner src/simulator/main.cpp)
+target_link_libraries(main_runner PRIVATE eiron2)
 
 #
 # C++ Examples
@@ -53,9 +68,10 @@ target_link_libraries(simple_test PRIVATE eiron2)
 find_package(Catch2 3)
 
 # if(Catch2)
-add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp tests/cpp/test_trianglemesh.cpp)
+add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp tests/cpp/test_trianglemesh.cpp tests/cpp/test_json.cpp)
 target_link_libraries(all_tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(all_tests PRIVATE eiron2)
+# target_link_libraries(all_tests PRIVATE nlohmann_json::nlohmann_json)
 
 include(CTest)
 include(Catch)

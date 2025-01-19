@@ -23,6 +23,10 @@ namespace eiron2 {
  */
 class LineSource : public Source {
    public:
+    LineSource()
+        : Source()
+    {}
+
     LineSource(index_t max_particles_, Vec2 pos_a_, Vec2 pos_b_)
         : Source(max_particles_), pos_a(pos_a_), pos_b(pos_b_)
     {}
@@ -46,7 +50,6 @@ class LineSource : public Source {
      */
     Particle generate_particle();
 
-   private:
     Vec2 pos_a;                // start of the line that defines this source
     Vec2 pos_b;                // end of the line that defines this source
     real_t angle_min = -M_PI/2;  // minimum angle of the velocity vector

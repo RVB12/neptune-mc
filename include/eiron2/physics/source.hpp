@@ -37,7 +37,6 @@ class Source {
      */
     virtual Particle generate_particle() = 0;
 
-   protected:
     index_t max_particles_;  // the number of particles to generate from this source
     index_t i_particle = 0;  // the number of particles that have been generated
     index_t particle_id_offset = 0;  // the offset to add to the particle id

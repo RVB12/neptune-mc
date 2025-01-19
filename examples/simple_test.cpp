@@ -11,7 +11,7 @@ int main()
 {
     real_t Lx = 1;
     real_t Ly = 1;
-    index_t nx = 100;
+    index_t nx = 10;
     index_t ny = 1;
 
     VoxelMesh mesh(Lx, Ly, nx, ny);
@@ -31,14 +31,11 @@ int main()
     params.max_steps = 1000;
 
     vector<real_t> density(n_cells);
-    for (index_t i = 0; i < n_cells; i++) {
-        density[i] = 0;
-    }
-
+    
     index_t particles_per_cell = 100;
     LineSource line = LineSource(n_cells * particles_per_cell, Vec2(0, 0), Vec2(0, 1));
-    vector<Source*> sources(1);
-    sources[0] = &line;
+    vector<std::unique_ptr<Source>> sources(1);
+    sources[0] = std::make_unique<LineSource>(line);
 
     simulate(mesh, background, sources, density, params);
 

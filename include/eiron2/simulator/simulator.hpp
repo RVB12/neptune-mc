@@ -16,6 +16,8 @@ namespace eiron2 {
 
 class PlasmaBackground {
    public:
+    PlasmaBackground() = default;
+
     PlasmaBackground(index_t n_cells)
         : plasma_dens(n_cells),
           plasma_temp(n_cells),
@@ -41,7 +43,7 @@ struct SimulationParams {
  */
 void simulate(Mesh& mesh,
               PlasmaBackground& background,
-              vector<Source*>& sources,
+              vector<std::unique_ptr<Source>>& sources,
               vector<real_t>& density,
               SimulationParams params);
 

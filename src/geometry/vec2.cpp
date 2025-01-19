@@ -17,6 +17,8 @@ real_t& Vec2::operator[](index_t i)
             return x;
         case 1:
             return y;
+        default:
+            throw std::runtime_error("Index out of bounds");
     }
 }
 
@@ -29,6 +31,8 @@ const real_t& Vec2::operator[](index_t i) const
             return x;
         case 1:
             return y;
+        default:
+            throw std::runtime_error("Index out of bounds");
     }
 }
 

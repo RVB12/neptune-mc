@@ -173,7 +173,7 @@ class vector {
      */
     vector& operator=(vector&& v)
     {
-        assert(v.size() == _n);
+        _n = v._n;
         _data = std::move(v._data);
         return *this;
     }
@@ -208,6 +208,20 @@ class vector {
         assert(i < _n);
         assert(i >= 0);
         return _data[i];
+    }
+
+    /**
+     * @brief Resize the vector, the old data will be lost.
+     * 
+     * @param n integer
+     */
+    void resize(index_t n)
+    {
+        if(n == _n) {
+            return;
+        }
+        _n = n;
+        _data.reset(new T[_n]);
     }
 
     /**
@@ -268,7 +282,7 @@ class vector {
     inline const T* cend() const { return _data.get() + _n; }
 
    private:
-    const index_t _n;
+    index_t _n;
     std::unique_ptr<T[]> _data;
 };
 

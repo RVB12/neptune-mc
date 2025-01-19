@@ -1,11 +1,11 @@
 #ifndef EIRON2_VOXELMESH_HPP
 #define EIRON2_VOXELMESH_HPP
 
+#include "eiron2/common/utils.hpp"
+#include "eiron2/common/vec2.hpp"
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/mesh.hpp"
 #include "eiron2/geometry/particlegeometry.hpp"
-#include "eiron2/common/vec2.hpp"
-#include "eiron2/common/utils.hpp"
 
 namespace eiron2 {
 
@@ -49,14 +49,14 @@ class Index2D {
  */
 class VoxelMesh : public Mesh {
    public:
+    // Default constructor is needed for json conversion
+    // It should not be used otherwise
+    VoxelMesh()
+        : Mesh()
+    {}
+
     VoxelMesh(real_t Lx_, real_t Ly_, index_t nx_, index_t ny_)
-        : Mesh(),
-          Lx(Lx_),
-          Ly(Ly_),
-          nx(nx_),
-          ny(ny_),
-          dx(Lx / nx),
-          dy(Ly / ny)
+        : Mesh(), Lx(Lx_), Ly(Ly_), nx(nx_), ny(ny_), dx(Lx / nx), dy(Ly / ny)
     {}
 
     index_t n_cells() const;
@@ -93,12 +93,11 @@ class VoxelMesh : public Mesh {
      */
     real_t get_volume(index_t cell_index) const;
 
-   private:
     // Member variables
     real_t Lx = 0.;  // Length of the mesh in x direction
     real_t Ly = 0.;  // Length of the mesh in y direction
-    index_t nx = 0;      // Number of cells in the x direction
-    index_t ny = 0;      // Number of cells in the y direction
+    index_t nx = 0;  // Number of cells in the x direction
+    index_t ny = 0;  // Number of cells in the y direction
     real_t dx = 0.;  // Size of a cell in x direction
     real_t dy = 0.;  // Size of a cell in y direction
 };
