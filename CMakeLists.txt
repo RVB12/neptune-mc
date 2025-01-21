@@ -73,6 +73,9 @@ install(TARGETS _core DESTINATION eiron2)
 add_executable(simple_test examples/simple_test.cpp)
 target_link_libraries(simple_test PRIVATE eiron2)
 
+add_executable(simple_test_trianglemesh examples/simple_test_trianglemesh.cpp)
+target_link_libraries(simple_test_trianglemesh PRIVATE eiron2)
+
 # This compile command adds bounds checks for std::vectors,
 # but then you also need to compile the library itself with those flags.
 # target_compile_options(simple_test PRIVATE -D_GLIBCXX_DEBUG)

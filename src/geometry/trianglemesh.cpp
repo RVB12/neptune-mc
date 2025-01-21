@@ -89,7 +89,14 @@ inline real_t find_edge_intersection(const Vec2& p1,
         return -1;
     }
 
-    // solve system using cramer's rule.
+    // position of intersection: new_pos = p1 + s * (p2 - p1)
+    real_t s = (a11 * b0 - a01 * b1) / determinant;
+
+    if( s < 0 or s > 1){
+        // intersection is not on the edge, return -1
+        return -1;
+    }
+
     return (a00 * b1 - b0 * a10) / determinant;
 }
 
@@ -104,29 +111,20 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     real_t t2 = find_edge_intersection(p2, p3, p.position, p.velocity);
     real_t t3 = find_edge_intersection(p3, p1, p.position, p.velocity);
 
-    // std::cout << "position is in cell? " << is_in_cell(p.position, p.cell_id) << std::endl;
-    // std::cout << "position: " << p.position << std::endl;
-    // std::cout << "velocity: " << p.velocity << std::endl;
-    // std::cout << "cell_id: " << p.cell_id << std::endl;
-    // std::cout << "found cell id: " << get_cell_index(p.position) << std::endl;
-    // std::cout << "t1: " << t1 << std::endl;
-    // std::cout << "t2: " << t2 << std::endl;
-    // std::cout << "t3: " << t3 << std::endl;
-
     real_t t_new;
     index_t id_new;
     index_t surface_id;
-    if (t1 > 0 and t1 >= t2 and t1 >= t3) {
+    if (t1 > 1.0e-8 and t1 >= t2 and t1 >= t3) {
         t_new = t1;
         id_new = neighbors[3 * p.cell_id];
         surface_id = 0;
     }
-    else if (t2 > 0 and t2 >= t1 and t2 >= t3) {
+    else if (t2 > 1.0e-8 and t2 >= t1 and t2 >= t3) {
         t_new = t2;
         id_new = neighbors[3 * p.cell_id + 1];
         surface_id = 1;
     }
-    else if (t3 > 0 and t3 >= t1 and t3 >= t2) {
+    else if (t3 > 1.0e-8 and t3 >= t1 and t3 >= t2) {
         t_new = t3;
         id_new = neighbors[3 * p.cell_id + 2];
         surface_id = 2;
@@ -139,20 +137,21 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
 
     index_t boundary_id = -1;
     if (id_new < 0) {
-        boundary_id = -id_new;
+        // If the id is negative, it is a boundary,
+        // so negate it and subtract 1 (zero based) to get the boundary id
+        boundary_id = -id_new - 1;
         id_new = -1;
     }
-
-    std::cout << "id_new: " << id_new << std::endl;
 
     return CellCrossing(pos_new, t_new, surface_id, id_new, boundary_id);
 }
 
-void TriangleMesh::make_neighborlist()
+void make_neighborlist(const vector<Triangle>& triangles, vector<index_t>& neighbors)
 {
     // For now, this is really stupid, we're just manually going through all the
     // triangles and checking the edges
-    for (index_t i = 0; i < n_cells(); i++) {
+    // A kd tree would massively speed this up
+    for (index_t i = 0; i < triangles.size(); i++) {
         Triangle t1 = triangles[i];
 
         // Initialize to -1, both to keep track if all neighbors of this triangle have been found,
@@ -161,7 +160,7 @@ void TriangleMesh::make_neighborlist()
         neighbors[3 * i + 1] = -1;
         neighbors[3 * i + 2] = -1;
 
-        for (index_t j = 0; j < n_cells(); j++) {
+        for (index_t j = 0; j < triangles.size(); j++) {
             if (i == j) continue;
 
             Triangle t2 = triangles[j];

@@ -22,6 +22,21 @@ class Triangle{
 };
 
 /**
+ * @brief Construct a neighbor list for a list of triangles
+ * 
+ * If two triangles share an edge, the neighbor list will contain the index of the
+ * neighboring triangle. If no neighbor is found, the corresponding entry will be -1.
+ * If an edge has entry -1, it is a boundary edge (or the mesh is ill defined)
+ * 
+ * After this function, you should still fill change the boundary edges to the correct
+ * boundary id.
+ * 
+ * @param triangles 
+ * @param neighbors 
+ */
+void make_neighborlist(const vector<Triangle>& triangles, vector<index_t>& neighbors);
+
+/**
  * @brief An unstructured mesh consisting of triangles
  * 
  * The mesh is stored as a list of vertices and a list of triangles,
@@ -33,38 +48,34 @@ class Triangle{
 class TriangleMesh : public Mesh {
    public:
 
-    TriangleMesh(vector<Vec2>& vertices_, vector<Triangle>& triangles_)
-        : Mesh(),
-         vertices(vertices_),
-         triangles(triangles_),
-         neighbors(3*triangles.size())
-    {
-        make_neighborlist();
-    }
-
     TriangleMesh(vector<Vec2>& vertices_, vector<Triangle>& triangles_, vector<index_t>& neighbors_)
         : Mesh(),
          vertices(vertices_),
          triangles(triangles_),
          neighbors(neighbors_)
-    {
-        make_neighborlist();
-    }
+    {}
 
-    TriangleMesh(vectorview<real_t> vertices_, vectorview<index_t> triangles_)
+
+    TriangleMesh(vector<Vec2>&& vertices_, vector<Triangle>&& triangles_, vector<index_t>&& neighbors_)
         : Mesh(),
-         vertices(vertices_.size() / 2),
-         triangles(triangles_.size() / 3),
-         neighbors(3*triangles_.size())
-    {
-        for (index_t i = 0; i < vertices.size(); i++) {
-            vertices[i] = Vec2(vertices_[2*i], vertices_[2*i+1]);
-        }
-        for(index_t i = 0; i < triangles.size(); i++) {
-            triangles[i] = Triangle(triangles_[3*i], triangles_[3*i+1], triangles_[3*i+2]);
-        }
-        make_neighborlist();
-    }
+         vertices(std::move(vertices_)),
+         triangles(std::move(triangles_)),
+         neighbors(std::move(neighbors_))
+    {}
+
+    TriangleMesh(const TriangleMesh& other)
+        : Mesh(),
+         vertices(other.vertices),
+         triangles(other.triangles),
+         neighbors(other.neighbors)
+    {}
+
+    TriangleMesh(TriangleMesh&& other)
+        : Mesh(),
+         vertices(std::move(other.vertices)),
+         triangles(std::move(other.triangles)),
+         neighbors(std::move(other.neighbors))
+    {}
 
     index_t n_cells() const;
 
@@ -96,8 +107,6 @@ class TriangleMesh : public Mesh {
     Vec2 get_surface_normal(index_t cell_index, index_t surface_id) const;
 
    private:
-    // Go through all the triangles and construct the neighborlist
-    void make_neighborlist();
 
     // Member variables
     vector<Vec2> vertices; // List of all the triangles in the mesh
