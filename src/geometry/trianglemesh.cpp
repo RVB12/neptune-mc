@@ -148,6 +148,10 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
 
 void make_neighborlist(const vector<Triangle>& triangles, vector<index_t>& neighbors)
 {
+    if(neighbors.size() != 3 * triangles.size()){
+        neighbors.resize(3 * triangles.size());
+    }
+
     // For now, this is really stupid, we're just manually going through all the
     // triangles and checking the edges
     // A kd tree would massively speed this up
@@ -198,16 +202,22 @@ Vec2 TriangleMesh::get_surface_normal(index_t cell_index, index_t surface_id) co
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];
 
+    Vec2 normal;
     switch (surface_id) {
         case 0:
-            return Vec2(p2.y - p1.y, p1.x - p2.x);
+            normal = Vec2(p2.y - p1.y, p1.x - p2.x);
+            break;
         case 1:
-            return Vec2(p3.y - p2.y, p2.x - p3.x);
+            normal = Vec2(p3.y - p2.y, p2.x - p3.x);
+            break;
         case 2:
-            return Vec2(p1.y - p3.y, p3.x - p1.x);
+            normal = Vec2(p1.y - p3.y, p3.x - p1.x);
+            break;
         default:
             throw std::runtime_error("Invalid surface id");
     }
+
+    return normal / normal.norm();
 }
 
 }  // namespace eiron2

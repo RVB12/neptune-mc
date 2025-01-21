@@ -24,6 +24,18 @@ void from_json(const nlohmann::json& j, Vec3& v)
     j.at(2).get_to(v.z);
 }
 
+void to_json(nlohmann::json& j, const Triangle& t)
+{
+    j = nlohmann::json{t.ind1, t.ind2, t.ind3};
+}
+
+void from_json(const nlohmann::json& j, Triangle& t)
+{
+    j.at(0).get_to(t.ind1);
+    j.at(1).get_to(t.ind2);
+    j.at(2).get_to(t.ind3);
+}
+
 void to_json(nlohmann::json& j, const vector<real_t>& v)
 {
     j = nlohmann::json::array();
@@ -49,6 +61,38 @@ void to_json(nlohmann::json& j, const vector<index_t>& v)
 }
 
 void from_json(const nlohmann::json& j, vector<index_t>& v)
+{
+    v.resize(j.size());
+    for (index_t i = 0; i < v.size(); i++) {
+        j.at(i).get_to(v[i]);
+    }
+}
+
+void to_json(nlohmann::json& j, const vector<Vec2>& v)
+{
+    j = nlohmann::json::array();
+    for (int i = 0; i < v.size(); i++) {
+        j.push_back(v[i]);
+    }
+}
+
+void from_json(const nlohmann::json& j, vector<Vec2>& v)
+{
+    v.resize(j.size());
+    for (index_t i = 0; i < v.size(); i++) {
+        j.at(i).get_to(v[i]);
+    }
+}
+
+void to_json(nlohmann::json& j, const vector<Triangle>& v)
+{
+    j = nlohmann::json::array();
+    for (int i = 0; i < v.size(); i++) {
+        j.push_back(v[i]);
+    }
+}
+
+void from_json(const nlohmann::json& j, vector<Triangle>& v)
 {
     v.resize(j.size());
     for (index_t i = 0; i < v.size(); i++) {
@@ -166,9 +210,11 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Mesh>& m)
     std::string type;
     j.at("type").get_to(type);
     if (type == "voxel") {
-        VoxelMesh vm;
-        vm = j;
+        VoxelMesh vm = j;
         m = std::make_unique<VoxelMesh>(vm);
+    } else if (type == "triangle") {
+        TriangleMesh tm = j;
+        m = std::make_unique<TriangleMesh>(tm);
     }
     else {
         throw std::runtime_error("Unknown mesh type");

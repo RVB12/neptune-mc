@@ -30,7 +30,7 @@ list(APPEND eiron2_SOURCES
 
 add_library(eiron2 ${eiron2_SOURCES})
 target_include_directories(eiron2 PUBLIC include)
-# target_compile_options(eiron2 PRIVATE -O3)
+target_compile_options(eiron2 PRIVATE -O3)
 target_compile_options(eiron2 PRIVATE -fPIC)
 
 # JSON

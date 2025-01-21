@@ -2,16 +2,18 @@ import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import numpy as np
 import eiron2
+import math
+import json
 
 # First create the x and y coordinates of the points.
-n_angles = 36
-n_radii = 8
+n_angles = 200
+n_radii = 200
 min_radius = 0.25
 radii = np.linspace(min_radius, 0.95, n_radii)
 
 angles = np.linspace(0, 2 * np.pi, n_angles, endpoint=False)
 angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
-angles[:, 1::2] += np.pi / n_angles
+# angles[:, 1::2] += np.pi / n_angles
 
 x = (radii * np.cos(angles)).flatten()
 y = (radii * np.sin(angles)).flatten()
@@ -28,12 +30,12 @@ triang.set_mask(np.hypot(x[triang.triangles].mean(axis=1),
                          y[triang.triangles].mean(axis=1))
                 < min_radius)
 
-
 ncells = triang.triangles.shape[0]
-xy = np.concatenate((x[:, None], y[:, None]), axis=1).flatten(order='C')
-triangles = triang.triangles.flatten(order='C')
+xy = np.concatenate((x[:, None], y[:, None]), axis=1)
+triangles = triang.triangles
 
-mesh = eiron2.TriangleMesh(eiron2.VectorReal(xy), eiron2.VectorInt(triangles))
+
+config = {}
 
 plasma_dens = np.zeros(ncells, dtype=np.float64)
 plasma_temp = np.zeros(ncells, dtype=np.float64)
@@ -41,26 +43,60 @@ plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 
 for i in range(ncells):
-    plasma_dens[i] = 1.0e13
-    plasma_vel_x[i] = 10
-    plasma_vel_y[i] = 2
-    plasma_temp[i] = 0.25
+    plasma_dens[i] = 1.0e11
 
-background = eiron2.PlasmaBackground(
-    eiron2.VectorReal(plasma_dens),
-    eiron2.VectorReal(plasma_temp),
-    eiron2.VectorReal(plasma_vel_x),
-    eiron2.VectorReal(plasma_vel_y)
-)
+for i in range(ncells):
+    plasma_temp[i] = 1
 
-params = eiron2.SimulationParams()
-params.n_particles = 1
-params.max_steps = 50
+for i in range(ncells):
+    plasma_vel_x[i] = 0
 
-neutral_density = np.zeros(ncells, dtype=np.float64)
+for i in range(ncells):
+    plasma_vel_y[i] = 0
 
-eiron2.simulate(mesh, background, eiron2.VectorReal(neutral_density), params)
+config["background"] = {
+    "plasma_dens": plasma_dens.tolist(),
+    "plasma_temp": plasma_temp.tolist(),
+    "plasma_vel_x": plasma_vel_x.tolist(),
+    "plasma_vel_y": plasma_vel_y.tolist()
+}
 
+config["mesh"] = {
+    "type": "triangle",
+    "vertices": xy.tolist(),
+    "triangles": triangles.tolist()
+}
+
+
+config["sources"] = [
+    {
+        "type": "line",
+        "pos_a": [-0.5, 0],
+        "pos_b": [-0.5, 0],
+        "n_particles": 100,
+        "angle_min": -math.pi,
+        "angle_max": math.pi,
+    }
+]
+
+config["boundary_conditions"] = [
+    "reflective"
+]
+
+config["max_steps"] = 1000
+config["seed"] = 0
+
+inputstring = json.dumps(config)
+
+# write inputstring to file
+# with open("input.json", "w") as f:
+#     f.write(inputstring)
+
+outputstring = eiron2.simulate(inputstring)
+
+output = json.loads(outputstring)
+
+neutral_density = np.array(output["density"])
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')

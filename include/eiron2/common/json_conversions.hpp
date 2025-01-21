@@ -7,28 +7,33 @@
 #include "eiron2/common/vec2.hpp"
 #include "eiron2/common/vec3.hpp"
 #include "eiron2/common/vector.hpp"
+#include "eiron2/geometry/trianglemesh.hpp"
 #include "eiron2/geometry/voxelmesh.hpp"
+#include "eiron2/physics/boundarycondition.hpp"
 #include "eiron2/physics/linesource.hpp"
 #include "eiron2/physics/source.hpp"
 #include "eiron2/simulator/simulator.hpp"
-#include "eiron2/physics/boundarycondition.hpp"
-
-
 
 namespace eiron2 {
 
 void to_json(nlohmann::json& j, const Vec2& v);
 void to_json(nlohmann::json& j, const Vec3& v);
+void to_json(nlohmann::json& j, const Triangle& t);
 void to_json(nlohmann::json& j, const vector<real_t>& v);
 void to_json(nlohmann::json& j, const vector<index_t>& v);
+void to_json(nlohmann::json& j, const vector<Vec2>& v);
+void to_json(nlohmann::json& j, const vector<Triangle>& v);
 void to_json(nlohmann::json& j, const VoxelMesh& m);
 void to_json(nlohmann::json& j, const BoundaryCondition& m);
 void to_json(nlohmann::json& j, const vector<BoundaryCondition>& v);
 
 void from_json(const nlohmann::json& j, Vec2& v);
 void from_json(const nlohmann::json& j, Vec3& v);
+void from_json(const nlohmann::json& j, Triangle& t);
 void from_json(const nlohmann::json& j, vector<real_t>& v);
 void from_json(const nlohmann::json& j, vector<index_t>& v);
+void from_json(const nlohmann::json& j, vector<Vec2>& v);
+void from_json(const nlohmann::json& j, vector<Triangle>& v);
 void from_json(const nlohmann::json& j, std::unique_ptr<Source>& v);
 void from_json(const nlohmann::json& j, VoxelMesh& m);
 void from_json(const nlohmann::json& j, std::unique_ptr<Mesh>& v);
@@ -44,10 +49,11 @@ struct adl_serializer<eiron2::PlasmaBackground> {
     static eiron2::PlasmaBackground from_json(const json& j)
     {
         eiron2::index_t n_cells = j.at("plasma_dens").size();
-        if(n_cells != (eiron2::index_t) j.at("plasma_temp").size() ||
-           n_cells != (eiron2::index_t)  j.at("plasma_vel_x").size() ||
-           n_cells != (eiron2::index_t)  j.at("plasma_vel_y").size()){
-            throw std::runtime_error("Plasma background arrays must have the same size");
+        if (n_cells != (eiron2::index_t)j.at("plasma_temp").size() ||
+            n_cells != (eiron2::index_t)j.at("plasma_vel_x").size() ||
+            n_cells != (eiron2::index_t)j.at("plasma_vel_y").size()) {
+            throw std::runtime_error(
+                "Plasma background arrays must have the same size");
         }
 
         eiron2::PlasmaBackground m(n_cells);
@@ -90,12 +96,41 @@ struct adl_serializer<eiron2::LineSource> {
 
     static void to_json(json& j, eiron2::LineSource t)
     {
-        j = json{{"type", "line"},
-                 {"pos_a", t.pos_a},
-                 {"pos_b", t.pos_b},
-                 {"angle_min", t.angle_min},
-                 {"angle_max", t.angle_max},
-                 {"n_particles", t.max_particles()}};
+        j = json{
+            {"type", "line"},           {"pos_a", t.pos_a},
+            {"pos_b", t.pos_b},         {"angle_min", t.angle_min},
+            {"angle_max", t.angle_max}, {"n_particles", t.max_particles()}};
+    }
+};
+
+template <>
+struct adl_serializer<eiron2::TriangleMesh> {
+    static eiron2::TriangleMesh from_json(const json& j)
+    {
+        eiron2::vector<eiron2::Vec2> vertices = j.at("vertices");
+        eiron2::vector<eiron2::Triangle> triangles = j.at("triangles");
+
+        if (j.find("neighbors") == j.end()) {
+            eiron2::vector<eiron2::index_t> neighbors;
+            eiron2::make_neighborlist(triangles, neighbors);
+            return eiron2::TriangleMesh(std::move(vertices),
+                                        std::move(triangles),
+                                        std::move(neighbors));
+        }
+        else {
+            eiron2::vector<eiron2::index_t> neighbors = j.at("neighbors");
+            return eiron2::TriangleMesh(std::move(vertices),
+                                        std::move(triangles),
+                                        std::move(neighbors));
+        }
+    }
+
+    static void to_json(json& j, eiron2::LineSource t)
+    {
+        j = json{
+            {"type", "line"},           {"pos_a", t.pos_a},
+            {"pos_b", t.pos_b},         {"angle_min", t.angle_min},
+            {"angle_max", t.angle_max}, {"n_particles", t.max_particles()}};
     }
 };
 
