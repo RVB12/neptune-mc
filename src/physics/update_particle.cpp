@@ -12,8 +12,9 @@ void update_particle(const Mesh& mesh,
     real_t T_e = T_i;
     // real_t T_n = T_i;
     real_t K_cx = 3.2e-15 * std::sqrt(T_i / 0.026);
-    real_t K_i = 2.0e-13 / (6.0 + (T_e / 13.6)) * std::sqrt(T_e / 13.6) *
-                 std::exp(-13.6 / T_e);
+    // real_t K_i = 2.0e-13 / (6.0 + (T_e / 13.6)) * std::sqrt(T_e / 13.6) *
+    //              std::exp(-13.6 / T_e);
+    real_t K_i = 2.0e-18;
 
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);

@@ -78,11 +78,11 @@ template <>
 struct adl_serializer<eiron2::LineSource> {
     static eiron2::LineSource from_json(const json& j)
     {
-        eiron2::index_t max_particles = j.at("n_particles");
+        eiron2::index_t num_particles = j.at("n_particles");
         eiron2::Vec2 pos_a = j.at("pos_a");
         eiron2::Vec2 pos_b = j.at("pos_b");
 
-        eiron2::LineSource s(max_particles, pos_a, pos_b);
+        eiron2::LineSource s(num_particles, pos_a, pos_b);
 
         if (j.find("angle_min") != j.end()) {
             s.angle_min = j.at("angle_min");
@@ -99,7 +99,7 @@ struct adl_serializer<eiron2::LineSource> {
         j = json{
             {"type", "line"},           {"pos_a", t.pos_a},
             {"pos_b", t.pos_b},         {"angle_min", t.angle_min},
-            {"angle_max", t.angle_max}, {"n_particles", t.max_particles()}};
+            {"angle_max", t.angle_max}, {"n_particles", t.num_particles()}};
     }
 };
 
@@ -123,14 +123,6 @@ struct adl_serializer<eiron2::TriangleMesh> {
                                         std::move(triangles),
                                         std::move(neighbors));
         }
-    }
-
-    static void to_json(json& j, eiron2::LineSource t)
-    {
-        j = json{
-            {"type", "line"},           {"pos_a", t.pos_a},
-            {"pos_b", t.pos_b},         {"angle_min", t.angle_min},
-            {"angle_max", t.angle_max}, {"n_particles", t.max_particles()}};
     }
 };
 

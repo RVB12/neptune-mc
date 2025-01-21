@@ -4,16 +4,15 @@
 
 namespace eiron2 {
 
-Particle LineSource::generate_particle()
+Particle LineSource::generate_particle(index_t i_particle)
 {
-    if (particles_left() <= 0) {
+    if (i_particle >= num_particles()) {
         throw std::runtime_error(
             "LineSource::generate_particle: "
             "Tried to generate more particles than "
-            "allowed by max_particles");
+            "allowed by num_particles");
     }
-    Particle p(i_particle + particle_id_offset);
-    i_particle++;
+    Particle p(i_particle + particle_id_offset_);
 
     // The position is determined as pos_a + u * (pos_b - pos_a),
     // where u is a uniform random number between 0 and 1.

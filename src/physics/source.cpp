@@ -2,8 +2,6 @@
 
 namespace eiron2 {
 
-index_t Source::max_particles() const { return max_particles_; }
-
-index_t Source::particles_left() const { return max_particles_ - i_particle; }
+index_t Source::num_particles() const { return num_particles_; }
 
 }  // namespace eiron2

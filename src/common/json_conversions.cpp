@@ -167,7 +167,7 @@ void from_json(const nlohmann::json& j, vector<BoundaryCondition>& v)
 //     j.at("pos_b").get_to(s.pos_b);
 //     j.at("angle_min").get_to(s.angle_min);
 //     j.at("angle_max").get_to(s.angle_max);
-//     j.at("max_particles").get_to(s.max_particles_);
+//     j.at("max_particles").get_to(s.num_particles_);
 //     j.at("particle_id_offset").get_to(s.particle_id_offset);
 // }
 

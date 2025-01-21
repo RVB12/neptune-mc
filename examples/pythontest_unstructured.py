@@ -30,9 +30,9 @@ triang.set_mask(np.hypot(x[triang.triangles].mean(axis=1),
                          y[triang.triangles].mean(axis=1))
                 < min_radius)
 
-ncells = triang.triangles.shape[0]
+triangles = triang.get_masked_triangles()
+ncells = triangles.shape[0]
 xy = np.concatenate((x[:, None], y[:, None]), axis=1)
-triangles = triang.triangles
 
 
 config = {}
@@ -71,9 +71,9 @@ config["mesh"] = {
 config["sources"] = [
     {
         "type": "line",
-        "pos_a": [-0.5, 0],
-        "pos_b": [-0.5, 0],
-        "n_particles": 100,
+        "pos_a": [-0.5, -0.5],
+        "pos_b": [-0.5, 0.5],
+        "n_particles": 100000,
         "angle_min": -math.pi,
         "angle_max": math.pi,
     }
@@ -100,7 +100,7 @@ neutral_density = np.array(output["density"])
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(triang, neutral_density, shading='flat')
+tpc = ax1.tripcolor(x, y, neutral_density, triangles=triangles, shading='flat')
 fig1.colorbar(tpc)
 ax1.set_title('neutral density')
 

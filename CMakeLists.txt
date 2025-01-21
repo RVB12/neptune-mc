@@ -41,11 +41,10 @@ FetchContent_MakeAvailable(json)
 
 target_link_libraries(eiron2 PUBLIC nlohmann_json::nlohmann_json)
 
-
-# find_package(OpenMP)
-# if(OpenMP_CXX_FOUND)
-#     target_link_libraries(eiron2 PUBLIC OpenMP::OpenMP_CXX)
-# endif()
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(eiron2 PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 # Main runner
 

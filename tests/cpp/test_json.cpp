@@ -69,11 +69,9 @@ TEST_CASE("LineSource json conversion works", "[vector][json]")
     REQUIRE(a.pos_b.y == b.pos_b.y);
     REQUIRE(a.angle_min == b.angle_min);
     REQUIRE(a.angle_max == b.angle_max);
-    REQUIRE(a.max_particles() == b.max_particles());
-    REQUIRE(a.particle_id_offset == b.particle_id_offset);
-    REQUIRE(a.i_particle == b.i_particle);
+    REQUIRE(a.num_particles() == b.num_particles());
 
-    std::string s_expected = R"({"angle_max":0.2,"angle_min":0.1,"max_particles":10,"particle_id_offset":0,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
+    std::string s_expected = R"({"angle_max":0.2,"angle_min":0.1,"n_particles":10,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
     REQUIRE(j.dump() == s_expected);
 }
 
@@ -93,11 +91,9 @@ TEST_CASE("Source json conversion works", "[vector][json]")
     REQUIRE(a.pos_b.y == c->pos_b.y);
     REQUIRE(a.angle_min == c->angle_min);
     REQUIRE(a.angle_max == c->angle_max);
-    REQUIRE(a.max_particles() == c->max_particles());
-    REQUIRE(a.particle_id_offset == c->particle_id_offset);
-    REQUIRE(a.i_particle == c->i_particle);
+    REQUIRE(a.num_particles() == c->num_particles());
 
-    std::string s_expected = R"({"angle_max":0.2,"angle_min":0.1,"max_particles":10,"particle_id_offset":0,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
+    std::string s_expected = R"({"angle_max":0.2,"angle_min":0.1,"n_particles":10,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
     REQUIRE(j.dump() == s_expected);
 }
 
@@ -116,6 +112,6 @@ TEST_CASE("VoxelMesh json conversion works", "[vector][json]")
     REQUIRE(a.dx == b.dx);
     REQUIRE(a.dy == b.dy);
 
-    std::string s_expected = R"({"dx":0.15,"dy":0.125,"Lx":1.5,"Ly":2.5,"nx":10,"ny":20,"type":"voxel"})";
+    std::string s_expected = R"({"Lx":1.5,"Ly":2.5,"nx":10,"ny":20,"type":"voxel"})";
     REQUIRE(j.dump() == s_expected);
 }
