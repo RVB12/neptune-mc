@@ -45,7 +45,7 @@ int main()
 
     vector<real_t> density(n_cells);
 
-    index_t particles_per_cell = 100;
+    index_t particles_per_cell = 10000;
     LineSource line =
         LineSource(n_cells * particles_per_cell, Vec2(0, 0), Vec2(0, 1));
     vector<std::unique_ptr<Source>> sources(1);

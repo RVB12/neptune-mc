@@ -114,17 +114,17 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     real_t t_new;
     index_t id_new;
     index_t surface_id;
-    if (t1 > 1.0e-8 and t1 >= t2 and t1 >= t3) {
+    if (t1 > 0 and t1 >= t2 and t1 >= t3) {
         t_new = t1;
         id_new = neighbors[3 * p.cell_id];
         surface_id = 0;
     }
-    else if (t2 > 1.0e-8 and t2 >= t1 and t2 >= t3) {
+    else if (t2 > 0 and t2 >= t1 and t2 >= t3) {
         t_new = t2;
         id_new = neighbors[3 * p.cell_id + 1];
         surface_id = 1;
     }
-    else if (t3 > 1.0e-8 and t3 >= t1 and t3 >= t2) {
+    else if (t3 > 0 and t3 >= t1 and t3 >= t2) {
         t_new = t3;
         id_new = neighbors[3 * p.cell_id + 2];
         surface_id = 2;
