@@ -9,8 +9,8 @@ config = {}
 
 Lx = 1
 Ly = 1
-nx = 200
-ny = 100
+nx = 400
+ny = 400
 
 config["mesh"] = {
     "type": "voxel",
@@ -51,7 +51,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [0, 0.25],
         "pos_b": [0, 0.75],
-        "n_particles": 100000,
+        "n_particles": 1000000,
         "angle_min": -math.pi/2,
         "angle_max": math.pi/2,
     }

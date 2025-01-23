@@ -198,7 +198,7 @@ void make_neighborlist(const vector<Triangle>& triangles,
 
 void make_neighborlist(const vector<Vec2>& vertices,
                        const vector<Triangle>& triangles,
-                       const SpatialIndex2D& spatialindex,
+                       const SpatialIndex& spatialindex,
                        vector<index_t>& neighbors)
 {
     if (neighbors.size() != 3 * triangles.size()) {

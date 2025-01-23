@@ -3,7 +3,7 @@
 #include <catch2/matchers/catch_matchers.hpp>
 
 #include "eiron2/common/vec2.hpp"
-#include "eiron2/geometry/2Dspatialindex.hpp"
+#include "eiron2/geometry/spatialindex.hpp"
 
 using namespace eiron2;
 
@@ -18,7 +18,7 @@ TEST_CASE("Spatial index constructor works (only one value)",
 
     auto bbox_func = [&](index_t i) { return bboxes[i]; };
 
-    SpatialIndex2D index(nx, ny, bboxes.size(), bbox_func);
+    SpatialIndex index(nx, ny, bboxes.size(), bbox_func);
 
     REQUIRE(index.nx == nx);
     REQUIRE(index.ny == ny);
@@ -64,7 +64,7 @@ TEST_CASE("Spatial index constructor works (two values)",
 
     auto bbox_func = [&](index_t i) { return bboxes[i]; };
 
-    SpatialIndex2D index(nx, ny, bboxes.size(), bbox_func);
+    SpatialIndex index(nx, ny, bboxes.size(), bbox_func);
 
     REQUIRE(index.nx == nx);
     REQUIRE(index.ny == ny);

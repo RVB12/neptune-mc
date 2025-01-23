@@ -37,7 +37,7 @@ void simulate(Mesh& mesh,
             Particle particle = sources[i_source]->generate_particle(i_particle);
             particle.geometry.cell_id =
                 mesh.get_cell_index(particle.geometry.position);
-
+                
             for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
                 real_t weight_old = particle.weight;
                 real_t t_old = particle.t;

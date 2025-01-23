@@ -37,7 +37,7 @@ struct BoundingBox {
  * each cell.
  *
  */
-class SpatialIndex2D {
+class SpatialIndex {
    public:
     /**
      * @brief Construct a new Spatial Index from a list of values
@@ -48,7 +48,7 @@ class SpatialIndex2D {
      * @param bbox_func A function that returns the bounding box of a value
      *
      */
-    SpatialIndex2D(index_t nx_,
+    SpatialIndex(index_t nx_,
                    index_t ny_,
                    index_t n_values,
                    std::function<BoundingBox(index_t)> bbox_func)
@@ -136,7 +136,7 @@ class SpatialIndex2D {
     }
 
     // Copy constructor
-    SpatialIndex2D(const SpatialIndex2D& other)
+    SpatialIndex(const SpatialIndex& other)
         : bbox(other.bbox),
           nx(other.nx),
           ny(other.ny),
@@ -147,7 +147,7 @@ class SpatialIndex2D {
     }
 
     // Move constructor
-    SpatialIndex2D(SpatialIndex2D&& other)
+    SpatialIndex(SpatialIndex&& other)
         : bbox(other.bbox),
           nx(other.nx),
           ny(other.ny),

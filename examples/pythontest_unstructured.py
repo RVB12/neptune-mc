@@ -6,8 +6,8 @@ import math
 import json
 
 # First create the x and y coordinates of the points.
-n_angles = 200
-n_radii = 200
+n_angles = 400
+n_radii = 400
 min_radius = 0.25
 radii = np.linspace(min_radius, 0.95, n_radii)
 
@@ -73,7 +73,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [-0.5, -0.5],
         "pos_b": [-0.5, 0.5],
-        "n_particles": 100000,
+        "n_particles": 1000,
         "angle_min": -math.pi,
         "angle_max": math.pi,
     }
@@ -89,8 +89,8 @@ config["seed"] = 0
 inputstring = json.dumps(config)
 
 # write inputstring to file
-# with open("input.json", "w") as f:
-#     f.write(inputstring)
+with open("build/input.json", "w") as f:
+    f.write(inputstring)
 
 outputstring = eiron2.simulate(inputstring)
 

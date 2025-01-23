@@ -4,7 +4,7 @@
 #include "eiron2/common/utils.hpp"
 #include "eiron2/common/vec2.hpp"
 #include "eiron2/common/vector.hpp"
-#include "eiron2/geometry/2Dspatialindex.hpp"
+#include "eiron2/geometry/spatialindex.hpp"
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/mesh.hpp"
 #include "eiron2/geometry/particlegeometry.hpp"
@@ -55,7 +55,7 @@ void make_neighborlist(const vector<Triangle>& triangles,
  */
 void make_neighborlist(const vector<Vec2>& vertices,
                        const vector<Triangle>& triangles,
-                       const SpatialIndex2D& spatialindex,
+                       const SpatialIndex& spatialindex,
                        vector<index_t>& neighbors);
 
 /**
@@ -76,6 +76,7 @@ class TriangleMesh : public Mesh {
         : Mesh(),
           vertices(vertices_),
           triangles(triangles_),
+
           neighbors(neighbors_)
     {}
 
@@ -133,9 +134,19 @@ class TriangleMesh : public Mesh {
 
    private:
     // Member variables
-    vector<Vec2> vertices;       // List of all the triangles in the mesh
-    vector<Triangle> triangles;  // List of all the triangles in the mesh
-    vector<index_t> neighbors;   // Map of the shared edges of the triangles
+
+    // List of all the triangles in the mesh
+    vector<Vec2> vertices;       
+
+    // List of all the triangles in the mesh
+    vector<Triangle> triangles;
+
+    // Spatial index for fast spatial queries
+    SpatialIndex spatialindex;
+
+    // Map from triangle edge to the triangle that shares the edge
+    // used for fast traversal
+    vector<index_t> neighbors;
 };
 
 }  // namespace eiron2
