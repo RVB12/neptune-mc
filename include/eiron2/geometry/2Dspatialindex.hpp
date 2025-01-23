@@ -40,17 +40,6 @@ struct BoundingBox {
 class SpatialIndex2D {
    public:
     /**
-     * @brief Construct a new Spatial Index from vectors
-     * 
-     */
-    SpatialIndex2D(Vec2 min, Vec2 max, index_t nx, index_t ny, vector<index_t>& cell_idx, vector<index_t>& data)
-        : nx(nx), ny(ny), cell_idx(cell_idx), data(data)
-    {
-        BoundingBox box = BoundingBox(min, max);
-        cell_size = (box.max - box.min) / Vec2(nx, ny);
-    }
-
-    /**
      * @brief Construct a new Spatial Index from a list of values
      *
      * @param nx_ The number of cells in the x direction
@@ -146,6 +135,28 @@ class SpatialIndex2D {
         }
     }
 
+    // Copy constructor
+    SpatialIndex2D(const SpatialIndex2D& other)
+        : bbox(other.bbox),
+          nx(other.nx),
+          ny(other.ny),
+          cell_size(other.cell_size),
+          cell_idx(other.cell_idx),
+          data(other.data)
+    {
+    }
+
+    // Move constructor
+    SpatialIndex2D(SpatialIndex2D&& other)
+        : bbox(other.bbox),
+          nx(other.nx),
+          ny(other.ny),
+          cell_size(other.cell_size),
+          cell_idx(std::move(other.cell_idx)),
+          data(std::move(other.data))
+    {
+    }
+
     /**
      * @brief Query the values in the same cell as a given position
      *
@@ -153,7 +164,7 @@ class SpatialIndex2D {
      * 
      * @return vectorview<index_t> The values in the cell
      */
-    inline vectorview<index_t> query(Vec2 position)
+    inline vectorview<index_t> query(Vec2 position) const
     {
         assert(position.x >= bbox.min.x);
         assert(position.y >= bbox.min.y);
@@ -174,7 +185,7 @@ class SpatialIndex2D {
      * 
      * @param box The bounding box to query
      */
-    inline vector<index_t> query(BoundingBox query_box)
+    inline vector<index_t> query(BoundingBox query_box) const
     {
         assert(query_box.min.x >= bbox.min.x);
         assert(query_box.min.y >= bbox.min.y);

@@ -92,7 +92,7 @@ inline real_t find_edge_intersection(const Vec2& p1,
     // position of intersection: new_pos = p1 + s * (p2 - p1)
     real_t s = (a11 * b0 - a01 * b1) / determinant;
 
-    if( s < 0 or s > 1){
+    if (s < 0 or s > 1) {
         // intersection is not on the edge, return -1
         return -1;
     }
@@ -146,9 +146,10 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     return CellCrossing(pos_new, t_new, surface_id, id_new, boundary_id);
 }
 
-void make_neighborlist(const vector<Triangle>& triangles, vector<index_t>& neighbors)
+void make_neighborlist(const vector<Triangle>& triangles,
+                       vector<index_t>& neighbors)
 {
-    if(neighbors.size() != 3 * triangles.size()){
+    if (neighbors.size() != 3 * triangles.size()) {
         neighbors.resize(3 * triangles.size());
     }
 
@@ -158,8 +159,8 @@ void make_neighborlist(const vector<Triangle>& triangles, vector<index_t>& neigh
     for (index_t i = 0; i < triangles.size(); i++) {
         Triangle t1 = triangles[i];
 
-        // Initialize to -1, both to keep track if all neighbors of this triangle have been found,
-        // but also to keep track of boundaries.
+        // Initialize to -1, both to keep track if all neighbors of this
+        // triangle have been found, but also to keep track of boundaries.
         neighbors[3 * i] = -1;
         neighbors[3 * i + 1] = -1;
         neighbors[3 * i + 2] = -1;
@@ -195,7 +196,71 @@ void make_neighborlist(const vector<Triangle>& triangles, vector<index_t>& neigh
     }
 }
 
-Vec2 TriangleMesh::get_surface_normal(index_t cell_index, index_t surface_id) const
+void make_neighborlist(const vector<Vec2>& vertices,
+                       const vector<Triangle>& triangles,
+                       const SpatialIndex2D& spatialindex,
+                       vector<index_t>& neighbors)
+{
+    if (neighbors.size() != 3 * triangles.size()) {
+        neighbors.resize(3 * triangles.size());
+    }
+
+    for (index_t i = 0; i < triangles.size(); i++) {
+        Triangle t1 = triangles[i];
+
+        // Initialize to -1, both to keep track if all neighbors of this
+        // triangle have been found, but also to keep track of boundaries.
+        neighbors[3 * i] = -1;
+        neighbors[3 * i + 1] = -1;
+        neighbors[3 * i + 2] = -1;
+
+        // Find the bounding box of the triangle
+        Vec2 p1 = vertices[t1.ind1];
+        Vec2 p2 = vertices[t1.ind2];
+        Vec2 p3 = vertices[t1.ind3];
+
+        real_t min_x = std::min({p1.x, p2.x, p3.x});
+        real_t max_x = std::max({p1.x, p2.x, p3.x});
+        real_t min_y = std::min({p1.y, p2.y, p3.y});
+        real_t max_y = std::max({p1.y, p2.y, p3.y});
+
+        BoundingBox box({min_x, min_y}, {max_x, max_y});
+
+        vector<index_t> candidates = spatialindex.query(box);
+
+        for(index_t j = 0; j < candidates.size(); j++){
+            index_t k = candidates[j];
+            if(i == k) continue;
+            Triangle t2 = triangles[k];
+
+            bool has_ind1 =
+                t2.ind1 == t1.ind1 || t2.ind2 == t1.ind1 || t2.ind3 == t1.ind1;
+            bool has_ind2 =
+                t2.ind1 == t1.ind2 || t2.ind2 == t1.ind2 || t2.ind3 == t1.ind2;
+            bool has_ind3 =
+                t2.ind1 == t1.ind3 || t2.ind2 == t1.ind3 || t2.ind3 == t1.ind3;
+
+            if (has_ind1 and has_ind2) {
+                neighbors[3 * i] = k;
+            }
+            if (has_ind2 and has_ind3) {
+                neighbors[3 * i + 1] = k;
+            }
+            if (has_ind3 and has_ind1) {
+                neighbors[3 * i + 2] = k;
+            }
+
+            // Early exit if all neighbors are found
+            if (neighbors[3 * i] != -1 and neighbors[3 * i + 1] != -1 and
+                neighbors[3 * i + 2] != -1) {
+                break;
+            }
+        }
+    }
+}
+
+Vec2 TriangleMesh::get_surface_normal(index_t cell_index,
+                                      index_t surface_id) const
 {
     Triangle t = triangles[cell_index];
     Vec2 p1 = vertices[t.ind1];
