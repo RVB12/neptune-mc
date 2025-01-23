@@ -85,7 +85,7 @@ target_link_libraries(simple_test_trianglemesh PRIVATE eiron2)
 find_package(Catch2 3)
 
 # if(Catch2)
-add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp tests/cpp/test_trianglemesh.cpp tests/cpp/test_json.cpp)
+add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp tests/cpp/test_trianglemesh.cpp tests/cpp/test_json.cpp tests/cpp/test_spatialindex.cpp)
 target_link_libraries(all_tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(all_tests PRIVATE eiron2)
 # target_link_libraries(all_tests PRIVATE nlohmann_json::nlohmann_json)
