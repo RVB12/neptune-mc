@@ -73,7 +73,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [-0.5, -0.5],
         "pos_b": [-0.5, 0.5],
-        "n_particles": 1000,
+        "n_particles": 10000,
         "angle_min": -math.pi,
         "angle_max": math.pi,
     }
@@ -83,7 +83,7 @@ config["boundary_conditions"] = [
     "reflective"
 ]
 
-config["max_steps"] = 1000
+config["max_steps"] = 10000
 config["seed"] = 0
 
 inputstring = json.dumps(config)

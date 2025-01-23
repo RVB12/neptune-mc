@@ -4,23 +4,13 @@
 #include "eiron2/common/utils.hpp"
 #include "eiron2/common/vec2.hpp"
 #include "eiron2/common/vector.hpp"
-#include "eiron2/geometry/spatialindex.hpp"
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/mesh.hpp"
 #include "eiron2/geometry/particlegeometry.hpp"
+#include "eiron2/geometry/spatialindex.hpp"
+#include "eiron2/geometry/triangle.hpp"
 
 namespace eiron2 {
-
-/**
- * @brief A triangle, defined by three indices into the vertex array
- *        The indices should be listed in counter clockwise order.
- */
-class Triangle {
-   public:
-    index_t ind1;
-    index_t ind2;
-    index_t ind3;
-};
 
 /**
  * @brief Construct a neighbor list for a list of triangles
@@ -70,22 +60,34 @@ void make_neighborlist(const vector<Vec2>& vertices,
  */
 class TriangleMesh : public Mesh {
    public:
+    TriangleMesh(vector<Vec2>& vertices_, vector<Triangle>& triangles_)
+        : Mesh(),
+          vertices(vertices_),
+          triangles(triangles_),
+          spatialindex(vertices, triangles)
+    {
+        make_neighborlist(vertices, triangles, spatialindex, neighbors);
+    }
+
     TriangleMesh(vector<Vec2>& vertices_,
                  vector<Triangle>& triangles_,
+                 SpatialIndex& spatialindex,
                  vector<index_t>& neighbors_)
         : Mesh(),
           vertices(vertices_),
           triangles(triangles_),
-
+          spatialindex(spatialindex),
           neighbors(neighbors_)
     {}
 
     TriangleMesh(vector<Vec2>&& vertices_,
                  vector<Triangle>&& triangles_,
+                 SpatialIndex&& spatialindex,
                  vector<index_t>&& neighbors_)
         : Mesh(),
           vertices(std::move(vertices_)),
           triangles(std::move(triangles_)),
+          spatialindex(std::move(spatialindex)),
           neighbors(std::move(neighbors_))
     {}
 
@@ -93,6 +95,7 @@ class TriangleMesh : public Mesh {
         : Mesh(),
           vertices(other.vertices),
           triangles(other.triangles),
+          spatialindex(other.spatialindex),
           neighbors(other.neighbors)
     {}
 
@@ -100,6 +103,7 @@ class TriangleMesh : public Mesh {
         : Mesh(),
           vertices(std::move(other.vertices)),
           triangles(std::move(other.triangles)),
+          spatialindex(std::move(other.spatialindex)),
           neighbors(std::move(other.neighbors))
     {}
 
@@ -136,7 +140,7 @@ class TriangleMesh : public Mesh {
     // Member variables
 
     // List of all the triangles in the mesh
-    vector<Vec2> vertices;       
+    vector<Vec2> vertices;
 
     // List of all the triangles in the mesh
     vector<Triangle> triangles;

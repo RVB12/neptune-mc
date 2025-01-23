@@ -8,24 +8,11 @@
 #include "eiron2/common/utils.hpp"
 #include "eiron2/common/vec2.hpp"
 #include "eiron2/common/vector.hpp"
+#include "eiron2/geometry/triangle.hpp"
+
+#include "eiron2/geometry/boundingbox.hpp"
 
 namespace eiron2 {
-
-struct BoundingBox {
-    BoundingBox() : min(Vec2(0, 0)), max(Vec2(0, 0)) {}
-
-    BoundingBox(Vec2 min_, Vec2 max_) : min(min_), max(max_) {}
-
-    inline BoundingBox merge(BoundingBox other)
-    {
-        return BoundingBox(
-            Vec2(std::min(min.x, other.min.x), std::min(min.y, other.min.y)),
-            Vec2(std::max(max.x, other.max.x), std::max(max.y, other.max.y)));
-    }
-
-    Vec2 min;
-    Vec2 max;
-};
 
 /**
  * @brief A very simple grid-based spatial index
@@ -42,28 +29,98 @@ class SpatialIndex {
     /**
      * @brief Construct a new Spatial Index from a list of values
      *
-     * @param nx_ The number of cells in the x direction
-     * @param ny_  The number of cells in the y direction
      * @param n_values The number of values to be indexed
      * @param bbox_func A function that returns the bounding box of a value
      *
      */
-    SpatialIndex(index_t nx_,
-                   index_t ny_,
-                   index_t n_values,
-                   std::function<BoundingBox(index_t)> bbox_func)
-        : nx(nx_), ny(ny_)
+    SpatialIndex(index_t n_values,
+                 std::function<BoundingBox(index_t)> bbox_func)
+    {
+        populate(n_values, bbox_func);
+    }
+
+    /**
+     * @brief Construct a new Spatial Index from a list of vertices and
+     * triangles
+     *
+     * @param nx_ The number of cells in the x direction
+     * @param ny_  The number of cells in the y direction
+     * @param vertices The list of vertices
+     * @param triangles The list of triangles
+     *
+     */
+    SpatialIndex(vector<Vec2>& vertices,
+                 vector<Triangle>& triangles)
+    {
+        auto bbox_func = [&triangles, &vertices](index_t i) {
+            Triangle t = triangles[i];
+            Vec2 p1 = vertices[t.ind1];
+            Vec2 p2 = vertices[t.ind2];
+            Vec2 p3 = vertices[t.ind3];
+
+            real_t min_x = std::min(std::min(p1.x, p2.x), p3.x);
+            real_t min_y = std::min(std::min(p1.y, p2.y), p3.y);
+
+            real_t max_x = std::max(std::max(p1.x, p2.x), p3.x);
+            real_t max_y = std::max(std::max(p1.y, p2.y), p3.y);
+
+            return BoundingBox(Vec2(min_x, min_y), Vec2(max_x, max_y));
+        };
+
+        populate(triangles.size(), bbox_func);
+    }
+
+    // Copy constructor
+    SpatialIndex(const SpatialIndex& other)
+        : bbox(other.bbox),
+          nx(other.nx),
+          ny(other.ny),
+          cell_size(other.cell_size),
+          cell_idx(other.cell_idx),
+          data(other.data)
+    {}
+
+    // Move constructor
+    SpatialIndex(SpatialIndex&& other)
+        : bbox(other.bbox),
+          nx(other.nx),
+          ny(other.ny),
+          cell_size(other.cell_size),
+          cell_idx(std::move(other.cell_idx)),
+          data(std::move(other.data))
+    {}
+
+    /**
+     * @brief Populate the index with the given values
+     *
+     */
+    inline void populate(index_t n_values,
+                         std::function<BoundingBox(index_t)> bbox_func)
     {
         // Make three passes over the data.
         // First, determine the bounding box of the data
         // Second, determine how many values are in each cell
         // Third, allocate data array and fill it with the values
 
-        // First pass, bounding box
+        // First pass, bounding box and cell size
+        real_t size_x = 0;
+        real_t size_y = 0;
         bbox = bbox_func(0);
+        // average size of the objects
+        size_x = bbox.max.x - bbox.min.x;
+        size_y = bbox.max.y - bbox.min.y;
         for (index_t i = 1; i < n_values; ++i) {
-            bbox = bbox.merge(bbox_func(i));
+            auto bbox_i = bbox_func(i);
+            bbox = bbox.merge(bbox_i);
+            size_x += bbox_i.max.x - bbox_i.min.x;
+            size_y += bbox_i.max.y - bbox_i.min.y;
         }
+        size_x /= n_values;
+        size_y /= n_values;
+
+        // Determine nx and ny so that the average object fits in a cell
+        nx = std::max<index_t>(1, std::ceil((bbox.max.x - bbox.min.x) / size_x));
+        ny = std::max<index_t>(1, std::ceil((bbox.max.y - bbox.min.y) / size_y));
 
         cell_size = (bbox.max - bbox.min) / Vec2(nx, ny);
 
@@ -135,33 +192,11 @@ class SpatialIndex {
         }
     }
 
-    // Copy constructor
-    SpatialIndex(const SpatialIndex& other)
-        : bbox(other.bbox),
-          nx(other.nx),
-          ny(other.ny),
-          cell_size(other.cell_size),
-          cell_idx(other.cell_idx),
-          data(other.data)
-    {
-    }
-
-    // Move constructor
-    SpatialIndex(SpatialIndex&& other)
-        : bbox(other.bbox),
-          nx(other.nx),
-          ny(other.ny),
-          cell_size(other.cell_size),
-          cell_idx(std::move(other.cell_idx)),
-          data(std::move(other.data))
-    {
-    }
-
     /**
      * @brief Query the values in the same cell as a given position
      *
      * @param pos The position to query
-     * 
+     *
      * @return vectorview<index_t> The values in the cell
      */
     inline vectorview<index_t> query(Vec2 position) const
@@ -171,8 +206,12 @@ class SpatialIndex {
         assert(position.x <= bbox.max.x);
         assert(position.y <= bbox.max.y);
 
-        index_t ix = std::max<index_t>(0, std::min<index_t>(nx - 1, (position.x - bbox.min.x) / cell_size.x));
-        index_t iy = std::max<index_t>(0, std::min<index_t>(ny - 1, (position.y - bbox.min.y) / cell_size.y));
+        index_t ix = std::max<index_t>(
+            0,
+            std::min<index_t>(nx - 1, (position.x - bbox.min.x) / cell_size.x));
+        index_t iy = std::max<index_t>(
+            0,
+            std::min<index_t>(ny - 1, (position.y - bbox.min.y) / cell_size.y));
 
         index_t start = cell_idx[ix + iy * nx];
         index_t end = cell_idx[ix + iy * nx + 1];
@@ -181,8 +220,9 @@ class SpatialIndex {
     }
 
     /**
-     * @brief Query the values that are in the same cells as a given bounding box
-     * 
+     * @brief Query the values that are in the same cells as a given bounding
+     * box
+     *
      * @param box The bounding box to query
      */
     inline vector<index_t> query(BoundingBox query_box) const
@@ -192,10 +232,18 @@ class SpatialIndex {
         assert(query_box.max.x <= bbox.max.x);
         assert(query_box.max.y <= bbox.max.y);
 
-        index_t x0 = std::max<index_t>(0, std::min<index_t>(nx - 1, (query_box.min.x - bbox.min.x) / cell_size.x));
-        index_t x1 = std::max<index_t>(0, std::min<index_t>(nx - 1, (query_box.max.x - bbox.min.x) / cell_size.x));
-        index_t y0 = std::max<index_t>(0, std::min<index_t>(ny - 1, (query_box.min.y - bbox.min.y) / cell_size.y));
-        index_t y1 = std::max<index_t>(0, std::min<index_t>(ny - 1, (query_box.max.y - bbox.min.y) / cell_size.y));
+        index_t x0 = std::max<index_t>(
+            0, std::min<index_t>(nx - 1,
+                                 (query_box.min.x - bbox.min.x) / cell_size.x));
+        index_t x1 = std::max<index_t>(
+            0, std::min<index_t>(nx - 1,
+                                 (query_box.max.x - bbox.min.x) / cell_size.x));
+        index_t y0 = std::max<index_t>(
+            0, std::min<index_t>(ny - 1,
+                                 (query_box.min.y - bbox.min.y) / cell_size.y));
+        index_t y1 = std::max<index_t>(
+            0, std::min<index_t>(ny - 1,
+                                 (query_box.max.y - bbox.min.y) / cell_size.y));
 
         std::set<index_t> result;
         for (index_t y = y0; y <= y1; ++y) {
@@ -217,9 +265,9 @@ class SpatialIndex {
     // The bounding box of the spatial index
     BoundingBox bbox;
     // The number of cells in the x direction
-    index_t nx;
+    index_t nx = -1;
     // The number of cells in the y direction
-    index_t ny;
+    index_t ny = -1;
     // The size of one cell in the x and y direction
     Vec2 cell_size;
     // Column-major list of the start index of each cell

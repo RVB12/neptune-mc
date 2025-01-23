@@ -20,14 +20,10 @@ int main()
     triangles[0] = Triangle{0, 1, 2};
     triangles[1] = Triangle{0, 2, 3};
 
-    vector<index_t> neighbors(6);
-
-    make_neighborlist(triangles, neighbors);
-
     // Normally, we would still define the boundaries, but here,
     // we're just going to make everything reflective so it's fine.
 
-    TriangleMesh mesh(vertices, triangles, neighbors);
+    TriangleMesh mesh(vertices, triangles);
 
     index_t n_cells = mesh.n_cells();
 

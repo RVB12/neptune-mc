@@ -10,18 +10,15 @@ using namespace eiron2;
 TEST_CASE("Spatial index constructor works (only one value)",
           "[geometry][2Dspatialindex]")
 {
-    index_t nx = 10;
-    index_t ny = 10;
-
     vector<BoundingBox> bboxes = {
         BoundingBox(Vec2(0.25, 0.26), Vec2(0.7, 0.8))};
 
     auto bbox_func = [&](index_t i) { return bboxes[i]; };
 
-    SpatialIndex index(nx, ny, bboxes.size(), bbox_func);
+    SpatialIndex index(bboxes.size(), bbox_func);
 
-    REQUIRE(index.nx == nx);
-    REQUIRE(index.ny == ny);
+    REQUIRE(index.nx == 2);
+    REQUIRE(index.ny == 2);
 
     // There is only one value, so the bounding box should be the same as the
     // value
@@ -29,13 +26,13 @@ TEST_CASE("Spatial index constructor works (only one value)",
     REQUIRE(bboxes[0].min.y == index.bbox.min.y);
 
     // There is only one value, so each cell should contain that value
-    REQUIRE(index.cell_idx.size() == nx * ny + 1);
-    for(index_t i = 0; i < nx * ny + 1; i++) {
+    REQUIRE(index.cell_idx.size() == index.nx * index.ny + 1);
+    for(index_t i = 0; i < index.nx * index.ny + 1; i++) {
         REQUIRE(index.cell_idx[i] == i);
     }
 
-    REQUIRE(index.data.size() == nx * ny);
-    for(index_t i = 0; i < nx * ny; i++) {
+    REQUIRE(index.data.size() == index.nx * index.ny);
+    for(index_t i = 0; i < index.nx * index.ny; i++) {
         REQUIRE(index.data[i] == 0);
     }
 
@@ -55,19 +52,16 @@ TEST_CASE("Spatial index constructor works (only one value)",
 TEST_CASE("Spatial index constructor works (two values)",
           "[geometry][2Dspatialindex]")
 {
-    index_t nx = 2;
-    index_t ny = 2;
-
     vector<BoundingBox> bboxes = {
         BoundingBox(Vec2(0, 0), Vec2(0.75, 0.25)),
         BoundingBox(Vec2(0.6, 0), Vec2(1, 1))};
 
     auto bbox_func = [&](index_t i) { return bboxes[i]; };
 
-    SpatialIndex index(nx, ny, bboxes.size(), bbox_func);
+    SpatialIndex index(bboxes.size(), bbox_func);
 
-    REQUIRE(index.nx == nx);
-    REQUIRE(index.ny == ny);
+    REQUIRE(index.nx == 3);
+    REQUIRE(index.ny == 3);
 
     // There are two values, so the bounding box should be the union of the two
     // values

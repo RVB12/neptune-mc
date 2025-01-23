@@ -3,14 +3,15 @@ import eiron2
 from matplotlib import pyplot as plt
 import math
 import json
+import time
 
 
 config = {}
 
 Lx = 1
 Ly = 1
-nx = 400
-ny = 400
+nx = 256
+ny = 256
 
 config["mesh"] = {
     "type": "voxel",
@@ -60,7 +61,7 @@ config["sources"] = [
 config["boundary_conditions"] = [
     "reflective",
     "reflective",
-    "absorbing",
+    "reflective",
     "reflective"
 ]
 
@@ -70,10 +71,14 @@ config["seed"] = 0
 inputstring = json.dumps(config)
 
 # write inputstring to file
-with open("input.json", "w") as f:
-    f.write(inputstring)
+# with open("input.json", "w") as f:
+#     f.write(inputstring)
 
+start_time = time.time()
 outputstring = eiron2.simulate(inputstring)
+end_time = time.time()
+
+print("Simulation took", end_time - start_time, "seconds")
 
 output = json.loads(outputstring)
 

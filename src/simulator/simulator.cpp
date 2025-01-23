@@ -38,7 +38,8 @@ void simulate(Mesh& mesh,
             particle.geometry.cell_id =
                 mesh.get_cell_index(particle.geometry.position);
                 
-            for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
+            index_t i_step = 0;
+            for (; i_step < params.max_steps; i_step++) {
                 real_t weight_old = particle.weight;
                 real_t t_old = particle.t;
                 index_t cell_id_old = particle.geometry.cell_id;
@@ -54,10 +55,17 @@ void simulate(Mesh& mesh,
                 density[cell_id_old] +=
                     (particle.t - t_old) * weight_old / v * sfn;
 
-                if (particle.weight < 1.0e-8) {
+                if (particle.weight < 1.0e-4) {
                     break;
                 }
+                // std::cout << "Particle " << i_particle << " in cell "
+                //           << particle.geometry.cell_id << " with weight "
+                //           << particle.weight << std::endl;
             }
+
+            // std::cout<<"Number of steps: "<<i_step<<std::endl;
+
+
         }
     }
 }

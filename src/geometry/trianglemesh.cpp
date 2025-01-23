@@ -39,12 +39,12 @@ bool TriangleMesh::is_in_cell(Vec2 pos, index_t cell_index) const
 
 index_t TriangleMesh::get_cell_index(Vec2 pos) const
 {
-    // For now, this is really stupid, we're just manually going through all the
-    // triangles and checking which one the position is in. A kd tree would
-    // massively speed this up
-    for (index_t i = 0; i < n_cells(); i++) {
-        if (is_in_cell(pos, i)) {
-            return i;
+    auto candidates = spatialindex.query(pos);
+
+    for (index_t i = 0; i < candidates.size(); i++) {
+        index_t cell_index = candidates[i];
+        if (is_in_cell(pos, cell_index)) {
+            return cell_index;
         }
     }
 

@@ -112,35 +112,8 @@ struct adl_serializer<eiron2::TriangleMesh> {
     {
         eiron2::vector<eiron2::Vec2> vertices = j.at("vertices");
         eiron2::vector<eiron2::Triangle> triangles = j.at("triangles");
-        // Hard code nx and ny for now
-        eiron2::index_t nx = 400;
-        eiron2::index_t ny = 400;
-        auto bbox_func = [&vertices, &triangles](eiron2::index_t i) {
-            eiron2::Vec2 p1 = vertices[triangles[i].ind1];
-            eiron2::Vec2 p2 = vertices[triangles[i].ind2];
-            eiron2::Vec2 p3 = vertices[triangles[i].ind3];
 
-            eiron2::real_t min_x = std::min({p1.x, p2.x, p3.x});
-            eiron2::real_t max_x = std::max({p1.x, p2.x, p3.x});
-            eiron2::real_t min_y = std::min({p1.y, p2.y, p3.y});
-            eiron2::real_t max_y = std::max({p1.y, p2.y, p3.y});
-
-            return eiron2::BoundingBox({min_x, min_y}, {max_x, max_y});
-        };
-        auto time1 = std::chrono::high_resolution_clock::now();
-        eiron2::SpatialIndex spatialindex(nx, ny, triangles.size(),
-                                            bbox_func);
-        auto time2 = std::chrono::high_resolution_clock::now();
-
-        eiron2::vector<eiron2::index_t> neighbors;
-        eiron2::make_neighborlist(vertices, triangles, spatialindex, neighbors);
-        auto time3 = std::chrono::high_resolution_clock::now();
-
-        std::cout << "Time to make spatial index: " << std::chrono::duration_cast<std::chrono::milliseconds>(time2 - time1).count() << " ms" << std::endl;
-        std::cout << "Time to make neighbor list: " << std::chrono::duration_cast<std::chrono::milliseconds>(time3 - time2).count() << " ms" << std::endl;
-
-        return eiron2::TriangleMesh(std::move(vertices), std::move(triangles),
-                                    std::move(neighbors));
+        return eiron2::TriangleMesh(vertices, triangles);
     }
 };
 
