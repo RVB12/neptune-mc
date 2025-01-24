@@ -2,7 +2,7 @@
 #define EIRON2_VOXELMESH_HPP
 
 #include "eiron2/common/utils.hpp"
-#include "eiron2/common/vec2.hpp"
+#include "eiron2/geometry/vec2.hpp"
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/mesh.hpp"
 #include "eiron2/geometry/particlegeometry.hpp"

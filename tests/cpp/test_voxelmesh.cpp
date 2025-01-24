@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include "eiron2/common/vec2.hpp"
+#include "eiron2/geometry/vec2.hpp"
 #include "eiron2/geometry/voxelmesh.hpp"
 
 using namespace eiron2;

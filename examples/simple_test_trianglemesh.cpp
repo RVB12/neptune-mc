@@ -16,9 +16,9 @@ int main()
     vertices[2] = Vec2(1, 1);
     vertices[3] = Vec2(0, 1);
 
-    vector<Triangle> triangles(2);
-    triangles[0] = Triangle{0, 1, 2};
-    triangles[1] = Triangle{0, 2, 3};
+    vector<TriangleIndices> triangles(2);
+    triangles[0] = TriangleIndices{0, 1, 2};
+    triangles[1] = TriangleIndices{0, 2, 3};
 
     // Normally, we would still define the boundaries, but here,
     // we're just going to make everything reflective so it's fine.

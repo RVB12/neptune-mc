@@ -26,6 +26,7 @@ list(APPEND eiron2_SOURCES
     src/physics/source.cpp
     src/physics/update_particle.cpp
     src/common/json_conversions.cpp
+    src/geometry/triangle.cpp
 )
 
 add_library(eiron2 ${eiron2_SOURCES})

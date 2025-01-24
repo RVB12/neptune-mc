@@ -5,7 +5,7 @@
 #include <random>
 
 #include "eiron2/common/utils.hpp"
-#include "eiron2/common/vec2.hpp"
+#include "eiron2/geometry/vec2.hpp"
 #include "eiron2/physics/particle.hpp"
 #include "eiron2/physics/source.hpp"
 

@@ -6,7 +6,7 @@
 #include <set>
 
 #include "eiron2/common/utils.hpp"
-#include "eiron2/common/vec2.hpp"
+#include "eiron2/geometry/vec2.hpp"
 #include "eiron2/common/vector.hpp"
 #include "eiron2/geometry/triangle.hpp"
 
@@ -50,21 +50,14 @@ class SpatialIndex {
      *
      */
     SpatialIndex(vector<Vec2>& vertices,
-                 vector<Triangle>& triangles)
+                 vector<TriangleIndices>& triangles)
     {
         auto bbox_func = [&triangles, &vertices](index_t i) {
-            Triangle t = triangles[i];
-            Vec2 p1 = vertices[t.ind1];
-            Vec2 p2 = vertices[t.ind2];
-            Vec2 p3 = vertices[t.ind3];
+            TriangleIndices t_ind = triangles[i];
+            Triangle t(vertices[t_ind.ind1], vertices[t_ind.ind2],
+                        vertices[t_ind.ind3]);
 
-            real_t min_x = std::min(std::min(p1.x, p2.x), p3.x);
-            real_t min_y = std::min(std::min(p1.y, p2.y), p3.y);
-
-            real_t max_x = std::max(std::max(p1.x, p2.x), p3.x);
-            real_t max_y = std::max(std::max(p1.y, p2.y), p3.y);
-
-            return BoundingBox(Vec2(min_x, min_y), Vec2(max_x, max_y));
+            return t.bounding_box();
         };
 
         populate(triangles.size(), bbox_func);
@@ -119,9 +112,9 @@ class SpatialIndex {
         size_y /= n_values;
 
         // Determine nx and ny so that the average object fits in a cell
+        // This is just a heuristic, but it should work well in most cases
         nx = std::max<index_t>(1, std::ceil((bbox.max.x - bbox.min.x) / size_x));
         ny = std::max<index_t>(1, std::ceil((bbox.max.y - bbox.min.y) / size_y));
-
         cell_size = (bbox.max - bbox.min) / Vec2(nx, ny);
 
         // Second pass, count values in each cell

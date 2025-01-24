@@ -2,7 +2,7 @@
 #define EIRON2_TRIANGLEMESH_HPP
 
 #include "eiron2/common/utils.hpp"
-#include "eiron2/common/vec2.hpp"
+#include "eiron2/geometry/vec2.hpp"
 #include "eiron2/common/vector.hpp"
 #include "eiron2/geometry/cellcrossing.hpp"
 #include "eiron2/geometry/mesh.hpp"
@@ -28,7 +28,7 @@ namespace eiron2 {
  * @param triangles
  * @param neighbors
  */
-void make_neighborlist(const vector<Triangle>& triangles,
+void make_neighborlist(const vector<TriangleIndices>& triangles,
                        vector<index_t>& neighbors);
 /**
  * @brief Construct a neighbor list for a list of triangles
@@ -44,7 +44,7 @@ void make_neighborlist(const vector<Triangle>& triangles,
  * This version uses a spatial index for efficiency.
  */
 void make_neighborlist(const vector<Vec2>& vertices,
-                       const vector<Triangle>& triangles,
+                       const vector<TriangleIndices>& triangles,
                        const SpatialIndex& spatialindex,
                        vector<index_t>& neighbors);
 
@@ -60,7 +60,7 @@ void make_neighborlist(const vector<Vec2>& vertices,
  */
 class TriangleMesh : public Mesh {
    public:
-    TriangleMesh(vector<Vec2>& vertices_, vector<Triangle>& triangles_)
+    TriangleMesh(vector<Vec2>& vertices_, vector<TriangleIndices>& triangles_)
         : Mesh(),
           vertices(vertices_),
           triangles(triangles_),
@@ -70,7 +70,7 @@ class TriangleMesh : public Mesh {
     }
 
     TriangleMesh(vector<Vec2>& vertices_,
-                 vector<Triangle>& triangles_,
+                 vector<TriangleIndices>& triangles_,
                  SpatialIndex& spatialindex,
                  vector<index_t>& neighbors_)
         : Mesh(),
@@ -81,7 +81,7 @@ class TriangleMesh : public Mesh {
     {}
 
     TriangleMesh(vector<Vec2>&& vertices_,
-                 vector<Triangle>&& triangles_,
+                 vector<TriangleIndices>&& triangles_,
                  SpatialIndex&& spatialindex,
                  vector<index_t>&& neighbors_)
         : Mesh(),
@@ -117,6 +117,11 @@ class TriangleMesh : public Mesh {
     index_t get_cell_index(Vec2 position) const;
 
     /**
+     * @brief Return the triangle indices corresponding to the given index
+     */
+    TriangleIndices get_triangle_indices(index_t cell_index) const;
+
+    /**
      * @brief Return the triangle corresponding to the given index
      */
     Triangle get_triangle(index_t cell_index) const;
@@ -143,7 +148,7 @@ class TriangleMesh : public Mesh {
     vector<Vec2> vertices;
 
     // List of all the triangles in the mesh
-    vector<Triangle> triangles;
+    vector<TriangleIndices> triangles;
 
     // Spatial index for fast spatial queries
     SpatialIndex spatialindex;

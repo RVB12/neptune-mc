@@ -6,8 +6,8 @@
 #include <iostream>
 #include <chrono>
 
-#include "eiron2/common/vec2.hpp"
-#include "eiron2/common/vec3.hpp"
+#include "eiron2/geometry/vec2.hpp"
+#include "eiron2/geometry/vec3.hpp"
 #include "eiron2/common/vector.hpp"
 #include "eiron2/geometry/spatialindex.hpp"
 #include "eiron2/geometry/trianglemesh.hpp"
@@ -21,22 +21,22 @@ namespace eiron2 {
 
 void to_json(nlohmann::json& j, const Vec2& v);
 void to_json(nlohmann::json& j, const Vec3& v);
-void to_json(nlohmann::json& j, const Triangle& t);
+void to_json(nlohmann::json& j, const TriangleIndices& t);
 void to_json(nlohmann::json& j, const vector<real_t>& v);
 void to_json(nlohmann::json& j, const vector<index_t>& v);
 void to_json(nlohmann::json& j, const vector<Vec2>& v);
-void to_json(nlohmann::json& j, const vector<Triangle>& v);
+void to_json(nlohmann::json& j, const vector<TriangleIndices>& v);
 void to_json(nlohmann::json& j, const VoxelMesh& m);
 void to_json(nlohmann::json& j, const BoundaryCondition& m);
 void to_json(nlohmann::json& j, const vector<BoundaryCondition>& v);
 
 void from_json(const nlohmann::json& j, Vec2& v);
 void from_json(const nlohmann::json& j, Vec3& v);
-void from_json(const nlohmann::json& j, Triangle& t);
+void from_json(const nlohmann::json& j, TriangleIndices& t);
 void from_json(const nlohmann::json& j, vector<real_t>& v);
 void from_json(const nlohmann::json& j, vector<index_t>& v);
 void from_json(const nlohmann::json& j, vector<Vec2>& v);
-void from_json(const nlohmann::json& j, vector<Triangle>& v);
+void from_json(const nlohmann::json& j, vector<TriangleIndices>& v);
 void from_json(const nlohmann::json& j, std::unique_ptr<Source>& v);
 void from_json(const nlohmann::json& j, VoxelMesh& m);
 void from_json(const nlohmann::json& j, std::unique_ptr<Mesh>& v);
@@ -111,7 +111,7 @@ struct adl_serializer<eiron2::TriangleMesh> {
     static eiron2::TriangleMesh from_json(const json& j)
     {
         eiron2::vector<eiron2::Vec2> vertices = j.at("vertices");
-        eiron2::vector<eiron2::Triangle> triangles = j.at("triangles");
+        eiron2::vector<eiron2::TriangleIndices> triangles = j.at("triangles");
 
         return eiron2::TriangleMesh(vertices, triangles);
     }

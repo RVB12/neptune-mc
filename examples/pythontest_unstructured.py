@@ -4,6 +4,7 @@ import numpy as np
 import eiron2
 import math
 import json
+import time
 
 # First create the x and y coordinates of the points.
 n_angles = 400
@@ -83,7 +84,7 @@ config["boundary_conditions"] = [
     "reflective"
 ]
 
-config["max_steps"] = 10000
+config["max_steps"] = 1000000
 config["seed"] = 0
 
 inputstring = json.dumps(config)
@@ -92,7 +93,12 @@ inputstring = json.dumps(config)
 with open("build/input.json", "w") as f:
     f.write(inputstring)
 
+start_time = time.time()
 outputstring = eiron2.simulate(inputstring)
+end_time = time.time()
+
+print("Simulation took", end_time - start_time, "seconds")
+
 
 output = json.loads(outputstring)
 

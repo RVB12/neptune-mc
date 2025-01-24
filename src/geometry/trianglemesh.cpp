@@ -4,37 +4,17 @@ namespace eiron2 {
 
 index_t TriangleMesh::n_cells() const { return triangles.size(); }
 
-Triangle TriangleMesh::get_triangle(index_t cell_index) const
+TriangleIndices TriangleMesh::get_triangle_indices(index_t cell_index) const
 {
     return triangles[cell_index];
 }
 
-inline real_t triangle_sign_helper(const Vec2& p1,
-                                   const Vec2& p2,
-                                   const Vec2& p3)
-{
-    return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
-}
-
-// Source:
-// https://stackoverflow.com/questions/2049582/how-to-determine-if-a-poindex_t-is-in-a-2d-triangle
 bool TriangleMesh::is_in_cell(Vec2 pos, index_t cell_index) const
 {
-    Triangle t = triangles[cell_index];
-    Vec2 p1 = vertices[t.ind1];
-    Vec2 p2 = vertices[t.ind2];
-    Vec2 p3 = vertices[t.ind3];
+    TriangleIndices tind = triangles[cell_index];
+    Triangle t(vertices[tind.ind1], vertices[tind.ind2], vertices[tind.ind3]);
 
-    // Half-plane checks
-    real_t d1 = triangle_sign_helper(pos, p1, p2);
-    real_t d2 = triangle_sign_helper(pos, p2, p3);
-    real_t d3 = triangle_sign_helper(pos, p3, p1);
-
-    // Check if the point is on the same side of all triangle edges
-    bool has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-    bool has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-
-    return !(has_neg && has_pos);
+    return t.contains(pos);
 }
 
 index_t TriangleMesh::get_cell_index(Vec2 pos) const
@@ -53,7 +33,7 @@ index_t TriangleMesh::get_cell_index(Vec2 pos) const
 
 real_t TriangleMesh::get_volume(index_t cell_index) const
 {
-    Triangle t = triangles[cell_index];
+    TriangleIndices t = triangles[cell_index];
     Vec2 p1 = vertices[t.ind1];
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];
@@ -102,7 +82,7 @@ inline real_t find_edge_intersection(const Vec2& p1,
 
 CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
 {
-    Triangle t = triangles[p.cell_id];
+    TriangleIndices t = triangles[p.cell_id];
     Vec2 p1 = vertices[t.ind1];
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];
@@ -146,7 +126,7 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     return CellCrossing(pos_new, t_new, surface_id, id_new, boundary_id);
 }
 
-void make_neighborlist(const vector<Triangle>& triangles,
+void make_neighborlist(const vector<TriangleIndices>& triangles,
                        vector<index_t>& neighbors)
 {
     if (neighbors.size() != 3 * triangles.size()) {
@@ -157,7 +137,7 @@ void make_neighborlist(const vector<Triangle>& triangles,
     // triangles and checking the edges
     // A kd tree would massively speed this up
     for (index_t i = 0; i < triangles.size(); i++) {
-        Triangle t1 = triangles[i];
+        TriangleIndices t1 = triangles[i];
 
         // Initialize to -1, both to keep track if all neighbors of this
         // triangle have been found, but also to keep track of boundaries.
@@ -168,7 +148,7 @@ void make_neighborlist(const vector<Triangle>& triangles,
         for (index_t j = 0; j < triangles.size(); j++) {
             if (i == j) continue;
 
-            Triangle t2 = triangles[j];
+            TriangleIndices t2 = triangles[j];
 
             bool has_ind1 =
                 t2.ind1 == t1.ind1 || t2.ind2 == t1.ind1 || t2.ind3 == t1.ind1;
@@ -197,7 +177,7 @@ void make_neighborlist(const vector<Triangle>& triangles,
 }
 
 void make_neighborlist(const vector<Vec2>& vertices,
-                       const vector<Triangle>& triangles,
+                       const vector<TriangleIndices>& triangles,
                        const SpatialIndex& spatialindex,
                        vector<index_t>& neighbors)
 {
@@ -206,7 +186,7 @@ void make_neighborlist(const vector<Vec2>& vertices,
     }
 
     for (index_t i = 0; i < triangles.size(); i++) {
-        Triangle t1 = triangles[i];
+        TriangleIndices t1 = triangles[i];
 
         // Initialize to -1, both to keep track if all neighbors of this
         // triangle have been found, but also to keep track of boundaries.
@@ -231,7 +211,7 @@ void make_neighborlist(const vector<Vec2>& vertices,
         for(index_t j = 0; j < candidates.size(); j++){
             index_t k = candidates[j];
             if(i == k) continue;
-            Triangle t2 = triangles[k];
+            TriangleIndices t2 = triangles[k];
 
             bool has_ind1 =
                 t2.ind1 == t1.ind1 || t2.ind2 == t1.ind1 || t2.ind3 == t1.ind1;
@@ -262,7 +242,7 @@ void make_neighborlist(const vector<Vec2>& vertices,
 Vec2 TriangleMesh::get_surface_normal(index_t cell_index,
                                       index_t surface_id) const
 {
-    Triangle t = triangles[cell_index];
+    TriangleIndices t = triangles[cell_index];
     Vec2 p1 = vertices[t.ind1];
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];

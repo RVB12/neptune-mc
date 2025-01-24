@@ -24,12 +24,12 @@ void from_json(const nlohmann::json& j, Vec3& v)
     j.at(2).get_to(v.z);
 }
 
-void to_json(nlohmann::json& j, const Triangle& t)
+void to_json(nlohmann::json& j, const TriangleIndices& t)
 {
     j = nlohmann::json{t.ind1, t.ind2, t.ind3};
 }
 
-void from_json(const nlohmann::json& j, Triangle& t)
+void from_json(const nlohmann::json& j, TriangleIndices& t)
 {
     j.at(0).get_to(t.ind1);
     j.at(1).get_to(t.ind2);
@@ -84,7 +84,7 @@ void from_json(const nlohmann::json& j, vector<Vec2>& v)
     }
 }
 
-void to_json(nlohmann::json& j, const vector<Triangle>& v)
+void to_json(nlohmann::json& j, const vector<TriangleIndices>& v)
 {
     j = nlohmann::json::array();
     for (int i = 0; i < v.size(); i++) {
@@ -92,7 +92,7 @@ void to_json(nlohmann::json& j, const vector<Triangle>& v)
     }
 }
 
-void from_json(const nlohmann::json& j, vector<Triangle>& v)
+void from_json(const nlohmann::json& j, vector<TriangleIndices>& v)
 {
     v.resize(j.size());
     for (index_t i = 0; i < v.size(); i++) {
