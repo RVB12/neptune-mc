@@ -48,8 +48,10 @@ int main()
     sources[0] = std::make_unique<LineSource>(line);
 
     vector<BoundaryCondition> boundary_conditions = {BoundaryCondition::REFLECTIVE};
+
+    ExecutionStatistics stats;
     
-    simulate(mesh, background, sources, density, boundary_conditions, params);
+    simulate(mesh, background, sources, density, boundary_conditions, params, stats);
 
     std::cout << "calculated density" << std::endl;
 

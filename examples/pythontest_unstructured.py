@@ -14,7 +14,7 @@ radii = np.linspace(min_radius, 0.95, n_radii)
 
 angles = np.linspace(0, 2 * np.pi, n_angles, endpoint=False)
 angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
-# angles[:, 1::2] += np.pi / n_angles
+angles[:, 1::2] += np.pi / n_angles
 
 x = (radii * np.cos(angles)).flatten()
 y = (radii * np.sin(angles)).flatten()
@@ -44,7 +44,7 @@ plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 
 for i in range(ncells):
-    plasma_dens[i] = 1.0e11
+    plasma_dens[i] = 1.0e13
 
 for i in range(ncells):
     plasma_temp[i] = 1
@@ -74,7 +74,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [-0.5, -0.5],
         "pos_b": [-0.5, 0.5],
-        "n_particles": 10000,
+        "n_particles": 100000,
         "angle_min": -math.pi,
         "angle_max": math.pi,
     }
@@ -101,6 +101,9 @@ print("Simulation took", end_time - start_time, "seconds")
 
 
 output = json.loads(outputstring)
+
+stats = output["stats"]
+print(stats)
 
 neutral_density = np.array(output["density"])
 

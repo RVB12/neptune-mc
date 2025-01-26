@@ -10,8 +10,8 @@ config = {}
 
 Lx = 1
 Ly = 1
-nx = 256
-ny = 256
+nx = 10
+ny = 10
 
 config["mesh"] = {
     "type": "voxel",
@@ -29,13 +29,13 @@ plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 
 for i in range(ncells):
-    plasma_dens[i] = 1.0e13
+    plasma_dens[i] = 1.0e19
 
 for i in range(ncells):
     plasma_temp[i] = 1
 
 for i in range(ncells):
-    plasma_vel_x[i] = 0
+    plasma_vel_x[i] = 1.0e4
 
 for i in range(ncells):
     plasma_vel_y[i] = 0
@@ -82,11 +82,14 @@ print("Simulation took", end_time - start_time, "seconds")
 
 output = json.loads(outputstring)
 
+stats = output["stats"]
+print(stats)
+
 neutral_density = np.array(output["density"])
 
 neutral_density_reshaped = np.reshape(neutral_density, (nx, ny))
 
-c = plt.imshow(np.transpose(neutral_density_reshaped), extent=[0, 1, 0, 1])
+c = plt.imshow(np.transpose(neutral_density_reshaped), extent=[0, Lx, 0, Ly])
 plt.title("Neutral particle density (log)")
 plt.colorbar(c)
 plt.xlabel("x")

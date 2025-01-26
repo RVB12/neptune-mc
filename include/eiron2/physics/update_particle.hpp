@@ -20,7 +20,9 @@ namespace eiron2 {
 void update_particle(const Mesh& mesh,
                      const PlasmaBackground& background,
                      const vector<BoundaryCondition>& boundary_conditions,
-                     Particle& p);
+                     Particle& p,
+                     index_t& num_crossings,
+                     index_t& num_collisions);
 
 }  // namespace eiron2
 

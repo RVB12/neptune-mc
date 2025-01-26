@@ -44,7 +44,9 @@ int main()
     boundary_conditions[2] = BoundaryCondition::REFLECTIVE;
     boundary_conditions[3] = BoundaryCondition::REFLECTIVE;
 
-    simulate(mesh, background, sources, density, boundary_conditions, params);
+    ExecutionStatistics stats;
+
+    simulate(mesh, background, sources, density, boundary_conditions, params, stats);
 
     std::cout << "calculated density" << std::endl;
 

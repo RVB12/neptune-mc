@@ -1,4 +1,5 @@
 #include <fstream>
+#include <chrono>
 
 #include "eiron2/common/json_conversions.hpp"
 #include "eiron2/simulator/simulator.hpp"
@@ -39,7 +40,14 @@ int main(int argc, char** argv)
 
     input_file >> j;
 
+
+    ExecutionStatistics stats;
+
+    auto start = std::chrono::high_resolution_clock::now();
     std::unique_ptr<Mesh> mesh_ptr = j["mesh"];
+    auto end = std::chrono::high_resolution_clock::now();
+    stats.grid_building_time =
+        std::chrono::duration<double>(end - start).count();
 
     PlasmaBackground background = j["background"];
 
@@ -53,12 +61,20 @@ int main(int argc, char** argv)
 
     vector<BoundaryCondition> boundary_conditions = j["boundary_conditions"];
 
+    start = std::chrono::high_resolution_clock::now();
     simulate(*mesh_ptr, background, sources, density, boundary_conditions,
-             params);
+             params, stats);
+    end = std::chrono::high_resolution_clock::now();
+    stats.trace_time =
+        std::chrono::duration<double>(end - start).count();
+
+    stats.total_time = stats.grid_building_time + stats.trace_time;
 
     nlohmann::json output;
 
     output["density"] = density;
+
+    output["stats"] = stats;
 
     output_file << output.dump(4);
 

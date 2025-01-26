@@ -16,6 +16,7 @@
 #include "eiron2/physics/linesource.hpp"
 #include "eiron2/physics/source.hpp"
 #include "eiron2/simulator/simulator.hpp"
+#include "eiron2/simulator/execution_statistics.hpp"
 
 namespace eiron2 {
 
@@ -29,6 +30,7 @@ void to_json(nlohmann::json& j, const vector<TriangleIndices>& v);
 void to_json(nlohmann::json& j, const VoxelMesh& m);
 void to_json(nlohmann::json& j, const BoundaryCondition& m);
 void to_json(nlohmann::json& j, const vector<BoundaryCondition>& v);
+void to_json(nlohmann::json& j, const ExecutionStatistics& stats);
 
 void from_json(const nlohmann::json& j, Vec2& v);
 void from_json(const nlohmann::json& j, Vec3& v);

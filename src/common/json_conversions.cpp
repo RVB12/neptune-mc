@@ -145,6 +145,17 @@ void from_json(const nlohmann::json& j, vector<BoundaryCondition>& v)
     }
 }
 
+void to_json(nlohmann::json& j, const ExecutionStatistics& stats)
+{
+    j = nlohmann::json{
+        {"num_crossings", stats.num_crossings},
+        {"num_collisions", stats.num_collisions},
+        {"grid_building_time", stats.grid_building_time},
+        {"trace_time", stats.trace_time},
+        {"total_time", stats.total_time},
+    };
+}
+
 // void to_json(nlohmann::json& j, const LineSource& s)
 // {
 //     j = nlohmann::json{

@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <chrono>
 
 #include <eiron2/simulator/simulator.hpp>
 #include "eiron2/common/json_conversions.hpp"
@@ -15,7 +16,13 @@ using namespace eiron2;
 
 std::string simulate_json(std::string jsonstring){
     nlohmann::json j = nlohmann::json::parse(jsonstring);
+    ExecutionStatistics stats;
+
+    auto start = std::chrono::high_resolution_clock::now();
     std::unique_ptr<Mesh> mesh_ptr = j["mesh"];
+    auto end = std::chrono::high_resolution_clock::now();
+    stats.grid_building_time =
+        std::chrono::duration<double>(end - start).count();
     PlasmaBackground background = j["background"];
     vector<std::unique_ptr<Source>> sources = j["sources"];
     SimulationParams params;
@@ -24,9 +31,15 @@ std::string simulate_json(std::string jsonstring){
     vector<real_t> density(mesh_ptr->n_cells());
     // TODO: read boundary conditions from json
     vector<BoundaryCondition> boundary_conditions = j["boundary_conditions"];
-    simulate(*mesh_ptr, background, sources, density, boundary_conditions, params);
+
+    start = std::chrono::high_resolution_clock::now();
+    simulate(*mesh_ptr, background, sources, density, boundary_conditions, params, stats);
+    end = std::chrono::high_resolution_clock::now();
+    stats.trace_time = std::chrono::duration<double>(end - start).count();
+    stats.total_time = stats.grid_building_time + stats.trace_time;
     nlohmann::json output;
     output["density"] = density;
+    output["stats"] = stats;
     return output.dump(4);
 }
 
