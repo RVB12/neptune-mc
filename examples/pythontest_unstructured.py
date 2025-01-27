@@ -47,7 +47,7 @@ for i in range(ncells):
     plasma_dens[i] = 1.0e13
 
 for i in range(ncells):
-    plasma_temp[i] = 1
+    plasma_temp[i] = 1.0e1
 
 for i in range(ncells):
     plasma_vel_x[i] = 0
@@ -75,6 +75,7 @@ config["sources"] = [
         "pos_a": [-0.5, -0.5],
         "pos_b": [-0.5, 0.5],
         "n_particles": 100000,
+        "intensity": 1.0e15,
         "angle_min": -math.pi,
         "angle_max": math.pi,
     }

@@ -1,5 +1,7 @@
 #include "eiron2/physics/update_particle.hpp"
 
+#include "eiron2/physics/physicalconstants.hpp"
+
 namespace eiron2 {
 
 void update_particle(const Mesh& mesh,
@@ -9,14 +11,6 @@ void update_particle(const Mesh& mesh,
                      index_t& num_crossings,
                      index_t& num_collisions)
 {
-    // TODO: Move these constants to a more appropriate place
-    real_t T_i = 40;
-    real_t T_e = T_i;
-    // real_t T_n = T_i;
-    real_t K_cx = 1.3e-13;
-    real_t K_i = 2.7e-14;
-    // real_t K_i = 2.0e-13;
-
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
 
@@ -25,7 +19,7 @@ void update_particle(const Mesh& mesh,
     // random number to determine time till collision
     real_t eps = r_unif(p.rng);
     // time till collision
-    real_t tc = -std::log(eps) / (K_cx * background.plasma_dens[cell_id]);
+    real_t tc = -std::log(eps) / (constants::K_cx * background.plasma_dens[cell_id]);
 
     // Calculate the next cell crossing
     CellCrossing crossing = mesh.get_next_crossing(p.geometry);
@@ -33,6 +27,7 @@ void update_particle(const Mesh& mesh,
     // Check which one is earlier, charge exchange or cell crossing
     real_t dt;
     if (tc < crossing.t) {
+            num_collisions++;
         // Move the particle until the collision
         p.geometry.position += tc * p.geometry.velocity;
         // Generate new velocity from plasma background (BGK
@@ -47,16 +42,15 @@ void update_particle(const Mesh& mesh,
         dt = tc;
     }
     else {
+        num_crossings++;
         dt = crossing.t;
         if (crossing.next_cell_id != -1) {
-            num_crossings++;
             // Regular grid crossing, move the particle to the next
             // cell
             p.geometry.position = crossing.position;
             p.geometry.cell_id = crossing.next_cell_id;
         }
         else {
-            num_collisions++;
             // Boundary crossing
             p.geometry.position = crossing.position;
             BoundaryCondition bc = boundary_conditions[crossing.boundary_id];
@@ -77,7 +71,7 @@ void update_particle(const Mesh& mesh,
     }
 
     // Ionisation
-    p.weight = p.weight * std::exp(-dt * K_i * background.plasma_dens[cell_id]);
+    p.weight = p.weight * std::exp(-dt * constants::K_i * background.plasma_dens[cell_id]);
 
     p.t += dt;
 }

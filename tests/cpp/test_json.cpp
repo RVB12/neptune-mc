@@ -1,9 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
+#include "eiron2/common/json_conversions.hpp"
 #include "eiron2/geometry/vec2.hpp"
 #include "eiron2/geometry/vec3.hpp"
-#include "eiron2/common/json_conversions.hpp"
 
 using namespace eiron2;
 
@@ -57,7 +57,7 @@ TEST_CASE("Vector json conversion works", "[vector][json]")
 
 TEST_CASE("LineSource json conversion works", "[vector][json]")
 {
-    LineSource a(10, Vec2(1.5, 2.5), Vec2(3.5, 4.5), 0.1, 0.2);
+    LineSource a(10, 100, Vec2(1.5, 2.5), Vec2(3.5, 4.5), 0.1, 0.2);
 
     nlohmann::json j = a;
 
@@ -71,13 +71,14 @@ TEST_CASE("LineSource json conversion works", "[vector][json]")
     REQUIRE(a.angle_max == b.angle_max);
     REQUIRE(a.num_particles() == b.num_particles());
 
-    std::string s_expected = R"({"angle_max":0.2,"angle_min":0.1,"n_particles":10,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
+    std::string s_expected =
+        R"({"angle_max":0.2,"angle_min":0.1,"n_particles":10,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
     REQUIRE(j.dump() == s_expected);
 }
 
 TEST_CASE("Source json conversion works", "[vector][json]")
 {
-    LineSource a(10, Vec2(1.5, 2.5), Vec2(3.5, 4.5), 0.1, 0.2);
+    LineSource a(10, 100, Vec2(1.5, 2.5), Vec2(3.5, 4.5), 0.1, 0.2);
 
     nlohmann::json j = a;
 
@@ -93,7 +94,8 @@ TEST_CASE("Source json conversion works", "[vector][json]")
     REQUIRE(a.angle_max == c->angle_max);
     REQUIRE(a.num_particles() == c->num_particles());
 
-    std::string s_expected = R"({"angle_max":0.2,"angle_min":0.1,"n_particles":10,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
+    std::string s_expected =
+        R"({"angle_max":0.2,"angle_min":0.1,"n_particles":10,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
     REQUIRE(j.dump() == s_expected);
 }
 
@@ -112,6 +114,7 @@ TEST_CASE("VoxelMesh json conversion works", "[vector][json]")
     REQUIRE(a.dx == b.dx);
     REQUIRE(a.dy == b.dy);
 
-    std::string s_expected = R"({"Lx":1.5,"Ly":2.5,"nx":10,"ny":20,"type":"voxel"})";
+    std::string s_expected =
+        R"({"Lx":1.5,"Ly":2.5,"nx":10,"ny":20,"type":"voxel"})";
     REQUIRE(j.dump() == s_expected);
 }

@@ -34,7 +34,7 @@ int main()
 
     index_t particles_per_cell = 100;
     LineSource line =
-        LineSource(n_cells * particles_per_cell, Vec2(0, 0), Vec2(0, 1));
+        LineSource(n_cells * particles_per_cell, 1, Vec2(0, 0), Vec2(0, 1));
     vector<std::unique_ptr<Source>> sources(1);
     sources[0] = std::make_unique<LineSource>(line);
 

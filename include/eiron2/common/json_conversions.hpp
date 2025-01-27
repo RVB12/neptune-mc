@@ -2,21 +2,21 @@
 #define EIRON2_JSON_CONVERSIONS_HPP
 
 #include <cassert>
-#include <nlohmann/json.hpp>
-#include <iostream>
 #include <chrono>
+#include <iostream>
+#include <nlohmann/json.hpp>
 
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/geometry/vec3.hpp"
 #include "eiron2/common/vector.hpp"
 #include "eiron2/geometry/spatialindex.hpp"
 #include "eiron2/geometry/trianglemesh.hpp"
+#include "eiron2/geometry/vec2.hpp"
+#include "eiron2/geometry/vec3.hpp"
 #include "eiron2/geometry/voxelmesh.hpp"
 #include "eiron2/physics/boundarycondition.hpp"
 #include "eiron2/physics/linesource.hpp"
 #include "eiron2/physics/source.hpp"
-#include "eiron2/simulator/simulator.hpp"
 #include "eiron2/simulator/execution_statistics.hpp"
+#include "eiron2/simulator/simulator.hpp"
 
 namespace eiron2 {
 
@@ -84,10 +84,11 @@ struct adl_serializer<eiron2::LineSource> {
     static eiron2::LineSource from_json(const json& j)
     {
         eiron2::index_t num_particles = j.at("n_particles");
+        eiron2::real_t intensity = j.at("intensity");
         eiron2::Vec2 pos_a = j.at("pos_a");
         eiron2::Vec2 pos_b = j.at("pos_b");
 
-        eiron2::LineSource s(num_particles, pos_a, pos_b);
+        eiron2::LineSource s(num_particles, intensity, pos_a, pos_b);
 
         if (j.find("angle_min") != j.end()) {
             s.angle_min = j.at("angle_min");
@@ -101,10 +102,13 @@ struct adl_serializer<eiron2::LineSource> {
 
     static void to_json(json& j, eiron2::LineSource t)
     {
-        j = json{
-            {"type", "line"},           {"pos_a", t.pos_a},
-            {"pos_b", t.pos_b},         {"angle_min", t.angle_min},
-            {"angle_max", t.angle_max}, {"n_particles", t.num_particles()}};
+        j = json{{"type", "line"},
+                 {"pos_a", t.pos_a},
+                 {"pos_b", t.pos_b},
+                 {"angle_min", t.angle_min},
+                 {"angle_max", t.angle_max},
+                 {"n_particles", t.num_particles()},
+                 {"intensity", t.intensity()}};
     }
 };
 

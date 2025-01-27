@@ -13,10 +13,12 @@ namespace eiron2 {
  */
 class Source {
    public:
-    Source(index_t num_particles) : num_particles_(num_particles) {}
+    Source(index_t num_particles, real_t intensity)
+        : num_particles_(num_particles), intensity_(intensity)
+    {}
 
-    Source(index_t num_particles, index_t particle_id_offset)
-        : num_particles_(num_particles), particle_id_offset_(particle_id_offset)
+    Source(index_t num_particles, real_t intensity, index_t particle_id_offset)
+        : num_particles_(num_particles), intensity_(intensity), particle_id_offset_(particle_id_offset)
     {}
 
     ~Source() = default;
@@ -28,6 +30,11 @@ class Source {
     index_t num_particles() const;
 
     /**
+     * @brief Return the intensity of the source
+     */
+    real_t intensity() const;
+
+    /**
      * Generate a particle from this source
      *
      * @param i The index of the particle to generate
@@ -36,6 +43,7 @@ class Source {
 
     index_t
         num_particles_;  // the number of particles to generate from this source
+    real_t intensity_;  // the intensity of the source (todo: find unit)
     index_t particle_id_offset_ = 0;  // the offset to add to the particle id
 };
 

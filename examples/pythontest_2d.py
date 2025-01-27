@@ -8,10 +8,10 @@ import time
 
 config = {}
 
-Lx = 1
-Ly = 1
-nx = 10
-ny = 10
+Lx = 0.1
+Ly = 0.1
+nx = 100
+ny = 100
 
 config["mesh"] = {
     "type": "voxel",
@@ -29,10 +29,10 @@ plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 
 for i in range(ncells):
-    plasma_dens[i] = 1.0e19
+    plasma_dens[i] = 1.0e21
 
 for i in range(ncells):
-    plasma_temp[i] = 1
+    plasma_temp[i] = 1.0e4
 
 for i in range(ncells):
     plasma_vel_x[i] = 1.0e4
@@ -50,9 +50,10 @@ config["background"] = {
 config["sources"] = [
     {
         "type": "line",
-        "pos_a": [0, 0.25],
-        "pos_b": [0, 0.75],
+        "pos_a": [0, 0.],
+        "pos_b": [0, 0.1],
         "n_particles": 1000000,
+        "intensity": 1.0e20,
         "angle_min": -math.pi/2,
         "angle_max": math.pi/2,
     }
@@ -61,7 +62,7 @@ config["sources"] = [
 config["boundary_conditions"] = [
     "reflective",
     "reflective",
-    "reflective",
+    "absorbing",
     "reflective"
 ]
 

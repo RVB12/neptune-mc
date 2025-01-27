@@ -27,13 +27,13 @@ plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 
 for i in range(ncells):
-    plasma_dens[i] = 1.0e13
+    plasma_dens[i] = 1.0e20
 
 for i in range(ncells):
     plasma_temp[i] = 1.0
 
 for i in range(ncells):
-    plasma_vel_x[i] = 1
+    plasma_vel_x[i] = 1.0e4
 
 config["background"] = {
     "plasma_dens": plasma_dens.tolist(),
@@ -46,6 +46,7 @@ config["background"] = {
 config["sources"] = [
     {
         "type": "line",
+        "intensity": 1.0e15,
         "pos_a": [0, 0],
         "pos_b": [0, 1],
         "n_particles": 10000,
