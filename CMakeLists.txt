@@ -43,29 +43,30 @@ FetchContent_MakeAvailable(json)
 target_link_libraries(eiron2 PUBLIC nlohmann_json::nlohmann_json)
 
 find_package(OpenMP)
+
 if(OpenMP_CXX_FOUND)
     target_link_libraries(eiron2 PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 # Main runner
-
 add_executable(main_json src/main_json.cpp)
 target_link_libraries(main_json PRIVATE eiron2)
 
 #
 # Python bindings
 #
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-find_package(pybind11 CONFIG REQUIRED)
+find_package(Python COMPONENTS Interpreter Development.Module)
+find_package(pybind11 CONFIG)
 
-python_add_library(_core MODULE src/main_python.cpp WITH_SOABI)
-target_link_libraries(_core PRIVATE pybind11::headers)
-target_link_libraries(_core PRIVATE eiron2)
+if(Python_FOUND AND pybind11_FOUND)
+    python_add_library(_core MODULE src/main_python.cpp WITH_SOABI)
+    target_link_libraries(_core PRIVATE pybind11::headers)
+    target_link_libraries(_core PRIVATE eiron2)
 
-# Note, i just copied this install command from the scikit build example
-# this may influence other things, need to check
-install(TARGETS _core DESTINATION eiron2)
-
+    # Note, i just copied this install command from the scikit build example
+    # this may influence other things, need to check
+    install(TARGETS _core DESTINATION eiron2)
+endif()
 
 #
 # C++ Examples
@@ -85,13 +86,13 @@ target_link_libraries(simple_test_trianglemesh PRIVATE eiron2)
 #
 find_package(Catch2 3)
 
-# if(Catch2)
-add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp tests/cpp/test_trianglemesh.cpp tests/cpp/test_json.cpp tests/cpp/test_spatialindex.cpp)
-target_link_libraries(all_tests PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(all_tests PRIVATE eiron2)
-# target_link_libraries(all_tests PRIVATE nlohmann_json::nlohmann_json)
+if(Catch2_FOUND)
+    add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp tests/cpp/test_trianglemesh.cpp tests/cpp/test_json.cpp tests/cpp/test_spatialindex.cpp)
+    target_link_libraries(all_tests PRIVATE Catch2::Catch2WithMain)
+    target_link_libraries(all_tests PRIVATE eiron2)
 
-include(CTest)
-include(Catch)
-catch_discover_tests(all_tests)
-# endif()
+    # target_link_libraries(all_tests PRIVATE nlohmann_json::nlohmann_json)
+    include(CTest)
+    include(Catch)
+    catch_discover_tests(all_tests)
+endif()
