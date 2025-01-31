@@ -39,8 +39,9 @@ real_t VoxelMesh::get_volume(index_t) const {
 index_t VoxelMesh::get_cell_index(Vec2 p) const
 {
     Index2D ind;
-    assert(p.x >= 0 && p.x <= Lx);
-    assert(p.y >= 0 && p.y <= Ly);
+    if(p.x >= Lx || p.y >= Ly || p.x < 0 || p.y < 0){
+        return -1;
+    }
 
     ind.i = p.x / dx;
     ind.j = p.y / dy;

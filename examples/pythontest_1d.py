@@ -6,8 +6,8 @@ import json
 
 config = {}
 
-Lx = 1
-Ly = 1
+Lx = 0.1
+Ly = 0.1
 nx = 400
 ny = 1
 
@@ -46,9 +46,9 @@ config["background"] = {
 config["sources"] = [
     {
         "type": "line",
-        "intensity": 1.0e15,
+        "intensity": 5.0e21,
         "pos_a": [0, 0],
-        "pos_b": [0, 1],
+        "pos_b": [0, 0.1],
         "n_particles": 10000,
     }
 ]

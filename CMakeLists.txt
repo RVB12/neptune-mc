@@ -27,6 +27,7 @@ list(APPEND eiron2_SOURCES
     src/physics/update_particle.cpp
     src/common/json_conversions.cpp
     src/geometry/triangle.cpp
+    src/simulator/simulate_kdmc.cpp
 )
 
 add_library(eiron2 ${eiron2_SOURCES})
@@ -77,9 +78,16 @@ target_link_libraries(simple_test PRIVATE eiron2)
 add_executable(simple_test_trianglemesh examples/simple_test_trianglemesh.cpp)
 target_link_libraries(simple_test_trianglemesh PRIVATE eiron2)
 
-# This compile command adds bounds checks for std::vectors,
-# but then you also need to compile the library itself with those flags.
-# target_compile_options(simple_test PRIVATE -D_GLIBCXX_DEBUG)
+#
+# MPI Examples
+#
+
+# find_package(MPI)
+
+# if(MPI_CXX_FOUND)
+#     add_executable(domain_decomposition_test src/domain_decomposition_test.cpp)
+#     target_link_libraries(domain_decomposition_test PRIVATE eiron2 MPI::MPI_CXX)
+# endif()
 
 #
 # Tests

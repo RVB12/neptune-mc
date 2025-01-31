@@ -2,6 +2,7 @@
 #include <chrono>
 
 #include <eiron2/simulator/simulator.hpp>
+#include "eiron2/simulator/simulator_kdmc.hpp"
 #include "eiron2/common/json_conversions.hpp"
 
 #include <string>
@@ -32,9 +33,20 @@ std::string simulate_json(std::string jsonstring){
     // TODO: read boundary conditions from json
     vector<BoundaryCondition> boundary_conditions = j["boundary_conditions"];
 
+
+
     start = std::chrono::high_resolution_clock::now();
-    simulate(*mesh_ptr, background, sources, density, boundary_conditions, params, stats);
+    if(j.contains("dt")) {
+        real_t dt = j["dt"];
+        simulate_kdmc(*mesh_ptr, background, sources, density, boundary_conditions,
+                      params, stats, dt);
+    }
+    else {
+        simulate(*mesh_ptr, background, sources, density, boundary_conditions,
+                      params, stats);
+    }
     end = std::chrono::high_resolution_clock::now();
+
     stats.trace_time = std::chrono::duration<double>(end - start).count();
     stats.total_time = stats.grid_building_time + stats.trace_time;
     nlohmann::json output;

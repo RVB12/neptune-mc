@@ -3,6 +3,7 @@
 
 #include "eiron2/common/json_conversions.hpp"
 #include "eiron2/simulator/simulator.hpp"
+#include "eiron2/simulator/simulator_kdmc.hpp"
 
 using namespace eiron2;
 
@@ -62,9 +63,17 @@ int main(int argc, char** argv)
     vector<BoundaryCondition> boundary_conditions = j["boundary_conditions"];
 
     start = std::chrono::high_resolution_clock::now();
-    simulate(*mesh_ptr, background, sources, density, boundary_conditions,
-             params, stats);
+    if(j.contains("dt")) {
+        real_t dt = j["dt"];
+        simulate_kdmc(*mesh_ptr, background, sources, density, boundary_conditions,
+                      params, stats, dt);
+    }
+    else {
+        simulate(*mesh_ptr, background, sources, density, boundary_conditions,
+                      params, stats);
+    }
     end = std::chrono::high_resolution_clock::now();
+    
     stats.trace_time =
         std::chrono::duration<double>(end - start).count();
 

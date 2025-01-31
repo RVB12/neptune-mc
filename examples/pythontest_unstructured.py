@@ -7,8 +7,8 @@ import json
 import time
 
 # First create the x and y coordinates of the points.
-n_angles = 400
-n_radii = 400
+n_angles = 100
+n_radii = 100
 min_radius = 0.25
 radii = np.linspace(min_radius, 0.95, n_radii)
 
@@ -35,6 +35,8 @@ triangles = triang.get_masked_triangles()
 ncells = triangles.shape[0]
 xy = np.concatenate((x[:, None], y[:, None]), axis=1)
 
+print(triangles.shape)
+
 
 config = {}
 
@@ -44,13 +46,13 @@ plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 
 for i in range(ncells):
-    plasma_dens[i] = 1.0e13
+    plasma_dens[i] = 1.0e11
 
 for i in range(ncells):
-    plasma_temp[i] = 1.0e1
+    plasma_temp[i] = 1.0e2
 
 for i in range(ncells):
-    plasma_vel_x[i] = 0
+    plasma_vel_x[i] = 1.0e2
 
 for i in range(ncells):
     plasma_vel_y[i] = 0
@@ -74,7 +76,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [-0.5, -0.5],
         "pos_b": [-0.5, 0.5],
-        "n_particles": 100000,
+        "n_particles": 100,
         "intensity": 1.0e15,
         "angle_min": -math.pi,
         "angle_max": math.pi,

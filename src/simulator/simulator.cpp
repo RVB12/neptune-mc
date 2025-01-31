@@ -39,6 +39,10 @@ void simulate(Mesh& mesh,
             particle.geometry.cell_id =
                 mesh.get_cell_index(particle.geometry.position);
 
+            if(particle.geometry.cell_id == -1) {
+                throw std::runtime_error("Particle generated outside of mesh");
+            }
+
             for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
                 real_t weight_old = particle.weight;
                 real_t t_old = particle.t;
