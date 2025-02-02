@@ -71,7 +71,7 @@ void update_particle(const Mesh& mesh,
     }
 
     // Ionisation
-    // p.weight = p.weight * std::exp(-dt * constants::K_i * background.plasma_dens[cell_id]);
+    p.weight = p.weight * std::exp(-dt * constants::K_i * background.plasma_dens[cell_id]);
 
     p.t += dt;
 }

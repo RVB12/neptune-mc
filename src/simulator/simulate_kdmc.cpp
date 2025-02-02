@@ -49,13 +49,17 @@ void simulate_kdmc(Mesh& mesh,
                 // real_t t_old = particle.t;
                 index_t cell_id_old = particle.geometry.cell_id;
 
-                // // Simulate the particle up to the next event
-                // update_particle_kdmc(mesh, background, boundary_conditions,
-                // particle,
-                //                 num_crossings, num_collisions, dt);
+                Vec2 drift_term = Vec2(background.plasma_vel_x[cell_id_old], background.plasma_vel_y[cell_id_old]) * dt;
+                real_t D0 = background.plasma_temp[cell_id_old] / background.plasma_dens[cell_id_old] / constants::K_cx;
+                Vec2 diffusion_term = Vec2(r_normal(particle.rng), r_normal(particle.rng)) * std::sqrt(2.0 * dt * D0);
 
-                // Move the particle for time dt, crossing boundaries and
-                // tallying along the way
+                Vec2 new_position = particle.geometry.position + drift_term + diffusion_term;
+
+                // If the particle travels for time dt at the assumed velocity, it ends up at new_position
+                Vec2 assumed_velocity = (new_position - particle.geometry.position) / dt;
+
+                particle.geometry.velocity = assumed_velocity;
+
                 real_t time_left = dt;
                 while (true) {
                     // Calculate the next cell crossing
@@ -122,22 +126,17 @@ void simulate_kdmc(Mesh& mesh,
                 }
 
                 // Check for charge exchange
-                real_t eps = r_unif(particle.rng);
-                // time till collision
-                // TODO: maybe accumulate charge exchange rate over all the cells?
-                real_t tc = -std::log(eps) / (constants::K_cx * background.plasma_dens[cell_id_old]);
-
-                if(tc < dt){
-                    num_collisions++;
-                    // Generate new velocity from plasma background (BGK
-                    // operator)
-                    real_t stddev = std::sqrt(background.plasma_temp[cell_id_old]);
-                    std::normal_distribution<real_t> dist_vx(
-                        background.plasma_vel_x[cell_id_old], stddev);
-                    std::normal_distribution<real_t> dist_vy(
-                        background.plasma_vel_y[cell_id_old], stddev);
-                    particle.geometry.velocity = Vec2(dist_vx(particle.rng), dist_vy(particle.rng));
-                }
+                // if(kinetic_flight_time < dt){
+                //     num_collisions++;
+                //     // Generate new velocity from plasma background (BGK
+                //     // operator)
+                //     real_t stddev = std::sqrt(background.plasma_temp[cell_id_old]);
+                //     std::normal_distribution<real_t> dist_vx(
+                //         background.plasma_vel_x[cell_id_old], stddev);
+                //     std::normal_distribution<real_t> dist_vy(
+                //         background.plasma_vel_y[cell_id_old], stddev);
+                //     particle.geometry.velocity = Vec2(dist_vx(particle.rng), dist_vy(particle.rng));
+                // }
 
                 // Ionisation
                 // particle.weight = particle.weight * std::exp(-dt * constants::K_i * background.plasma_dens[cell_id_old]);

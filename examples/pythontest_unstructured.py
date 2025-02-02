@@ -9,8 +9,8 @@ import time
 # First create the x and y coordinates of the points.
 n_angles = 100
 n_radii = 100
-min_radius = 0.25
-radii = np.linspace(min_radius, 0.95, n_radii)
+min_radius = 0.001
+radii = np.linspace(min_radius, 0.01, n_radii)
 
 angles = np.linspace(0, 2 * np.pi, n_angles, endpoint=False)
 angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
@@ -46,13 +46,13 @@ plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 
 for i in range(ncells):
-    plasma_dens[i] = 1.0e11
+    plasma_dens[i] = 1.0e20
 
 for i in range(ncells):
-    plasma_temp[i] = 1.0e2
+    plasma_temp[i] = 1.0e6
 
 for i in range(ncells):
-    plasma_vel_x[i] = 1.0e2
+    plasma_vel_x[i] = 1.0e8
 
 for i in range(ncells):
     plasma_vel_y[i] = 0
@@ -74,9 +74,9 @@ config["mesh"] = {
 config["sources"] = [
     {
         "type": "line",
-        "pos_a": [-0.5, -0.5],
-        "pos_b": [-0.5, 0.5],
-        "n_particles": 100,
+        "pos_a": [-0.005, -0.005],
+        "pos_b": [-0.005, 0.005],
+        "n_particles": 1000,
         "intensity": 1.0e15,
         "angle_min": -math.pi,
         "angle_max": math.pi,
