@@ -53,7 +53,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [0, 0.025],
         "pos_b": [0, 0.075],
-        "n_particles": 1000,
+        "n_particles": 10000,
         "intensity": 1.0e10,
         "angle_min": -math.pi/2,
         "angle_max": math.pi/2,
@@ -102,7 +102,7 @@ config["seed"] = 0
 # plt.xlabel("x")
 # plt.ylabel("y")
 
-for dt in [1.0e-1, 1.0e-3, 1e-5, 1.e-7]:
+for dt in [1.0e-1, 1.0e-3, 1e-5]:
     config["dt"] = dt
 
     inputstring = json.dumps(config)
@@ -133,6 +133,5 @@ for dt in [1.0e-1, 1.0e-3, 1e-5, 1.e-7]:
     plt.xlabel("x")
     plt.ylabel("y")
 plt.show()
-
 
 

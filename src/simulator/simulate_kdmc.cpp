@@ -2,9 +2,8 @@
 
 #include "eiron2/geometry/voxelmesh.hpp"
 #include "eiron2/physics/linesource.hpp"
-#include "eiron2/simulator/simulator_kdmc.hpp"
-
 #include "eiron2/physics/physicalconstants.hpp"
+#include "eiron2/simulator/simulator_kdmc.hpp"
 namespace eiron2 {
 
 void simulate_kdmc(Mesh& mesh,
@@ -49,21 +48,43 @@ void simulate_kdmc(Mesh& mesh,
                 // real_t t_old = particle.t;
                 index_t cell_id_old = particle.geometry.cell_id;
 
-                Vec2 drift_term = Vec2(background.plasma_vel_x[cell_id_old], background.plasma_vel_y[cell_id_old]) * dt;
-                real_t D0 = background.plasma_temp[cell_id_old] / background.plasma_dens[cell_id_old] / constants::K_cx;
-                Vec2 diffusion_term = Vec2(r_normal(particle.rng), r_normal(particle.rng)) * std::sqrt(2.0 * dt * D0);
+                // Calculate time until next charge exchange
+                real_t kinetic_flight_time =
+                    -std::log(r_unif(particle.rng)) /
+                    (constants::K_cx * background.plasma_dens[cell_id_old]);
 
-                Vec2 new_position = particle.geometry.position + drift_term + diffusion_term;
+                // Fill up remaining time with diffusion
+                real_t diffusive_flight_time =
+                    std::max(0.0, dt - kinetic_flight_time);
 
-                // If the particle travels for time dt at the assumed velocity, it ends up at new_position
-                Vec2 assumed_velocity = (new_position - particle.geometry.position) / dt;
+                Vec2 drift_term = Vec2(background.plasma_vel_x[cell_id_old],
+                                       background.plasma_vel_y[cell_id_old]) *
+                                  diffusive_flight_time;
+                // Note, this still needs to be updated to take the velocity
+                // correlation into account
+                real_t D0 = background.plasma_temp[cell_id_old] /
+                            background.plasma_dens[cell_id_old] /
+                            constants::K_cx;
+                Vec2 diffusion_term =
+                    Vec2(r_normal(particle.rng), r_normal(particle.rng)) *
+                    std::sqrt(2.0 * diffusive_flight_time * D0);
 
+                Vec2 new_position =
+                    particle.geometry.position +
+                    kinetic_flight_time * particle.geometry.velocity +
+                    drift_term + diffusion_term;
+
+                // We have calculated, now need to trace through the mesh
+                // for tallying. We do this by pretending the particles moves
+                // to the new position at a constant velocity
+                Vec2 assumed_velocity =
+                    (new_position - particle.geometry.position) / dt;
                 particle.geometry.velocity = assumed_velocity;
-
                 real_t time_left = dt;
                 while (true) {
                     // Calculate the next cell crossing
-                    CellCrossing crossing = mesh.get_next_crossing(particle.geometry);
+                    CellCrossing crossing =
+                        mesh.get_next_crossing(particle.geometry);
 
                     if (crossing.t < time_left) {
                         // We will hit the boundary before the time is up
@@ -94,7 +115,9 @@ void simulate_kdmc(Mesh& mesh,
                                     crossing.surface_id);
                                 particle.geometry.velocity =
                                     particle.geometry.velocity -
-                                    2 * dot(particle.geometry.velocity, normal) *
+                                    2 *
+                                        dot(particle.geometry.velocity,
+                                            normal) *
                                         normal;
                             }
                             else if (bc == BoundaryCondition::ABSORBING) {
@@ -126,20 +149,23 @@ void simulate_kdmc(Mesh& mesh,
                 }
 
                 // Check for charge exchange
-                // if(kinetic_flight_time < dt){
-                //     num_collisions++;
-                //     // Generate new velocity from plasma background (BGK
-                //     // operator)
-                //     real_t stddev = std::sqrt(background.plasma_temp[cell_id_old]);
-                //     std::normal_distribution<real_t> dist_vx(
-                //         background.plasma_vel_x[cell_id_old], stddev);
-                //     std::normal_distribution<real_t> dist_vy(
-                //         background.plasma_vel_y[cell_id_old], stddev);
-                //     particle.geometry.velocity = Vec2(dist_vx(particle.rng), dist_vy(particle.rng));
-                // }
+                if (kinetic_flight_time < dt) {
+                    num_collisions++;
+                    // Generate new velocity from plasma background (BGK
+                    // operator)
+                    real_t stddev =
+                        std::sqrt(background.plasma_temp[cell_id_old]);
+                    std::normal_distribution<real_t> dist_vx(
+                        background.plasma_vel_x[cell_id_old], stddev);
+                    std::normal_distribution<real_t> dist_vy(
+                        background.plasma_vel_y[cell_id_old], stddev);
+                    particle.geometry.velocity =
+                        Vec2(dist_vx(particle.rng), dist_vy(particle.rng));
+                }
 
                 // Ionisation
-                // particle.weight = particle.weight * std::exp(-dt * constants::K_i * background.plasma_dens[cell_id_old]);
+                // particle.weight = particle.weight * std::exp(-dt *
+                // constants::K_i * background.plasma_dens[cell_id_old]);
 
                 if (particle.weight < 1.0e-4) {
                     break;
