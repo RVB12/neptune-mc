@@ -81,5 +81,5 @@ TEST_CASE("TriangleMesh::get_next_crossing", "[TriangleMesh]") {
     REQUIRE(c.position.y == expected_pos.y);
     REQUIRE(c.t == 0.4);
     REQUIRE(c.next_cell_id == 1);
-    REQUIRE(c.boundary_id == -1);
+    REQUIRE(c.boundary_condition_id == -1);
 }

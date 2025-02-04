@@ -102,11 +102,13 @@ void simulate_kdmc(Mesh& mesh,
                             // Regular grid crossing, move the particle to the
                             // next cell
                             particle.geometry.cell_id = crossing.next_cell_id;
+                            particle.geometry.boundary_id = crossing.next_surface_id;
                         }
                         else {
                             // Boundary crossing
                             BoundaryCondition bc =
-                                boundary_conditions[crossing.boundary_id];
+                                boundary_conditions[crossing.boundary_condition_id];
+                            particle.geometry.boundary_id = crossing.surface_id;
 
                             if (bc == BoundaryCondition::REFLECTIVE) {
                                 // Reflect the particle
@@ -137,6 +139,7 @@ void simulate_kdmc(Mesh& mesh,
                         // This is the final iteration
                         particle.geometry.position +=
                             time_left * particle.geometry.velocity;
+                            particle.geometry.boundary_id = -1;
 
                         // Tally
                         real_t v = mesh.get_volume(particle.geometry.cell_id);

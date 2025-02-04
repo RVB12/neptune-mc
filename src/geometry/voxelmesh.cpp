@@ -93,21 +93,38 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
     // Calculate new position
     Vec2 pos_new = p.position + p.velocity * t;
 
+    CellCrossing crossing(pos_new, t, surface);
+
     // Check for boundary crossings
     if(next_ind.i < 0){
-        return CellCrossing(pos_new, t, surface, -1, 0);
+        crossing.boundary_condition_id = 0;
+        return crossing;
     }
     if(next_ind.j < 0){
-        return CellCrossing(pos_new, t, surface, -1, 1);
+        crossing.boundary_condition_id = 1;
+        return crossing;
     }
     if(next_ind.i >= nx){
-        return CellCrossing(pos_new, t, surface, -1, 2);
+        crossing.boundary_condition_id = 2;
+        return crossing;
     }
     if(next_ind.j >= ny){
-        return CellCrossing(pos_new, t, surface, -1, 3);
+        crossing.boundary_condition_id = 3;
+        return crossing;
     }
 
-    return CellCrossing(pos_new, t, surface, tuple_to_linear(next_ind), -1);
+    crossing.next_cell_id = tuple_to_linear(next_ind);
+    if(surface == 0){
+        crossing.next_surface_id = 2;
+    } else if (surface == 1){
+        crossing.next_surface_id = 3;
+    } else if (surface == 2){
+        crossing.next_surface_id = 0;
+    } else if (surface == 3){
+        crossing.next_surface_id = 1;
+    }
+
+    return crossing;
 }
 
 Vec2 VoxelMesh::get_surface_normal(index_t cell_index, index_t surface_id) const

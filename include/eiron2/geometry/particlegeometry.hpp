@@ -25,6 +25,8 @@ class ParticleGeometry {
     Vec2 position;     // Current position
     Vec2 velocity;     // Current velocity
     index_t cell_id = -1;  // id of the cell the particle is in
+    index_t boundary_id = -1; // id of the boundary the particle is on
+                              // -1 if the particle is not on a boundary
 };
 
 }  // namespace eiron2

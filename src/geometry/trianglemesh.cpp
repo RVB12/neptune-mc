@@ -70,42 +70,63 @@ inline real_t find_edge_intersection(const Vec2& p1,
     }
 
     // position of intersection: new_pos = p1 + s * (p2 - p1)
-    real_t s = (a11 * b0 - a01 * b1) / determinant;
+    // real_t s = (a11 * b0 - a01 * b1) / determinant;
 
-    if (s < 0 or s > 1) {
-        // intersection is not on the edge, return -1
-        return -1;
-    }
+    // if (s < 0 or s > 1) {
+    //     // intersection is not on the edge, return -1
+    //     return -1;
+    // }
 
     return (a00 * b1 - b0 * a10) / determinant;
 }
 
 CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
 {
+    assert(is_in_cell(p.position, p.cell_id));
     TriangleIndices t = triangles[p.cell_id];
     Vec2 p1 = vertices[t.ind1];
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];
 
-    real_t t1 = find_edge_intersection(p1, p2, p.position, p.velocity);
-    real_t t2 = find_edge_intersection(p2, p3, p.position, p.velocity);
-    real_t t3 = find_edge_intersection(p3, p1, p.position, p.velocity);
+    // Time till intersection with edge 0
+    real_t t0;
+    if(p.boundary_id == 0){
+        t0 = -1;
+    } else {
+        t0 = find_edge_intersection(p1, p2, p.position, p.velocity);
+    }
 
+    real_t t1;
+    if(p.boundary_id == 1){
+        t1 = -1;
+    } else {
+        t1 = find_edge_intersection(p2, p3, p.position, p.velocity);
+    }
+
+    real_t t2;
+    if(p.boundary_id == 2){
+        t2 = -1;
+    } else {
+        t2 = find_edge_intersection(p3, p1, p.position, p.velocity);
+    }
+
+    // t0, t1, and t2 are now the times until the intersection with the edges
+    // the true collision time is the smallest positive value of the three
     real_t t_new;
     index_t id_new;
     index_t surface_id;
-    if (t1 > 0 and t1 >= t2 and t1 >= t3) {
-        t_new = t1;
+    if (t0 > 0 and (t0 <= t1 or t1 < 0) and (t0 <= t2 or t2 < 0)) {
+        t_new = t0;
         id_new = neighbors[3 * p.cell_id];
         surface_id = 0;
     }
-    else if (t2 > 0 and t2 >= t1 and t2 >= t3) {
-        t_new = t2;
+    else if (t1 > 0 and (t1 <= t0 or t0 < 0) and (t1 <= t2 or t2 < 0)) {
+        t_new = t1;
         id_new = neighbors[3 * p.cell_id + 1];
         surface_id = 1;
     }
-    else if (t3 > 0 and t3 >= t1 and t3 >= t2) {
-        t_new = t3;
+    else if (t2 > 0 and (t2 <= t0 or t0 < 0) and (t2 <= t1 or t1 < 0)) {
+        t_new = t2;
         id_new = neighbors[3 * p.cell_id + 2];
         surface_id = 2;
     }
@@ -115,15 +136,25 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
 
     Vec2 pos_new = p.position + p.velocity * t_new;
 
-    index_t boundary_id = -1;
+    CellCrossing crossing = CellCrossing(pos_new, t_new, surface_id);
+
     if (id_new < 0) {
         // If the id is negative, it is a boundary,
         // so negate it and subtract 1 (zero based) to get the boundary id
-        boundary_id = -id_new - 1;
-        id_new = -1;
+        crossing.boundary_condition_id = -id_new - 1;
+        return crossing;
     }
 
-    return CellCrossing(pos_new, t_new, surface_id, id_new, boundary_id);
+    crossing.next_cell_id = id_new;
+    // Find the surface id of the next cell
+    for (index_t i = 0; i < 3; i++) {
+        if (neighbors[3 * id_new + i] == p.cell_id) {
+            crossing.next_surface_id = i;
+            break;
+        }
+    }
+
+    return crossing;
 }
 
 void make_neighborlist(const vector<TriangleIndices>& triangles,

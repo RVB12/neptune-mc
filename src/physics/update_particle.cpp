@@ -39,6 +39,9 @@ void update_particle(const Mesh& mesh,
             background.plasma_vel_y[cell_id], stddev);
         p.geometry.velocity = Vec2(dist_vx(p.rng), dist_vy(p.rng));
 
+        // Reset boundary id (we are no longer at a boundary)
+        p.geometry.boundary_id = -1;
+
         dt = tc;
     }
     else {
@@ -49,11 +52,13 @@ void update_particle(const Mesh& mesh,
             // cell
             p.geometry.position = crossing.position;
             p.geometry.cell_id = crossing.next_cell_id;
+            p.geometry.boundary_id = crossing.next_surface_id;
         }
         else {
             // Boundary crossing
             p.geometry.position = crossing.position;
-            BoundaryCondition bc = boundary_conditions[crossing.boundary_id];
+            p.geometry.boundary_id = crossing.surface_id;
+            BoundaryCondition bc = boundary_conditions[crossing.boundary_condition_id];
 
             if (bc == BoundaryCondition::REFLECTIVE) {
                 // Reflect the particle
