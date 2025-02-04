@@ -102,14 +102,15 @@ config["seed"] = 0
 # plt.xlabel("x")
 # plt.ylabel("y")
 
+#test with decreasing dt
 for dt in [1.0e-1, 1.0e-3, 1e-5]:
     config["dt"] = dt
 
     inputstring = json.dumps(config)
 
     # write inputstring to file
-    with open("build/input.json", "w") as f:
-        f.write(inputstring)
+    # with open("build/input.json", "w") as f:
+    #     f.write(inputstring)
 
     start_time = time.time()
     outputstring = eiron2.simulate(inputstring)
@@ -132,6 +133,44 @@ for dt in [1.0e-1, 1.0e-3, 1e-5]:
     plt.colorbar(c)
     plt.xlabel("x")
     plt.ylabel("y")
+
+config["dt"] = 1.0e-3
+#test with increasing collision rate
+for background_density in [1.0e18, 1.0e19, 1.0e20, 1.0e21, 1.0e22]:
+
+    for i in range(ncells):
+        plasma_dens[i] = background_density
+
+    config["background"]["plasma_dens"] = plasma_dens.tolist()
+
+    inputstring = json.dumps(config)
+
+    # # write inputstring to file
+    # with open("build/input.json", "w") as f:
+    #     f.write(inputstring)
+
+    start_time = time.time()
+    outputstring = eiron2.simulate(inputstring)
+    end_time = time.time()
+
+    print("Simulation took", end_time - start_time, "seconds")
+
+    output = json.loads(outputstring)
+
+    stats = output["stats"]
+    print(stats)
+
+    neutral_density = np.array(output["density"])
+
+    neutral_density_reshaped = np.reshape(neutral_density, (nx, ny))
+
+    plt.figure()
+    c = plt.imshow(np.transpose(neutral_density_reshaped), extent=[0, Lx, 0, Ly])
+    plt.title("Neutral particle density, background = " + str(background_density))
+    plt.colorbar(c)
+    plt.xlabel("x")
+    plt.ylabel("y")
+
 plt.show()
 
 
