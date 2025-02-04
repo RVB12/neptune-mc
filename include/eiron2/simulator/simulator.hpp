@@ -13,25 +13,10 @@
 #include "eiron2/common/utils.hpp"
 #include "eiron2/physics/boundarycondition.hpp"
 #include "eiron2/simulator/execution_statistics.hpp"
+#include "eiron2/physics/plasmabackground.hpp"
 
 namespace eiron2 {
 
-class PlasmaBackground {
-   public:
-    PlasmaBackground() = default;
-
-    PlasmaBackground(index_t n_cells)
-        : plasma_dens(n_cells),
-          plasma_temp(n_cells),
-          plasma_vel_x(n_cells),
-          plasma_vel_y(n_cells)
-    {}
-
-    vector<real_t> plasma_dens;
-    vector<real_t> plasma_temp;
-    vector<real_t> plasma_vel_x;
-    vector<real_t> plasma_vel_y;
-};
 
 struct SimulationParams {
     int64_t seed = 0;
