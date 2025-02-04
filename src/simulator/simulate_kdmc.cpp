@@ -56,6 +56,13 @@ void simulate_kdmc(Mesh& mesh,
                     -std::log(r_unif(particle.rng)) /
                     (K_cx * background.plasma_dens[cell_id_old]);
 
+                bool charge_exchange_occurred = false;
+                if (kinetic_flight_time <= dt) {
+                    charge_exchange_occurred = true;
+                } else {
+                    kinetic_flight_time = dt;
+                }
+
                 // Fill up remaining time with diffusion
                 real_t diffusive_flight_time =
                     std::max(0.0, dt - kinetic_flight_time);
@@ -65,9 +72,8 @@ void simulate_kdmc(Mesh& mesh,
                                   diffusive_flight_time;
                 // Note, this still needs to be updated to take the velocity
                 // correlation into account
-                real_t D0 = background.plasma_temp[cell_id_old] /
-                            background.plasma_dens[cell_id_old] /
-                            K_cx;
+                real_t D0 = background.plasma_temp[cell_id_old] * constants::eV_to_Joules / constants::m_p /
+                            background.plasma_dens[cell_id_old] / K_cx;
                 Vec2 diffusion_term =
                     Vec2(r_normal(particle.rng), r_normal(particle.rng)) *
                     std::sqrt(2.0 * diffusive_flight_time * D0);
@@ -105,12 +111,14 @@ void simulate_kdmc(Mesh& mesh,
                             // Regular grid crossing, move the particle to the
                             // next cell
                             particle.geometry.cell_id = crossing.next_cell_id;
-                            particle.geometry.boundary_id = crossing.next_surface_id;
+                            particle.geometry.boundary_id =
+                                crossing.next_surface_id;
                         }
                         else {
                             // Boundary crossing
                             BoundaryCondition bc =
-                                boundary_conditions[crossing.boundary_condition_id];
+                                boundary_conditions[crossing
+                                                        .boundary_condition_id];
                             particle.geometry.boundary_id = crossing.surface_id;
 
                             if (bc == BoundaryCondition::REFLECTIVE) {
@@ -142,7 +150,7 @@ void simulate_kdmc(Mesh& mesh,
                         // This is the final iteration
                         particle.geometry.position +=
                             time_left * particle.geometry.velocity;
-                            particle.geometry.boundary_id = -1;
+                        particle.geometry.boundary_id = -1;
 
                         // Tally
                         real_t v = mesh.get_volume(particle.geometry.cell_id);
@@ -155,12 +163,12 @@ void simulate_kdmc(Mesh& mesh,
                 }
 
                 // Check for charge exchange
-                if (kinetic_flight_time < dt) {
+                if (charge_exchange_occurred) {
                     num_collisions++;
                     // Generate new velocity from plasma background (BGK
                     // operator)
-                    real_t stddev =
-                        std::sqrt(background.plasma_temp[cell_id_old]);
+                    real_t stddev = constants::calculate_BGK_stddev(
+                        background.plasma_temp[cell_id_old]);
                     std::normal_distribution<real_t> dist_vx(
                         background.plasma_vel_x[cell_id_old], stddev);
                     std::normal_distribution<real_t> dist_vy(
@@ -170,10 +178,15 @@ void simulate_kdmc(Mesh& mesh,
                 }
 
                 // Ionisation
-                // particle.weight = particle.weight * std::exp(-dt *
-                // constants::K_i * background.plasma_dens[cell_id_old]);
+                particle.weight = particle.weight *
+                           std::exp(-dt *
+                                    constants::calculate_K_i(
+                                        background.plasma_temp[cell_id_old]) *
+                                    background.plasma_dens[cell_id_old]);
 
+                particle.t += dt;
                 if (particle.weight < 1.0e-4) {
+                    // std::cout << "final time: " << particle.t << std::endl;
                     break;
                 }
             }

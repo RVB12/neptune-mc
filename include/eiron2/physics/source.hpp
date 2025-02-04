@@ -43,7 +43,7 @@ class Source {
 
     index_t
         num_particles_;  // the number of particles to generate from this source
-    real_t intensity_;  // the intensity of the source (todo: find unit)
+    real_t intensity_;  // the intensity of the source (particles per second)
     index_t particle_id_offset_ = 0;  // the offset to add to the particle id
 };
 

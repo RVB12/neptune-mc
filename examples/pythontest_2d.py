@@ -36,7 +36,7 @@ for i in range(ncells):
     plasma_temp[i] = 1.0
 
 for i in range(ncells):
-    plasma_vel_x[i] = 1.0e0
+    plasma_vel_x[i] = 0.1
 
 for i in range(ncells):
     plasma_vel_y[i] = 0

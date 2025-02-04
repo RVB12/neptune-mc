@@ -1,4 +1,5 @@
 #include "eiron2/physics/linesource.hpp"
+#include "eiron2/physics/physicalconstants.hpp"
 
 #include <iostream>
 
@@ -31,8 +32,8 @@ Particle LineSource::generate_particle(index_t i_particle)
     real_t normal_angle = std::atan2(pos_b.y - pos_a.y, pos_b.x - pos_a.x) - M_PI/2;
     real_t angle = angle_dist(p.rng) + normal_angle;
     std::chi_squared_distribution<real_t> chi2_dist(3.);
-    // todo: scale by sqrt(T/m)
-    real_t v_nrm = std::sqrt(chi2_dist(p.rng));
+    // hardcode temperature at 1 eV for now
+    real_t v_nrm = std::sqrt(1.0 * constants::eV_to_Joules / constants::m_p * chi2_dist(p.rng));
  
     p.geometry.velocity.x = v_nrm * std::cos(angle);
     p.geometry.velocity.y = v_nrm * std::sin(angle);
