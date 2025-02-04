@@ -49,7 +49,7 @@ for i in range(ncells):
     plasma_dens[i] = 1.0e20
 
 for i in range(ncells):
-    plasma_temp[i] = 1.0e6
+    plasma_temp[i] = 1.0
 
 for i in range(ncells):
     plasma_vel_x[i] = 1.0e8

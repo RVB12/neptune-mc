@@ -48,10 +48,13 @@ void simulate_kdmc(Mesh& mesh,
                 // real_t t_old = particle.t;
                 index_t cell_id_old = particle.geometry.cell_id;
 
+                real_t K_cx = constants::calculate_K_cx(
+                    background.plasma_temp[cell_id_old]);
+
                 // Calculate time until next charge exchange
                 real_t kinetic_flight_time =
                     -std::log(r_unif(particle.rng)) /
-                    (constants::K_cx * background.plasma_dens[cell_id_old]);
+                    (K_cx * background.plasma_dens[cell_id_old]);
 
                 // Fill up remaining time with diffusion
                 real_t diffusive_flight_time =
@@ -64,7 +67,7 @@ void simulate_kdmc(Mesh& mesh,
                 // correlation into account
                 real_t D0 = background.plasma_temp[cell_id_old] /
                             background.plasma_dens[cell_id_old] /
-                            constants::K_cx;
+                            K_cx;
                 Vec2 diffusion_term =
                     Vec2(r_normal(particle.rng), r_normal(particle.rng)) *
                     std::sqrt(2.0 * diffusive_flight_time * D0);

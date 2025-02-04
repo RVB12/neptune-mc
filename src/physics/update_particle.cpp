@@ -19,7 +19,9 @@ void update_particle(const Mesh& mesh,
     // random number to determine time till collision
     real_t eps = r_unif(p.rng);
     // time till collision
-    real_t tc = -std::log(eps) / (constants::K_cx * background.plasma_dens[cell_id]);
+    real_t tc = -std::log(eps) /
+                (constants::calculate_K_cx(background.plasma_temp[cell_id]) *
+                 background.plasma_dens[cell_id]);
 
     // Calculate the next cell crossing
     CellCrossing crossing = mesh.get_next_crossing(p.geometry);
@@ -27,12 +29,13 @@ void update_particle(const Mesh& mesh,
     // Check which one is earlier, charge exchange or cell crossing
     real_t dt;
     if (tc < crossing.t) {
-            num_collisions++;
+        num_collisions++;
         // Move the particle until the collision
         p.geometry.position += tc * p.geometry.velocity;
         // Generate new velocity from plasma background (BGK
         // operator)
-        real_t stddev = std::sqrt(background.plasma_temp[cell_id]);
+        real_t stddev =
+            constants::calculate_BGK_stddev(background.plasma_temp[cell_id]);
         std::normal_distribution<real_t> dist_vx(
             background.plasma_vel_x[cell_id], stddev);
         std::normal_distribution<real_t> dist_vy(
@@ -58,25 +61,34 @@ void update_particle(const Mesh& mesh,
             // Boundary crossing
             p.geometry.position = crossing.position;
             p.geometry.boundary_id = crossing.surface_id;
-            BoundaryCondition bc = boundary_conditions[crossing.boundary_condition_id];
+            BoundaryCondition bc =
+                boundary_conditions[crossing.boundary_condition_id];
 
             if (bc == BoundaryCondition::REFLECTIVE) {
                 // Reflect the particle
-                Vec2 normal = mesh.get_surface_normal(cell_id, crossing.surface_id);
-                p.geometry.velocity = p.geometry.velocity - 2 * dot(p.geometry.velocity, normal) * normal;
+                Vec2 normal =
+                    mesh.get_surface_normal(cell_id, crossing.surface_id);
+                p.geometry.velocity =
+                    p.geometry.velocity -
+                    2 * dot(p.geometry.velocity, normal) * normal;
             }
             else if (bc == BoundaryCondition::ABSORBING) {
                 // Absorb the particle
                 p.weight = 0;
             }
             else {
-                throw std::runtime_error("Using a boundary condition that is not (yet) implemented");
+                throw std::runtime_error(
+                    "Using a boundary condition that is not (yet) implemented");
             }
         }
     }
 
     // Ionisation
-    // p.weight = p.weight * std::exp(-dt * constants::K_i * background.plasma_dens[cell_id]);
+    p.weight =
+        p.weight *
+        std::exp(-dt *
+                 constants::calculate_K_i(background.plasma_temp[cell_id]) *
+                 background.plasma_dens[cell_id]);
 
     p.t += dt;
 }

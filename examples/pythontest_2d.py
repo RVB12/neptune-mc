@@ -33,7 +33,7 @@ for i in range(ncells):
     plasma_dens[i] = 1.0e20
 
 for i in range(ncells):
-    plasma_temp[i] = 1.0e8
+    plasma_temp[i] = 1.0
 
 for i in range(ncells):
     plasma_vel_x[i] = 1.0e0
@@ -53,7 +53,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [0, 0.025],
         "pos_b": [0, 0.075],
-        "n_particles": 100,
+        "n_particles": 10000,
         "intensity": 1.0e10,
         "angle_min": -math.pi/2,
         "angle_max": math.pi/2,
@@ -96,7 +96,7 @@ neutral_density = np.array(output["density"])
 neutral_density_reshaped = np.reshape(neutral_density, (nx, ny))
 
 c = plt.imshow(np.transpose(neutral_density_reshaped), extent=[0, Lx, 0, Ly])
-plt.title("Neutral particle density (log)")
+plt.title("Neutral particle density")
 plt.colorbar(c)
 plt.xlabel("x")
 plt.ylabel("y")
