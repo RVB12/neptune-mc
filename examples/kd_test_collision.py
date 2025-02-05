@@ -53,7 +53,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [0, 0.025],
         "pos_b": [0, 0.075],
-        "n_particles": 10000,
+        "n_particles": 1000,
         "intensity": 1.0e10,
         "angle_min": -math.pi/2,
         "angle_max": math.pi/2,
@@ -122,13 +122,14 @@ for background_density in background_density_array:
 
     diff = neutral_density_exact_reshaped - neutral_density_reshaped
     errors.append(np.linalg.norm(diff) / np.linalg.norm(neutral_density_exact_reshaped))
+    print("Error: ", errors[-1])
 
 
 plt.figure()
 plt.loglog(background_density_array, errors)
 plt.title("Error vs background density")
 plt.xlabel("Background density")
-plt.ylabel("Error")
+plt.ylabel("Relative error")
 
 plt.show()
 

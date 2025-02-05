@@ -130,7 +130,7 @@ for dt in dt_array:
     ax[0].set_ylabel("y")
 
     diff = neutral_density_exact_reshaped - neutral_density_reshaped
-    c = ax[1].imshow(np.transpose(diff), extent=[0, Lx, 0, Ly])
+    c = ax[1].imshow(np.transpose(diff/neutral_density_exact_reshaped), extent=[0, Lx, 0, Ly])
     ax[1].set_title("Difference")
     fig.colorbar(c, ax=ax[1])
     ax[1].set_xlabel("x")
