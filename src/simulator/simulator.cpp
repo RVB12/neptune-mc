@@ -25,47 +25,61 @@ void simulate(Mesh& mesh,
 
     // History based simulation (because its easy)
     for (int i_source = 0; i_source < sources.size(); i_source++) {
-#pragma omp parallel for
-        for (int i_particle = 0;
-             i_particle < sources[i_source]->num_particles(); i_particle++) {
-            real_t intensity_multiplier = sources[i_source]->intensity() /
-                                          sources[i_source]->num_particles();
-            index_t num_crossings = 0;
-            index_t num_collisions = 0;
+#pragma omp parallel
+        {
+            index_t num_crossings_local = 0;
+            index_t num_collisions_local = 0;
 
-            // Generate particle
-            Particle particle =
-                sources[i_source]->generate_particle(i_particle);
-            particle.geometry.cell_id =
-                mesh.get_cell_index(particle.geometry.position);
+            // This should really be changed to a reduction clause instead of separate local variables
+            vector<real_t> density_local(mesh.n_cells(), 0);
+#pragma omp for
+            for (int i_particle = 0;
+                 i_particle < sources[i_source]->num_particles();
+                 i_particle++) {
+                real_t intensity_multiplier =
+                    sources[i_source]->intensity() /
+                    sources[i_source]->num_particles();
 
-            if(particle.geometry.cell_id == -1) {
-                throw std::runtime_error("Particle generated outside of mesh");
-            }
+                // Generate particle
+                Particle particle =
+                    sources[i_source]->generate_particle(i_particle);
+                particle.geometry.cell_id =
+                    mesh.get_cell_index(particle.geometry.position);
 
-            for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
-                real_t weight_old = particle.weight;
-                real_t t_old = particle.t;
-                index_t cell_id_old = particle.geometry.cell_id;
-                // Simulate the particle up to the next event
-                update_particle(mesh, background, boundary_conditions, particle,
-                                num_crossings, num_collisions);
+                if (particle.geometry.cell_id == -1) {
+                    throw std::runtime_error(
+                        "Particle generated outside of mesh");
+                }
 
-                // Tally
-                real_t v = mesh.get_volume(cell_id_old);
-#pragma omp atomic
-                density[cell_id_old] += (particle.t - t_old) * weight_old / v *
-                                        intensity_multiplier;
+                for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
+                    real_t weight_old = particle.weight;
+                    real_t t_old = particle.t;
+                    index_t cell_id_old = particle.geometry.cell_id;
+                    // Simulate the particle up to the next event
+                    update_particle(mesh, background, boundary_conditions,
+                                    particle, num_crossings_local,
+                                    num_collisions_local);
 
-                if (particle.weight < 1.0e-4) {
-                    break;
+                    // Tally
+                    real_t v = mesh.get_volume(cell_id_old);
+                    density_local[cell_id_old] += (particle.t - t_old) *
+                                                  weight_old / v *
+                                                  intensity_multiplier;
+
+                    if (particle.weight < 1.0e-4) {
+                        break;
+                    }
                 }
             }
 
+            for (index_t i = 0; i < mesh.n_cells(); i++) {
 #pragma omp atomic
-            stats.num_crossings += num_crossings;
+                density[i] += density_local[i];
+            }
 #pragma omp atomic
-            stats.num_collisions += num_collisions;
+            stats.num_crossings += num_crossings_local;
+#pragma omp atomic
+            stats.num_collisions += num_collisions_local;
         }
     }
 }
