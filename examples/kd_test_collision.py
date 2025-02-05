@@ -33,7 +33,7 @@ for i in range(ncells):
     plasma_dens[i] = 1.0e21
 
 for i in range(ncells):
-    plasma_temp[i] = 1.0e8
+    plasma_temp[i] = 1.0
 
 for i in range(ncells):
     plasma_vel_x[i] = 1.0e1
@@ -70,8 +70,11 @@ config["boundary_conditions"] = [
 config["max_steps"] = 10000000
 config["seed"] = 0
 
+errors = []
+background_density_array = [1.0e16, 1.0e17, 1.0e18, 1.0e19, 1.0e20, 1.0e21, 1.0e22]
+
 #test with increasing collision rate
-for background_density in [1.e16, 1.0e17, 1.0e18, 1.0e19, 1.0e20]:
+for background_density in background_density_array:
     config["dt"] = 1.0e-3
 
     for i in range(ncells):
@@ -94,12 +97,12 @@ for background_density in [1.e16, 1.0e17, 1.0e18, 1.0e19, 1.0e20]:
     neutral_density = np.array(output["density"])
     neutral_density_reshaped = np.reshape(neutral_density, (nx, ny))
 
-    plt.figure()
-    c = plt.imshow(np.transpose(neutral_density_reshaped), extent=[0, Lx, 0, Ly])
-    plt.title("Neutral particle density kd, background = " + str(background_density))
-    plt.colorbar(c)
-    plt.xlabel("x")
-    plt.ylabel("y")
+    fig, ax = plt.subplots(1,2)
+    c = ax[0].imshow(np.transpose(neutral_density_reshaped), extent=[0, Lx, 0, Ly])
+    ax[0].set_title("Neutral particle density (KD), background = " + str(background_density))
+    fig.colorbar(c, ax=ax[0])
+    ax[0].set_xlabel("x")
+    ax[0].set_ylabel("y")
 
     del config["dt"]
     inputstring = json.dumps(config)
@@ -109,14 +112,23 @@ for background_density in [1.e16, 1.0e17, 1.0e18, 1.0e19, 1.0e20]:
     stats = output["stats"]
     print(stats)
     neutral_density = np.array(output["density"])
-    neutral_density_reshaped = np.reshape(neutral_density, (nx, ny))
+    neutral_density_exact_reshaped = np.reshape(neutral_density, (nx, ny))
 
-    plt.figure()
-    c = plt.imshow(np.transpose(neutral_density_reshaped), extent=[0, Lx, 0, Ly])
-    plt.title("Neutral particle density, background = " + str(background_density))
-    plt.colorbar(c)
-    plt.xlabel("x")
-    plt.ylabel("y")
+    c = ax[1].imshow(np.transpose(neutral_density_exact_reshaped), extent=[0, Lx, 0, Ly])
+    ax[1].set_title("Neutral particle density, background = " + str(background_density))
+    fig.colorbar(c, ax=ax[1])
+    ax[1].set_xlabel("x")
+    ax[1].set_ylabel("y")
+
+    diff = neutral_density_exact_reshaped - neutral_density_reshaped
+    errors.append(np.linalg.norm(diff) / np.linalg.norm(neutral_density_exact_reshaped))
+
+
+plt.figure()
+plt.loglog(background_density_array, errors)
+plt.title("Error vs background density")
+plt.xlabel("Background density")
+plt.ylabel("Error")
 
 plt.show()
 
