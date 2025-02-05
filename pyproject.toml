@@ -4,9 +4,9 @@ build-backend = "scikit_build_core.build"
 
 
 [project]
-name = "eiron2"
+name = "eigrene"
 version = "0.1"
-description="Eiron2: monte carlo solver for neutral in plasma"
+description="Eigrene: monte carlo solver for neutral in plasma"
 readme = "README.md"
 authors = [
   { name = "Thijs" },

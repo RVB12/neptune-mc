@@ -1,9 +1,9 @@
-#ifndef EIRON2_SIMULATOR_EXECUTION_STATISTICS_HPP
-#define EIRON2_SIMULATOR_EXECUTION_STATISTICS_HPP
+#ifndef EIGRENE_SIMULATOR_EXECUTION_STATISTICS_HPP
+#define EIGRENE_SIMULATOR_EXECUTION_STATISTICS_HPP
 
-#include "eiron2/common/utils.hpp"
+#include "eigrene/common/utils.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 struct ExecutionStatistics {
     // The number of cell crossings
@@ -18,6 +18,6 @@ struct ExecutionStatistics {
     real_t total_time = 0;
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

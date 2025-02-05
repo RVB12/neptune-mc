@@ -1,11 +1,11 @@
 #include <fstream>
 #include <chrono>
 
-#include "eiron2/common/json_conversions.hpp"
-#include "eiron2/simulator/simulator.hpp"
-#include "eiron2/simulator/simulator_kdmc.hpp"
+#include "eigrene/common/json_conversions.hpp"
+#include "eigrene/simulator/simulator.hpp"
+#include "eigrene/simulator/simulator_kdmc.hpp"
 
-using namespace eiron2;
+using namespace eigrene;
 
 int main(int argc, char** argv)
 {

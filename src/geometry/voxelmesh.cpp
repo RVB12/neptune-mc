@@ -1,6 +1,6 @@
-#include "eiron2/geometry/voxelmesh.hpp"
+#include "eigrene/geometry/voxelmesh.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 index_t VoxelMesh::n_cells() const { return nx * ny; }
 
@@ -143,4 +143,4 @@ Vec2 VoxelMesh::get_surface_normal(index_t cell_index, index_t surface_id) const
     }
 }
 
-}  // namespace eiron2
+}  // namespace eigrene

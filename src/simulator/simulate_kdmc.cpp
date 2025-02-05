@@ -1,10 +1,10 @@
 #include <omp.h>
 
-#include "eiron2/geometry/voxelmesh.hpp"
-#include "eiron2/physics/linesource.hpp"
-#include "eiron2/physics/physicalconstants.hpp"
-#include "eiron2/simulator/simulator_kdmc.hpp"
-namespace eiron2 {
+#include "eigrene/geometry/voxelmesh.hpp"
+#include "eigrene/physics/linesource.hpp"
+#include "eigrene/physics/physicalconstants.hpp"
+#include "eigrene/simulator/simulator_kdmc.hpp"
+namespace eigrene {
 
 void simulate_kdmc(Mesh& mesh,
                    PlasmaBackground& background,
@@ -199,4 +199,4 @@ void simulate_kdmc(Mesh& mesh,
     }
 }
 
-}  // namespace eiron2
+}  // namespace eigrene

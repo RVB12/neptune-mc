@@ -1,13 +1,13 @@
-#ifndef EIRON2_GEOMETRY_BOUNDINGBOX_HPP
-#define EIRON2_GEOMETRY_BOUNDINGBOX_HPP
+#ifndef EIGRENE_GEOMETRY_BOUNDINGBOX_HPP
+#define EIGRENE_GEOMETRY_BOUNDINGBOX_HPP
 
 #include <cassert>
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/geometry/vec3.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/geometry/vec3.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief A simple axis-aligned bounding box
@@ -31,6 +31,6 @@ public:
     Vec2 max;
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

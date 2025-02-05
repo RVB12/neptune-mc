@@ -1,11 +1,11 @@
-#ifndef EIRON2_GEOMETRY_TRIANGLE_HPP
-#define EIRON2_GEOMETRY_TRIANGLE_HPP
+#ifndef EIGRENE_GEOMETRY_TRIANGLE_HPP
+#define EIGRENE_GEOMETRY_TRIANGLE_HPP
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/geometry/boundingbox.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/geometry/boundingbox.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief A triangle, defined by three indices into the vertex array
@@ -35,6 +35,6 @@ class Triangle {
     const Vec2& p3;
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

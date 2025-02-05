@@ -1,6 +1,6 @@
-#include "eiron2/geometry/trianglemesh.hpp"
+#include "eigrene/geometry/trianglemesh.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 index_t TriangleMesh::n_cells() const { return triangles.size(); }
 
@@ -296,4 +296,4 @@ Vec2 TriangleMesh::get_surface_normal(index_t cell_index,
     return normal / normal.norm();
 }
 
-}  // namespace eiron2
+}  // namespace eigrene

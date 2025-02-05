@@ -1,24 +1,24 @@
-#ifndef EIRON2_JSON_CONVERSIONS_HPP
-#define EIRON2_JSON_CONVERSIONS_HPP
+#ifndef EIGRENE_JSON_CONVERSIONS_HPP
+#define EIGRENE_JSON_CONVERSIONS_HPP
 
 #include <cassert>
 #include <chrono>
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-#include "eiron2/common/vector.hpp"
-#include "eiron2/geometry/spatialindex.hpp"
-#include "eiron2/geometry/trianglemesh.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/geometry/vec3.hpp"
-#include "eiron2/geometry/voxelmesh.hpp"
-#include "eiron2/physics/boundarycondition.hpp"
-#include "eiron2/physics/linesource.hpp"
-#include "eiron2/physics/source.hpp"
-#include "eiron2/simulator/execution_statistics.hpp"
-#include "eiron2/simulator/simulator.hpp"
+#include "eigrene/common/vector.hpp"
+#include "eigrene/geometry/spatialindex.hpp"
+#include "eigrene/geometry/trianglemesh.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/geometry/vec3.hpp"
+#include "eigrene/geometry/voxelmesh.hpp"
+#include "eigrene/physics/boundarycondition.hpp"
+#include "eigrene/physics/linesource.hpp"
+#include "eigrene/physics/source.hpp"
+#include "eigrene/simulator/execution_statistics.hpp"
+#include "eigrene/simulator/simulator.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 void to_json(nlohmann::json& j, const Vec2& v);
 void to_json(nlohmann::json& j, const Vec3& v);
@@ -46,22 +46,22 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<Source>>& v);
 void from_json(const nlohmann::json& j, BoundaryCondition& v);
 void from_json(const nlohmann::json& j, vector<BoundaryCondition>& v);
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 namespace nlohmann {
 template <>
-struct adl_serializer<eiron2::PlasmaBackground> {
-    static eiron2::PlasmaBackground from_json(const json& j)
+struct adl_serializer<eigrene::PlasmaBackground> {
+    static eigrene::PlasmaBackground from_json(const json& j)
     {
-        eiron2::index_t n_cells = j.at("plasma_dens").size();
-        if (n_cells != (eiron2::index_t)j.at("plasma_temp").size() ||
-            n_cells != (eiron2::index_t)j.at("plasma_vel_x").size() ||
-            n_cells != (eiron2::index_t)j.at("plasma_vel_y").size()) {
+        eigrene::index_t n_cells = j.at("plasma_dens").size();
+        if (n_cells != (eigrene::index_t)j.at("plasma_temp").size() ||
+            n_cells != (eigrene::index_t)j.at("plasma_vel_x").size() ||
+            n_cells != (eigrene::index_t)j.at("plasma_vel_y").size()) {
             throw std::runtime_error(
                 "Plasma background arrays must have the same size");
         }
 
-        eiron2::PlasmaBackground m(n_cells);
+        eigrene::PlasmaBackground m(n_cells);
         j.at("plasma_dens").get_to(m.plasma_dens);
         j.at("plasma_temp").get_to(m.plasma_temp);
         j.at("plasma_vel_x").get_to(m.plasma_vel_x);
@@ -70,7 +70,7 @@ struct adl_serializer<eiron2::PlasmaBackground> {
         return m;
     }
 
-    static void to_json(json& j, eiron2::PlasmaBackground t)
+    static void to_json(json& j, eigrene::PlasmaBackground t)
     {
         j = json{{"plasma_dens", t.plasma_dens},
                  {"plasma_temp", t.plasma_temp},
@@ -80,15 +80,15 @@ struct adl_serializer<eiron2::PlasmaBackground> {
 };
 
 template <>
-struct adl_serializer<eiron2::LineSource> {
-    static eiron2::LineSource from_json(const json& j)
+struct adl_serializer<eigrene::LineSource> {
+    static eigrene::LineSource from_json(const json& j)
     {
-        eiron2::index_t num_particles = j.at("n_particles");
-        eiron2::real_t intensity = j.at("intensity");
-        eiron2::Vec2 pos_a = j.at("pos_a");
-        eiron2::Vec2 pos_b = j.at("pos_b");
+        eigrene::index_t num_particles = j.at("n_particles");
+        eigrene::real_t intensity = j.at("intensity");
+        eigrene::Vec2 pos_a = j.at("pos_a");
+        eigrene::Vec2 pos_b = j.at("pos_b");
 
-        eiron2::LineSource s(num_particles, intensity, pos_a, pos_b);
+        eigrene::LineSource s(num_particles, intensity, pos_a, pos_b);
 
         if (j.find("angle_min") != j.end()) {
             s.angle_min = j.at("angle_min");
@@ -100,7 +100,7 @@ struct adl_serializer<eiron2::LineSource> {
         return s;
     }
 
-    static void to_json(json& j, eiron2::LineSource t)
+    static void to_json(json& j, eigrene::LineSource t)
     {
         j = json{{"type", "line"},
                  {"pos_a", t.pos_a},
@@ -113,16 +113,16 @@ struct adl_serializer<eiron2::LineSource> {
 };
 
 template <>
-struct adl_serializer<eiron2::TriangleMesh> {
-    static eiron2::TriangleMesh from_json(const json& j)
+struct adl_serializer<eigrene::TriangleMesh> {
+    static eigrene::TriangleMesh from_json(const json& j)
     {
-        eiron2::vector<eiron2::Vec2> vertices = j.at("vertices");
-        eiron2::vector<eiron2::TriangleIndices> triangles = j.at("triangles");
+        eigrene::vector<eigrene::Vec2> vertices = j.at("vertices");
+        eigrene::vector<eigrene::TriangleIndices> triangles = j.at("triangles");
 
-        return eiron2::TriangleMesh(vertices, triangles);
+        return eigrene::TriangleMesh(vertices, triangles);
     }
 };
 
 }  // namespace nlohmann
 
-#endif  // EIRON2_JSON_CONVERSIONS_HPP
+#endif  // EIGRENE_JSON_CONVERSIONS_HPP

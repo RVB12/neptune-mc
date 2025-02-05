@@ -1,11 +1,11 @@
-#ifndef EIRON2_CONSTANTS_HPP
-#define EIRON2_CONSTANTS_HPP
+#ifndef EIGRENE_CONSTANTS_HPP
+#define EIGRENE_CONSTANTS_HPP
 
 #include <math.h>
 
-#include "eiron2/common/utils.hpp"
+#include "eigrene/common/utils.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 namespace constants {
 
     // // Ion temperature (eV)
@@ -62,5 +62,5 @@ namespace constants {
 
 }  // namespace constants
 
-}  // namespace eiron2
+}  // namespace eigrene
 #endif

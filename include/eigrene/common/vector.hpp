@@ -1,6 +1,6 @@
 
-#ifndef EIRON2_VECTOR_HPP
-#define EIRON2_VECTOR_HPP
+#ifndef EIGRENE_VECTOR_HPP
+#define EIGRENE_VECTOR_HPP
 
 #include <algorithm>
 #include <cassert>
@@ -8,9 +8,9 @@
 #include <memory>
 #include <random>
 
-#include "eiron2/common/utils.hpp"
+#include "eigrene/common/utils.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 // Forward declaration of the vectorview class
 template <typename T = real_t>

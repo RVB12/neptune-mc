@@ -1,11 +1,11 @@
-#include <eiron2/common/vector.hpp>
-#include <eiron2/geometry/voxelmesh.hpp>
-#include <eiron2/physics/linesource.hpp>
-#include <eiron2/physics/source.hpp>
-#include <eiron2/simulator/simulator.hpp>
+#include <eigrene/common/vector.hpp>
+#include <eigrene/geometry/voxelmesh.hpp>
+#include <eigrene/physics/linesource.hpp>
+#include <eigrene/physics/source.hpp>
+#include <eigrene/simulator/simulator.hpp>
 #include <iostream>
 
-using namespace eiron2;
+using namespace eigrene;
 
 int main()
 {

@@ -3,10 +3,10 @@
 #include <cmath>
 #include <cassert>
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec2.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 real_t& Vec2::operator[](index_t i)
 {
@@ -119,4 +119,4 @@ std::ostream& operator<<(std::ostream& os, Vec2 const& v)
     return os;
 }
 
-}  // namespace eiron2
+}  // namespace eigrene

@@ -1,15 +1,15 @@
-#ifndef EIRON2_UPDATE_PARTICLE_HPP
-#define EIRON2_UPDATE_PARTICLE_HPP
+#ifndef EIGRENE_UPDATE_PARTICLE_HPP
+#define EIGRENE_UPDATE_PARTICLE_HPP
 
 #include <cassert>
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/geometry/mesh.hpp"
-#include "eiron2/physics/particle.hpp"
-#include "eiron2/simulator/simulator.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/geometry/mesh.hpp"
+#include "eigrene/physics/particle.hpp"
+#include "eigrene/simulator/simulator.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief Simulate a particle until an event occurs.
@@ -24,6 +24,6 @@ void update_particle(const Mesh& mesh,
                      index_t& num_crossings,
                      index_t& num_collisions);
 
-}  // namespace eiron2
+}  // namespace eigrene
 
-#endif  // EIRON2_UPDATE_PARTICLE_HPP
+#endif  // EIGRENE_UPDATE_PARTICLE_HPP

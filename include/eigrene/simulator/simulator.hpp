@@ -1,21 +1,21 @@
-#ifndef EIRON2_SIMULATOR
-#define EIRON2_SIMULATOR
+#ifndef EIGRENE_SIMULATOR
+#define EIGRENE_SIMULATOR
 
 #include <cstdint>
 #include <random>
 #include <vector>
 
-#include "eiron2/common/vector.hpp"
-#include "eiron2/geometry/cellcrossing.hpp"
-#include "eiron2/geometry/mesh.hpp"
-#include "eiron2/physics/particle.hpp"
-#include "eiron2/physics/source.hpp"
-#include "eiron2/common/utils.hpp"
-#include "eiron2/physics/boundarycondition.hpp"
-#include "eiron2/simulator/execution_statistics.hpp"
-#include "eiron2/physics/plasmabackground.hpp"
+#include "eigrene/common/vector.hpp"
+#include "eigrene/geometry/cellcrossing.hpp"
+#include "eigrene/geometry/mesh.hpp"
+#include "eigrene/physics/particle.hpp"
+#include "eigrene/physics/source.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/physics/boundarycondition.hpp"
+#include "eigrene/simulator/execution_statistics.hpp"
+#include "eigrene/physics/plasmabackground.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 
 struct SimulationParams {
@@ -24,7 +24,7 @@ struct SimulationParams {
 };
 
 /**
- * @brief The main function of Eiron2,
+ * @brief The main function of Eigrene,
  * Simulate a number of particles on a given grid.
  *
  */
@@ -36,6 +36,6 @@ void simulate(Mesh& mesh,
               SimulationParams params,
               ExecutionStatistics& stats);
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

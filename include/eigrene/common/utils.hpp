@@ -1,10 +1,10 @@
-#ifndef EIRON2_UTILS_HPP
-#define EIRON2_UTILS_HPP
+#ifndef EIGRENE_UTILS_HPP
+#define EIGRENE_UTILS_HPP
 
 #include <cassert>
 #include <random>
 
-namespace eiron2 {
+namespace eigrene {
 
     // The floating point type used throughout the code
     typedef double real_t;
@@ -19,6 +19,6 @@ namespace eiron2 {
         return x * x;
     }
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

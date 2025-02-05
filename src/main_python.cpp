@@ -1,9 +1,9 @@
 #include <pybind11/pybind11.h>
 #include <chrono>
 
-#include <eiron2/simulator/simulator.hpp>
-#include "eiron2/simulator/simulator_kdmc.hpp"
-#include "eiron2/common/json_conversions.hpp"
+#include <eigrene/simulator/simulator.hpp>
+#include "eigrene/simulator/simulator_kdmc.hpp"
+#include "eigrene/common/json_conversions.hpp"
 
 #include <string>
 #include <nlohmann/json.hpp>
@@ -13,7 +13,7 @@
 
 namespace py = pybind11;
 
-using namespace eiron2;
+using namespace eigrene;
 
 std::string simulate_json(std::string jsonstring){
     nlohmann::json j = nlohmann::json::parse(jsonstring);
@@ -58,10 +58,10 @@ std::string simulate_json(std::string jsonstring){
 PYBIND11_MODULE(_core, m)
 {
     m.doc() = R"pbdoc(
-        Eiron2 - simple C++ monte carlo neutral code
+        Eigrene - simple C++ monte carlo neutral code
         -----------------------
 
-        .. currentmodule:: eiron2
+        .. currentmodule:: eigrene
 
         .. autosummary::
            :toctree: _generate

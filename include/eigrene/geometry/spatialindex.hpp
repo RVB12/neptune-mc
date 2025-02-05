@@ -1,18 +1,18 @@
-#ifndef EIRON2_SPATIALINDEX_HPP
-#define EIRON2_SPATIALINDEX_HPP
+#ifndef EIGRENE_SPATIALINDEX_HPP
+#define EIGRENE_SPATIALINDEX_HPP
 
 #include <cassert>
 #include <functional>
 #include <set>
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/common/vector.hpp"
-#include "eiron2/geometry/triangle.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/common/vector.hpp"
+#include "eigrene/geometry/triangle.hpp"
 
-#include "eiron2/geometry/boundingbox.hpp"
+#include "eigrene/geometry/boundingbox.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief A very simple grid-based spatial index
@@ -274,6 +274,6 @@ class SpatialIndex {
     vector<index_t> data;
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

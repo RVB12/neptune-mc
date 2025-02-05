@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import numpy as np
-import eiron2
+import eigrene
 import math
 import json
 import time
@@ -97,7 +97,7 @@ with open("build/input.json", "w") as f:
     f.write(inputstring)
 
 start_time = time.time()
-outputstring = eiron2.simulate(inputstring)
+outputstring = eigrene.simulate(inputstring)
 end_time = time.time()
 
 print("Simulation took", end_time - start_time, "seconds")

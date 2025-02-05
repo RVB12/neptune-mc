@@ -1,13 +1,13 @@
-#ifndef EIRON2_VOXELMESH_HPP
-#define EIRON2_VOXELMESH_HPP
+#ifndef EIGRENE_VOXELMESH_HPP
+#define EIGRENE_VOXELMESH_HPP
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/geometry/cellcrossing.hpp"
-#include "eiron2/geometry/mesh.hpp"
-#include "eiron2/geometry/particlegeometry.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/geometry/cellcrossing.hpp"
+#include "eigrene/geometry/mesh.hpp"
+#include "eigrene/geometry/particlegeometry.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 class Index2D {
    public:
@@ -102,6 +102,6 @@ class VoxelMesh : public Mesh {
     real_t dy = 0.;  // Size of a cell in y direction
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

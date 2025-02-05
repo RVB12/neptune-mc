@@ -1,9 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include "eiron2/geometry/vec3.hpp"
+#include "eigrene/geometry/vec3.hpp"
 
-using namespace eiron2;
+using namespace eigrene;
 
 TEST_CASE("Default vec3 constructor works", "[vector]")
 {

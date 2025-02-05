@@ -1,8 +1,8 @@
-#include "eiron2/common/json_conversions.hpp"
+#include "eigrene/common/json_conversions.hpp"
 
 #include <fstream>
 
-namespace eiron2 {
+namespace eigrene {
 
 void to_json(nlohmann::json& j, const Vec2& v) { j = nlohmann::json{v.x, v.y}; }
 
@@ -265,4 +265,4 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<Source>>& v)
     }
 }
 
-}  // namespace eiron2
+}  // namespace eigrene

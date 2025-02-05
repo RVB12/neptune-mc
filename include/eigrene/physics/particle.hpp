@@ -1,13 +1,13 @@
-#ifndef EIRON2_PARTICLE_HPP
-#define EIRON2_PARTICLE_HPP
+#ifndef EIGRENE_PARTICLE_HPP
+#define EIGRENE_PARTICLE_HPP
 
 #include <cassert>
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec3.hpp"
-#include "eiron2/geometry/particlegeometry.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec3.hpp"
+#include "eigrene/geometry/particlegeometry.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief Class containing all the information of a particle
@@ -34,6 +34,6 @@ class Particle {
     rng_t rng;            // Random number generator
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

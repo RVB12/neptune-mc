@@ -1,5 +1,5 @@
 import numpy as np
-import eiron2
+import eigrene
 from matplotlib import pyplot as plt
 import math
 import json
@@ -65,7 +65,7 @@ config["seed"] = 0
 
 inputstring = json.dumps(config)
 
-outputstring = eiron2.simulate(inputstring)
+outputstring = eigrene.simulate(inputstring)
 
 output = json.loads(outputstring)
 

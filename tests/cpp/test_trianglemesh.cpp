@@ -1,10 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/geometry/trianglemesh.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/geometry/trianglemesh.hpp"
 
-using namespace eiron2;
+using namespace eigrene;
 TEST_CASE("TriangleMesh::n_cells", "[TriangleMesh]") {
     vector<Vec2> vertices = {Vec2(0, 0), Vec2(1, 0), Vec2(0, 1)};
     vector<TriangleIndices> triangles = {TriangleIndices(0, 1, 2)};

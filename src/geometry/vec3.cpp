@@ -3,10 +3,10 @@
 #include <cmath>
 #include <cassert>
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec3.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec3.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 real_t& Vec3::operator[](index_t i)
 {
@@ -125,4 +125,4 @@ real_t Vec3::norm() const {
     return std::sqrt(norm2());    
 }
 
-}  // namespace eiron2
+}  // namespace eigrene

@@ -1,10 +1,10 @@
-#ifndef EIRON2_PLASMA_BACKGROUND
-#define EIRON2_PLASMA_BACKGROUND
+#ifndef EIGRENE_PLASMA_BACKGROUND
+#define EIGRENE_PLASMA_BACKGROUND
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/common/vector.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/common/vector.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 class PlasmaBackground {
    public:

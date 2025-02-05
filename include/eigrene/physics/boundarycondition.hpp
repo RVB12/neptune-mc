@@ -1,9 +1,9 @@
-#ifndef EIRON2_BOUNDARYCONDITION_HPP
-#define EIRON2_BOUNDARYCONDITION_HPP
+#ifndef EIGRENE_BOUNDARYCONDITION_HPP
+#define EIGRENE_BOUNDARYCONDITION_HPP
 
 #include <cassert>
 
-namespace eiron2 {
+namespace eigrene {
 
     enum class BoundaryCondition {
         REFLECTIVE,

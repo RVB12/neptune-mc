@@ -1,11 +1,11 @@
-#ifndef EIRON2_SOURCE_HPP
-#define EIRON2_SOURCE_HPP
+#ifndef EIGRENE_SOURCE_HPP
+#define EIGRENE_SOURCE_HPP
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/physics/particle.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/physics/particle.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief An abstract class to represent a source of particles
@@ -47,6 +47,6 @@ class Source {
     index_t particle_id_offset_ = 0;  // the offset to add to the particle id
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

@@ -1,12 +1,12 @@
-#ifndef EIRON2_Vec2_HPP
-#define EIRON2_Vec2_HPP
+#ifndef EIGRENE_Vec2_HPP
+#define EIGRENE_Vec2_HPP
 
 #include <cassert>
 #include <ostream>
 
-#include "eiron2/common/utils.hpp"
+#include "eigrene/common/utils.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief Simple class that represents a 2D vector
@@ -72,6 +72,6 @@ inline real_t dot(Vec2 a, Vec2 b) { return a.dot(b); }
 
 inline real_t dist(Vec2 a, Vec2 b) { return a.dist(b); }
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

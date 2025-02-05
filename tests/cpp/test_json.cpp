@@ -1,11 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include "eiron2/common/json_conversions.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/geometry/vec3.hpp"
+#include "eigrene/common/json_conversions.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/geometry/vec3.hpp"
 
-using namespace eiron2;
+using namespace eigrene;
 
 TEST_CASE("Vec2 json conversion works", "[vector][json]")
 {

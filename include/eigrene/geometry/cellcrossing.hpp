@@ -1,12 +1,12 @@
-#ifndef EIRON2_CROSSING_HPP
-#define EIRON2_CROSSING_HPP
+#ifndef EIGRENE_CROSSING_HPP
+#define EIGRENE_CROSSING_HPP
 
 #include <cassert>
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec2.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief Class containing information about a cell crossing
@@ -56,6 +56,6 @@ class CellCrossing {
     index_t boundary_condition_id = -1;
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

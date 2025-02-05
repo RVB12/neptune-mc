@@ -1,5 +1,5 @@
 import numpy as np
-import eiron2
+import eigrene
 from matplotlib import pyplot as plt
 import math
 import json
@@ -73,7 +73,7 @@ config["seed"] = 0
 inputstring = json.dumps(config)
 
 start_time = time.time()
-outputstring = eiron2.simulate(inputstring)
+outputstring = eigrene.simulate(inputstring)
 end_time = time.time()
 
 print("Simulation took", end_time - start_time, "seconds")
@@ -108,7 +108,7 @@ for dt in dt_array:
     #     f.write(inputstring)
 
     start_time = time.time()
-    outputstring = eiron2.simulate(inputstring)
+    outputstring = eigrene.simulate(inputstring)
     end_time = time.time()
 
     print("Simulation took", end_time - start_time, "seconds")

@@ -1,12 +1,12 @@
-#ifndef EIRON2_MESH_HPP
-#define EIRON2_MESH_HPP
+#ifndef EIGRENE_MESH_HPP
+#define EIGRENE_MESH_HPP
 
-#include "eiron2/geometry/cellcrossing.hpp"
-#include "eiron2/geometry/particlegeometry.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/common/utils.hpp"
+#include "eigrene/geometry/cellcrossing.hpp"
+#include "eigrene/geometry/particlegeometry.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/common/utils.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief This is a very general class for a mesh
@@ -54,6 +54,6 @@ class Mesh {
     virtual Vec2 get_surface_normal(index_t cell_index, index_t surface_id) const = 0;
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

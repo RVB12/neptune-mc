@@ -1,11 +1,11 @@
-#include "eiron2/simulator/simulator.hpp"
+#include "eigrene/simulator/simulator.hpp"
 
 #include <omp.h>
 
-#include "eiron2/geometry/voxelmesh.hpp"
-#include "eiron2/physics/linesource.hpp"
-#include "eiron2/physics/update_particle.hpp"
-namespace eiron2 {
+#include "eigrene/geometry/voxelmesh.hpp"
+#include "eigrene/physics/linesource.hpp"
+#include "eigrene/physics/update_particle.hpp"
+namespace eigrene {
 
 void simulate(Mesh& mesh,
               PlasmaBackground& background,
@@ -84,4 +84,4 @@ void simulate(Mesh& mesh,
     }
 }
 
-}  // namespace eiron2
+}  // namespace eigrene

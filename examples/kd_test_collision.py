@@ -1,5 +1,5 @@
 import numpy as np
-import eiron2
+import eigrene
 from matplotlib import pyplot as plt
 import math
 import json
@@ -88,7 +88,7 @@ for background_density in background_density_array:
     # with open("build/input.json", "w") as f:
     #     f.write(inputstring)
 
-    outputstring = eiron2.simulate(inputstring)
+    outputstring = eigrene.simulate(inputstring)
 
     output = json.loads(outputstring)
 
@@ -106,7 +106,7 @@ for background_density in background_density_array:
 
     del config["dt"]
     inputstring = json.dumps(config)
-    outputstring = eiron2.simulate(inputstring)
+    outputstring = eigrene.simulate(inputstring)
     output = json.loads(outputstring)
 
     stats = output["stats"]

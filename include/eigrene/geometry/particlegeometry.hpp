@@ -1,12 +1,12 @@
-#ifndef EIRON2_PARTICLEGEOMETRY_HPP
-#define EIRON2_PARTICLEGEOMETRY_HPP
+#ifndef EIGRENE_PARTICLEGEOMETRY_HPP
+#define EIGRENE_PARTICLEGEOMETRY_HPP
 
 #include <cassert>
 
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/common/utils.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief Class containing geometric information about a particle,
@@ -29,6 +29,6 @@ class ParticleGeometry {
                               // -1 if the particle is not on a boundary
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

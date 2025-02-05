@@ -1,10 +1,10 @@
-#ifndef EIRON2_GEOMETRY_CONE_HPP
-#define EIRON2_GEOMETRY_CONE_HPP
+#ifndef EIGRENE_GEOMETRY_CONE_HPP
+#define EIGRENE_GEOMETRY_CONE_HPP
 
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/geometry/vec3.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/geometry/vec3.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief Find the intersection of a ray with position pos and velocity vel with
@@ -21,6 +21,6 @@ namespace eiron2 {
  */
 real_t ray_cone_intersection(
     Vec3 pos, Vec3 vel, real_t r_a, real_t z_a, real_t r_b, real_t z_b);
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

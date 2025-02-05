@@ -1,15 +1,15 @@
-#ifndef EIRON2_LINESOURCE_HPP
-#define EIRON2_LINESOURCE_HPP
+#ifndef EIGRENE_LINESOURCE_HPP
+#define EIGRENE_LINESOURCE_HPP
 
 #include <cassert>
 #include <random>
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/physics/particle.hpp"
-#include "eiron2/physics/source.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/physics/particle.hpp"
+#include "eigrene/physics/source.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief A line source of particles
@@ -56,6 +56,6 @@ class LineSource : public Source {
     real_t angle_max = M_PI / 2;   // maximum angle of the velocity vector
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif

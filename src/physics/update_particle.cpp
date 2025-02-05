@@ -1,8 +1,8 @@
-#include "eiron2/physics/update_particle.hpp"
+#include "eigrene/physics/update_particle.hpp"
 
-#include "eiron2/physics/physicalconstants.hpp"
+#include "eigrene/physics/physicalconstants.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 void update_particle(const Mesh& mesh,
                      const PlasmaBackground& background,
@@ -93,4 +93,4 @@ void update_particle(const Mesh& mesh,
     p.t += dt;
 }
 
-}  // namespace eiron2
+}  // namespace eigrene

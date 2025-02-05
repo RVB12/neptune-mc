@@ -1,16 +1,16 @@
-#ifndef EIRON2_TRIANGLEMESH_HPP
-#define EIRON2_TRIANGLEMESH_HPP
+#ifndef EIGRENE_TRIANGLEMESH_HPP
+#define EIGRENE_TRIANGLEMESH_HPP
 
-#include "eiron2/common/utils.hpp"
-#include "eiron2/geometry/vec2.hpp"
-#include "eiron2/common/vector.hpp"
-#include "eiron2/geometry/cellcrossing.hpp"
-#include "eiron2/geometry/mesh.hpp"
-#include "eiron2/geometry/particlegeometry.hpp"
-#include "eiron2/geometry/spatialindex.hpp"
-#include "eiron2/geometry/triangle.hpp"
+#include "eigrene/common/utils.hpp"
+#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/common/vector.hpp"
+#include "eigrene/geometry/cellcrossing.hpp"
+#include "eigrene/geometry/mesh.hpp"
+#include "eigrene/geometry/particlegeometry.hpp"
+#include "eigrene/geometry/spatialindex.hpp"
+#include "eigrene/geometry/triangle.hpp"
 
-namespace eiron2 {
+namespace eigrene {
 
 /**
  * @brief Construct a neighbor list for a list of triangles
@@ -158,6 +158,6 @@ class TriangleMesh : public Mesh {
     vector<index_t> neighbors;
 };
 
-}  // namespace eiron2
+}  // namespace eigrene
 
 #endif
