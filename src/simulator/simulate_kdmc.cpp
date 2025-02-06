@@ -48,32 +48,71 @@ void simulate_kdmc(Mesh& mesh,
                 // real_t t_old = particle.t;
                 index_t cell_id_old = particle.geometry.cell_id;
 
+                // Charge exchange rate coefficient
                 real_t K_cx = constants::calculate_K_cx(
                     background.plasma_temp[cell_id_old]);
 
+                // Charge exchange rate
+                real_t R_cx = K_cx * background.plasma_dens[cell_id_old];
+
                 // Calculate time until next charge exchange
                 real_t kinetic_flight_time =
-                    -std::log(r_unif(particle.rng)) /
-                    (K_cx * background.plasma_dens[cell_id_old]);
+                    -std::log(r_unif(particle.rng)) / (R_cx);
 
                 bool charge_exchange_occurred = false;
+                Vec2 new_velocity = particle.geometry.velocity;
                 if (kinetic_flight_time <= dt) {
                     charge_exchange_occurred = true;
+                    real_t stddev = constants::calculate_BGK_stddev(
+                        background.plasma_temp[cell_id_old]);
+                    std::normal_distribution<real_t> dist_vx(
+                        background.plasma_vel_x[cell_id_old], stddev);
+                    std::normal_distribution<real_t> dist_vy(
+                        background.plasma_vel_y[cell_id_old], stddev);
+                    new_velocity =
+                        Vec2(dist_vx(particle.rng), dist_vy(particle.rng));
                 } else {
                     kinetic_flight_time = dt;
+                    new_velocity = particle.geometry.velocity;
                 }
 
                 // Fill up remaining time with diffusion
                 real_t diffusive_flight_time =
                     std::max(0.0, dt - kinetic_flight_time);
 
-                Vec2 drift_term = Vec2(background.plasma_vel_x[cell_id_old],
-                                       background.plasma_vel_y[cell_id_old]) *
-                                  diffusive_flight_time;
+                // Correspondence with formulas (3.1--3.2) in KDMC paper:
+                // T / sigma = plasma_background_variance
+                // D = Variance(Delta X| V) / 2 / diffusive_flight_time
+                // charge_exchange_rate = sigma / epsilon^2
+                Vec2 u = Vec2(background.plasma_vel_x[cell_id_old],
+                              background.plasma_vel_y[cell_id_old]);
+
+                Vec2 drift_term = u * diffusive_flight_time;
+                // drift_term += (new_velocity - u) / R_cx *
+                //               (1 - std::exp(-R_cx * diffusive_flight_time));
+                // TODO: add spatial derivative term
+
                 // Note, this still needs to be updated to take the velocity
                 // correlation into account
-                real_t D0 = background.plasma_temp[cell_id_old] * constants::eV_to_Joules / constants::m_p /
-                            background.plasma_dens[cell_id_old] / K_cx;
+                real_t D0 = background.plasma_temp[cell_id_old] *
+                            constants::eV_to_Joules / constants::m_p / R_cx;
+
+                // D0 *= (2 * std::exp(-R_cx * diffusive_flight_time) +
+                //        R_cx * diffusive_flight_time +
+                //        R_cx * diffusive_flight_time *
+                //            std::exp(-R_cx * diffusive_flight_time) -
+                //        2);
+
+                // D0 += (new_velocity - u).norm2() / (R_cx * R_cx) *
+                //       (1 -
+                //        2 * R_cx * diffusive_flight_time *
+                //            std::exp(-R_cx * diffusive_flight_time) -
+                //        std::exp(-2 * R_cx * diffusive_flight_time));
+
+                // assert(D0 >= 0);
+                if(D0 < 0){
+                    D0 = 0;
+                }
                 Vec2 diffusion_term =
                     Vec2(r_normal(particle.rng), r_normal(particle.rng)) *
                     std::sqrt(2.0 * diffusive_flight_time * D0);
@@ -82,6 +121,8 @@ void simulate_kdmc(Mesh& mesh,
                     particle.geometry.position +
                     kinetic_flight_time * particle.geometry.velocity +
                     drift_term + diffusion_term;
+
+                Vec2 old_velocity = particle.geometry.velocity;
 
                 // We have calculated, now need to trace through the mesh
                 // for tallying. We do this by pretending the particles moves
@@ -162,19 +203,14 @@ void simulate_kdmc(Mesh& mesh,
                     }
                 }
 
+                particle.geometry.velocity = old_velocity;
+
                 // Check for charge exchange
                 if (charge_exchange_occurred) {
                     num_collisions++;
                     // Generate new velocity from plasma background (BGK
                     // operator)
-                    real_t stddev = constants::calculate_BGK_stddev(
-                        background.plasma_temp[cell_id_old]);
-                    std::normal_distribution<real_t> dist_vx(
-                        background.plasma_vel_x[cell_id_old], stddev);
-                    std::normal_distribution<real_t> dist_vy(
-                        background.plasma_vel_y[cell_id_old], stddev);
-                    particle.geometry.velocity =
-                        Vec2(dist_vx(particle.rng), dist_vy(particle.rng));
+                    particle.geometry.velocity = new_velocity;
                 }
 
                 // Ionisation

@@ -95,7 +95,7 @@ plt.xlabel("x")
 plt.ylabel("y")
 
 errors = []
-dt_array = [1.0e-3, 1.0e-4, 1.0e-5, 1e-6, 1e-7]
+dt_array = [1.0e-3, 1.0e-4, 1.0e-5, 1e-6, 1.0e-7, 1.0e-8]
 
 #test with decreasing dt
 for dt in dt_array:
@@ -104,8 +104,8 @@ for dt in dt_array:
     inputstring = json.dumps(config)
 
     # write inputstring to file
-    # with open("build/input.json", "w") as f:
-    #     f.write(inputstring)
+    with open("build/input.json", "w") as f:
+        f.write(inputstring)
 
     start_time = time.time()
     outputstring = eigrene.simulate(inputstring)
@@ -137,6 +137,7 @@ for dt in dt_array:
     ax[1].set_ylabel("y")
 
     errors.append(np.linalg.norm(diff)/np.linalg.norm(neutral_density_exact_reshaped))
+    print(errors[-1])
 
 
 plt.figure()

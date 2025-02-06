@@ -10,8 +10,8 @@ config = {}
 
 Lx = 0.1
 Ly = 0.1
-nx = 100
-ny = 100
+nx = 10
+ny = 10
 
 config["mesh"] = {
     "type": "voxel",
@@ -30,7 +30,7 @@ plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 
 
 for i in range(ncells):
-    plasma_dens[i] = 1.0e20
+    plasma_dens[i] = 1.0e21
 
 for i in range(ncells):
     plasma_temp[i] = 1.0
