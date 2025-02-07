@@ -30,7 +30,7 @@ config["sources"] = [
         "type": "point",
         "n_particles": 500000,
         "intensity": 1.0e10,
-        "pos": [20, 0],
+        "pos": [20, 20],
         "vel_mean": [-5, 0],
         "vel_stddev": 1,
     },
@@ -38,7 +38,7 @@ config["sources"] = [
         "type": "point",
         "n_particles": 500000,
         "intensity": 1.0e10,
-        "pos": [20, 0],
+        "pos": [20, 20],
         "vel_mean": [15, 0],
         "vel_stddev": 1,
     }

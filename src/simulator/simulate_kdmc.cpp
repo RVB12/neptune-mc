@@ -56,7 +56,7 @@ void update_particle_kdmc(const Mesh& mesh,
                   background.plasma_vel_y[cell_id]);
 
     Vec2 drift_term = u * diffusive_flight_time;
-    drift_term += (new_velocity - u) / R_cx * (1 - std::exp(-R_cx * dt));
+    drift_term += (new_velocity - u) / R_cx * (1 - std::exp(-R_cx * diffusive_flight_time));
 
     // Note, this still needs to be updated to take the velocity
     // correlation into account

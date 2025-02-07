@@ -28,11 +28,12 @@ for eps in eps_array:
     neutral_density = np.array(output["density"])
 
     plt.figure()
-    plt.plot(x_pts, neutral_density_exact)
-    plt.plot(x_pts, neutral_density)
+    plt.plot(x_pts, neutral_density_exact, label="MC")
+    plt.plot(x_pts, neutral_density, label="KD")
     plt.title("epsilon = " + str(eps))
     plt.xlabel("x")
     plt.ylabel("density")
+    plt.legend()
 
     plt.savefig("outputs/mc_eps_" + str(eps) + ".png")
     plt.close()
