@@ -32,7 +32,7 @@ for i in range(ncells):
     plasma_temp[i] = 1.0
 
 for i in range(ncells):
-    plasma_vel_x[i] = 0
+    plasma_vel_x[i] = 0.1
 
 for i in range(ncells):
     plasma_vel_y[i] = 0
@@ -49,7 +49,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [0.5, 0.5],
         "pos_b": [0.5, 0.5],
-        "n_particles": 100000,
+        "n_particles": 1000000,
         "intensity": 1.0e10,
         "angle_min": -math.pi,
         "angle_max": math.pi,
@@ -57,10 +57,10 @@ config["sources"] = [
 ]
 
 config["boundary_conditions"] = [
-    "absorbing",
-    "absorbing",
-    "absorbing",
-    "absorbing"
+    "reflective",
+    "reflective",
+    "reflective",
+    "reflective"
 ]
 
 config["t_final"] = 1.0e-3
@@ -72,7 +72,7 @@ inputstring = json.dumps(config)
 with open("inputs/reference.json", "w") as f:
     f.write(inputstring)
 
-dt_array = [1.0e-3, 1.0e-4, 1.0e-5, 1e-6, 1.0e-7, 1.0e-8]
+dt_array = np.logspace(-3, -7, num = 11, endpoint=True, base=10.0)
 
 #test with decreasing dt
 for dt in dt_array:
