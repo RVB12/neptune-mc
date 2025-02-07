@@ -23,4 +23,5 @@ for f in inputs/*.json; do
     $MAIN_FILE $f ${f/inputs/outputs}
 done
 
-
+# Make the plots
+python3 make_plots.py
