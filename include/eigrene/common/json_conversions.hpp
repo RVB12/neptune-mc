@@ -14,6 +14,7 @@
 #include "eigrene/geometry/voxelmesh.hpp"
 #include "eigrene/physics/boundarycondition.hpp"
 #include "eigrene/physics/linesource.hpp"
+#include "eigrene/physics/pointsource.hpp"
 #include "eigrene/physics/source.hpp"
 #include "eigrene/simulator/execution_statistics.hpp"
 #include "eigrene/simulator/simulator.hpp"
@@ -107,6 +108,33 @@ struct adl_serializer<eigrene::LineSource> {
                  {"pos_b", t.pos_b},
                  {"angle_min", t.angle_min},
                  {"angle_max", t.angle_max},
+                 {"n_particles", t.num_particles()},
+                 {"intensity", t.intensity()}};
+    }
+};
+
+
+template <>
+struct adl_serializer<eigrene::PointSource> {
+    static eigrene::PointSource from_json(const json& j)
+    {
+        eigrene::index_t num_particles = j.at("n_particles");
+        eigrene::real_t intensity = j.at("intensity");
+        eigrene::Vec2 pos = j.at("pos");
+        eigrene::Vec2 vel_mean = j.at("vel_mean");
+        eigrene::real_t vel_stddev = j.at("vel_stddev");
+
+        eigrene::PointSource s(num_particles, intensity, pos, vel_mean, vel_stddev);
+
+        return s;
+    }
+
+    static void to_json(json& j, eigrene::PointSource t)
+    {
+        j = json{{"type", "point"},
+                 {"pos", t.pos},
+                 {"vel_mean", t.vel_mean},
+                 {"vel_stddev", t.vel_stddev},
                  {"n_particles", t.num_particles()},
                  {"intensity", t.intensity()}};
     }

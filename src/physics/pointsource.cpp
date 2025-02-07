@@ -1,0 +1,28 @@
+#include "eigrene/physics/pointsource.hpp"
+#include "eigrene/physics/physicalconstants.hpp"
+
+#include <iostream>
+
+namespace eigrene {
+
+Particle PointSource::generate_particle(index_t i_particle)
+{
+    if (i_particle >= num_particles()) {
+        throw std::runtime_error(
+            "PointSource::generate_particle: "
+            "Tried to generate more particles than "
+            "allowed by num_particles");
+    }
+    Particle p(i_particle + particle_id_offset_);
+    
+    p.geometry.position = pos;
+
+    std::normal_distribution<real_t> dist_vx(vel_mean.x, vel_stddev);
+    std::normal_distribution<real_t> dist_vy(vel_mean.y, vel_stddev);
+
+    p.geometry.velocity = Vec2(dist_vx(p.rng), dist_vy(p.rng));
+
+    return p;
+}
+
+}  // namespace eigrene

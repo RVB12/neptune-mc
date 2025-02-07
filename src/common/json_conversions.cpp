@@ -156,32 +156,6 @@ void to_json(nlohmann::json& j, const ExecutionStatistics& stats)
     };
 }
 
-// void to_json(nlohmann::json& j, const LineSource& s)
-// {
-//     j = nlohmann::json{
-//         {"type", "line"},
-//         {"pos_a", s.pos_a},
-//         {"pos_b", s.pos_b},
-//         {"angle_min", s.angle_min},
-//         {"angle_max", s.angle_max},
-//         {"max_particles", s.max_particles()},
-//         {"particle_id_offset", s.particle_id_offset},
-//     };
-// }
-
-// void from_json(const nlohmann::json& j, LineSource& s)
-// {
-//     if (j.at("type") != "line") {
-//         throw std::runtime_error("Wrong source type");
-//     }
-//     j.at("pos_a").get_to(s.pos_a);
-//     j.at("pos_b").get_to(s.pos_b);
-//     j.at("angle_min").get_to(s.angle_min);
-//     j.at("angle_max").get_to(s.angle_max);
-//     j.at("max_particles").get_to(s.num_particles_);
-//     j.at("particle_id_offset").get_to(s.particle_id_offset);
-// }
-
 void from_json(const nlohmann::json& j, std::unique_ptr<Source>& s)
 {
     std::string type;
@@ -189,6 +163,9 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Source>& s)
     if (type == "line") {
         LineSource ls = j;
         s = std::make_unique<LineSource>(ls);
+    } else if (type == "point") {
+        PointSource ps = j;
+        s = std::make_unique<PointSource>(ps);
     }
     else {
         throw std::runtime_error("Unknown source type");

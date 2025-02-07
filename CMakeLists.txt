@@ -22,6 +22,7 @@ list(APPEND eigrene_SOURCES
     src/geometry/voxelmesh.cpp
     src/simulator/simulator.cpp
     src/geometry/trianglemesh.cpp
+    src/physics/pointsource.cpp
     src/physics/linesource.cpp
     src/physics/source.cpp
     src/physics/update_particle.cpp
