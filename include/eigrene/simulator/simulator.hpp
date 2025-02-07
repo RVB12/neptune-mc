@@ -21,6 +21,7 @@ namespace eigrene {
 struct SimulationParams {
     int64_t seed = 0;
     index_t max_steps = 100000;
+    real_t t_final = 1.0;
 };
 
 /**
@@ -35,6 +36,26 @@ void simulate(Mesh& mesh,
               vector<BoundaryCondition>& boundary_conditions,
               SimulationParams params,
               ExecutionStatistics& stats);
+
+void simulate_fixed_time(Mesh& mesh,
+              PlasmaBackground& background,
+              vector<std::unique_ptr<Source>>& sources,
+              vector<real_t>& density,
+              vector<BoundaryCondition>& boundary_conditions,
+              SimulationParams params,
+              ExecutionStatistics& stats,
+              real_t t_final);
+
+void simulate_kdmc(Mesh& mesh,
+              PlasmaBackground& background,
+              vector<std::unique_ptr<Source>>& sources,
+              vector<real_t>& density,
+              vector<BoundaryCondition>& boundary_conditions,
+              SimulationParams params,
+              ExecutionStatistics& stats,
+              real_t t_final,
+              real_t dt);
+
 
 }  // namespace eigrene
 

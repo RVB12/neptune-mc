@@ -53,7 +53,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [0, 0.025],
         "pos_b": [0, 0.075],
-        "n_particles": 10000,
+        "n_particles": 100000,
         "intensity": 1.0e10,
         "angle_min": -math.pi/2,
         "angle_max": math.pi/2,
@@ -69,6 +69,8 @@ config["boundary_conditions"] = [
 
 config["max_steps"] = 1000000
 config["seed"] = 0
+
+config["t_final"] = 1.0e-4
 
 inputstring = json.dumps(config)
 

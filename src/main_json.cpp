@@ -1,9 +1,9 @@
-#include <fstream>
 #include <chrono>
+#include <fstream>
 
 #include "eigrene/common/json_conversions.hpp"
 #include "eigrene/simulator/simulator.hpp"
-#include "eigrene/simulator/simulator_kdmc.hpp"
+#include "eigrene/simulator/simulator.hpp"
 
 using namespace eigrene;
 
@@ -41,7 +41,6 @@ int main(int argc, char** argv)
 
     input_file >> j;
 
-
     ExecutionStatistics stats;
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -63,19 +62,26 @@ int main(int argc, char** argv)
     vector<BoundaryCondition> boundary_conditions = j["boundary_conditions"];
 
     start = std::chrono::high_resolution_clock::now();
-    if(j.contains("dt")) {
-        real_t dt = j["dt"];
-        simulate_kdmc(*mesh_ptr, background, sources, density, boundary_conditions,
-                      params, stats, dt);
+    if (j.contains("t_final")) {
+        real_t t_final = j["t_final"];
+        if (j.contains("dt")) {
+            real_t dt = j["dt"];
+            simulate_kdmc(*mesh_ptr, background, sources, density,
+                          boundary_conditions, params, stats, t_final, dt);
+        }
+        else {
+            simulate_fixed_time(*mesh_ptr, background, sources, density,
+                                boundary_conditions, params, stats, t_final);
+        }
     }
     else {
         simulate(*mesh_ptr, background, sources, density, boundary_conditions,
-                      params, stats);
+                 params, stats);
     }
+
     end = std::chrono::high_resolution_clock::now();
-    
-    stats.trace_time =
-        std::chrono::duration<double>(end - start).count();
+
+    stats.trace_time = std::chrono::duration<double>(end - start).count();
 
     stats.total_time = stats.grid_building_time + stats.trace_time;
 

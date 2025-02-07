@@ -2,7 +2,6 @@
 #include <chrono>
 
 #include <eigrene/simulator/simulator.hpp>
-#include "eigrene/simulator/simulator_kdmc.hpp"
 #include "eigrene/common/json_conversions.hpp"
 
 #include <string>
@@ -36,14 +35,21 @@ std::string simulate_json(std::string jsonstring){
 
 
     start = std::chrono::high_resolution_clock::now();
-    if(j.contains("dt")) {
-        real_t dt = j["dt"];
-        simulate_kdmc(*mesh_ptr, background, sources, density, boundary_conditions,
-                      params, stats, dt);
+    if (j.contains("t_final")) {
+        real_t t_final = j["t_final"];
+        if (j.contains("dt")) {
+            real_t dt = j["dt"];
+            simulate_kdmc(*mesh_ptr, background, sources, density,
+                          boundary_conditions, params, stats, t_final, dt);
+        }
+        else {
+            simulate_fixed_time(*mesh_ptr, background, sources, density,
+                                boundary_conditions, params, stats, t_final);
+        }
     }
     else {
         simulate(*mesh_ptr, background, sources, density, boundary_conditions,
-                      params, stats);
+                 params, stats);
     }
     end = std::chrono::high_resolution_clock::now();
 

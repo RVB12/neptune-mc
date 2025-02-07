@@ -24,6 +24,14 @@ void update_particle(const Mesh& mesh,
                      index_t& num_crossings,
                      index_t& num_collisions);
 
+void update_particle_fixed_time(const Mesh& mesh,
+                     const PlasmaBackground& background,
+                     const vector<BoundaryCondition>& boundary_conditions,
+                     Particle& p,
+                     index_t& num_crossings,
+                     index_t& num_collisions,
+                     real_t t_final);
+
 }  // namespace eigrene
 
 #endif  // EIGRENE_UPDATE_PARTICLE_HPP

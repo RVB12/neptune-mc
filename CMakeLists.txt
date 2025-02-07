@@ -28,6 +28,7 @@ list(APPEND eigrene_SOURCES
     src/common/json_conversions.cpp
     src/geometry/triangle.cpp
     src/simulator/simulate_kdmc.cpp
+    src/simulator/simulator_fixed_time.cpp
 )
 
 add_library(eigrene ${eigrene_SOURCES})
