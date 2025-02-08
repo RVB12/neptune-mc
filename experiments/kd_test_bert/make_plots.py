@@ -4,7 +4,7 @@ import math
 import json
 import time
 
-Lx = 40
+Lx = 35
 Ly = 1
 nx = 201
 ny = 1

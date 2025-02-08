@@ -52,36 +52,33 @@ void update_particle_kdmc(const Mesh& mesh,
     // T / sigma = plasma_background_variance
     // D = Variance(Delta X| V) / 2 / diffusive_flight_time
     // charge_exchange_rate = sigma / epsilon^2
+
+    real_t R_cx_theta = R_cx * diffusive_flight_time;
     Vec2 u = Vec2(background.plasma_vel_x[cell_id],
                   background.plasma_vel_y[cell_id]);
 
     Vec2 drift_term = u * diffusive_flight_time;
-    drift_term += (new_velocity - u) / R_cx * (1 - std::exp(-R_cx * diffusive_flight_time));
+    drift_term += (new_velocity - u) / R_cx * (1 - std::exp(-R_cx_theta));
 
-    // Note, this still needs to be updated to take the velocity
-    // correlation into account
     real_t D0 = background.plasma_temp[cell_id] * constants::eV_to_Joules /
-                constants::m_p / R_cx;
+                constants::m_p / (R_cx * R_cx);
+    D0 *=
+        (2. * std::exp(-R_cx_theta) + R_cx_theta + R_cx_theta * std::exp(-R_cx_theta) - 2.);
 
-    D0 *= (2 * std::exp(-R_cx * diffusive_flight_time) +
-           R_cx * diffusive_flight_time +
-           R_cx * diffusive_flight_time *
-               std::exp(-R_cx * diffusive_flight_time) -
-           2);
+    Vec2 D = Vec2(D0, D0);
+    D += (new_velocity - u) * (new_velocity - u) / (R_cx * R_cx) *
+         (1. - 2. * R_cx_theta * std::exp(-R_cx_theta) - std::exp(-2. * R_cx_theta));
 
-    D0 += (new_velocity - u).norm2() / (R_cx * R_cx) *
-          (1 -
-           2 * R_cx * diffusive_flight_time *
-               std::exp(-R_cx * diffusive_flight_time) -
-           std::exp(-2 * R_cx * diffusive_flight_time));
-
-    // assert(D0 >= 0);
-    if (D0 < 0) {
-        D0 = 0;
+    if (D.x < 0) {
+        D.x = 0;
+    }
+    if (D.y < 0) {
+        D.y = 0;
     }
 
-    Vec2 diffusion_term = Vec2(r_normal(p.rng), r_normal(p.rng)) *
-                          std::sqrt(2.0 * diffusive_flight_time * D0);
+    Vec2 diffusion_term = 2.0 * D;
+    diffusion_term.x = std::sqrt(diffusion_term.x) * r_normal(p.rng);
+    diffusion_term.y = std::sqrt(diffusion_term.y) * r_normal(p.rng);
 
     Vec2 new_position = p.geometry.position + drift_term + diffusion_term +
                         kinetic_flight_time * p.geometry.velocity;
@@ -108,7 +105,7 @@ void update_particle_kdmc(const Mesh& mesh,
         p.t += dt2;
     }
 
-    if(kinetic_flight_time < dt2){
+    if (kinetic_flight_time < dt2) {
         num_collisions++;
         p.geometry.velocity = new_velocity;
     }

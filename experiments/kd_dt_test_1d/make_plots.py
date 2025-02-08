@@ -4,10 +4,10 @@ import math
 import json
 import time
 
-nx = 21
+Lx = 20
+Ly = 20
+nx = 101
 ny = 1
-Lx = 1
-Ly = 1
 
 x_pts = np.linspace(0,Lx,nx)
 
@@ -29,7 +29,7 @@ plt.close()
 
 errors = []
 runtime = []
-dt_array = np.array([1.0e-3, 1.0e-4, 1.0e-5, 1.0e-6, 1.0e-7, 1.0e-8])
+dt_array = np.array([1.0, 0.1, 0.01, 0.001])
 
 for dt in dt_array:
 
@@ -41,7 +41,9 @@ for dt in dt_array:
     neutral_density = np.array(output["density"])
 
     plt.figure()
-    plt.plot(x_pts, neutral_density)
+    plt.plot(x_pts, neutral_density, label="KD")
+    plt.plot(x_pts, neutral_density_exact, label="MC")
+    plt.legend()
     plt.title("Neutral particle density, KD, dt = " + str(dt))
     plt.xlabel("x")
     plt.ylabel("density")
