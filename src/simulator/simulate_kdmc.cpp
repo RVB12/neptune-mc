@@ -24,19 +24,21 @@ void update_particle_kdmc(const Mesh& mesh,
     // Limit the time step to the final time
     real_t dt2 = std::min(dt, t_final - p.t);
 
-    // Charge exchange rate coefficient
-    real_t K_cx = constants::calculate_K_cx(background.plasma_temp[cell_id]);
+    // Charge exchange rate coefficient at the starting cell
+    real_t K_cx0 = constants::calculate_K_cx(background.plasma_temp[cell_id]);
 
-    // Charge exchange rate
-    real_t R_cx = K_cx * background.plasma_dens[cell_id];
+    // Charge exchange rate at the starting cell
+    real_t R_cx0 = K_cx0 * background.plasma_dens[cell_id];
 
     // Kinetic flight time: part of the timestep using normal kinetic model
-    real_t kinetic_flight_time = -std::log(r_unif(p.rng)) / (R_cx);
+    real_t kinetic_flight_time = -std::log(r_unif(p.rng)) / (R_cx0);
 
     if (kinetic_flight_time > dt2) {
         kinetic_flight_time = dt2;
     }
 
+    // Draw the velocity that will be used for the post-diffusive step
+    // velocity
     real_t stddev =
         constants::calculate_BGK_stddev(background.plasma_temp[cell_id]);
     std::normal_distribution<real_t> dist_vx(background.plasma_vel_x[cell_id],
@@ -48,26 +50,55 @@ void update_particle_kdmc(const Mesh& mesh,
     // Diffusive flight time: part of the timestep using diffusive model
     real_t diffusive_flight_time = std::max(0.0, dt2 - kinetic_flight_time);
 
-    // Correspondence with formulas (3.1--3.2) in KDMC paper:
-    // T / sigma = plasma_background_variance
-    // D = Variance(Delta X| V) / 2 / diffusive_flight_time
-    // charge_exchange_rate = sigma / epsilon^2
+    //
+    // Calculate the drift and diffusion terms.
+    // This is equation 3.1 -- 3.6 in the KDMC paper.
+    // We don't do scaling with epsilon here, it should be safe
+    // to just remove epsilon from the equations.
+    //
 
+    //
+    // First step, calculate initial drift term and use it to calculate
+    // an intermediate position.
+    //
+    Vec2 u0 = Vec2(background.plasma_vel_x[cell_id],
+                   background.plasma_vel_y[cell_id]);
+    real_t R_cx_theta0 = R_cx0 * diffusive_flight_time;
+
+    Vec2 drift_term0 = 0.5 * (u0 * dt2 + (new_velocity - u0) / R_cx0 *
+                                             (1 - std::exp(-R_cx_theta0)));
+
+    Vec2 pos_intermediate = p.geometry.position + drift_term0;
+
+    index_t cell_id_intermediate = mesh.get_cell_index(pos_intermediate);
+
+    if (cell_id_intermediate == -1) {
+        cell_id_intermediate = p.geometry.cell_id;
+    }
+
+    // Charge exchange rate coefficient at the intermediate cell
+    real_t K_cx =
+        constants::calculate_K_cx(background.plasma_temp[cell_id_intermediate]);
+    real_t R_cx = K_cx * background.plasma_dens[cell_id_intermediate];
     real_t R_cx_theta = R_cx * diffusive_flight_time;
-    Vec2 u = Vec2(background.plasma_vel_x[cell_id],
-                  background.plasma_vel_y[cell_id]);
 
-    Vec2 drift_term = u * diffusive_flight_time;
-    drift_term += (new_velocity - u) / R_cx * (1 - std::exp(-R_cx_theta));
+    Vec2 u = Vec2(background.plasma_vel_x[cell_id_intermediate],
+                  background.plasma_vel_y[cell_id_intermediate]);
 
-    real_t D0 = background.plasma_temp[cell_id] * constants::eV_to_Joules /
+    Vec2 drift_term = u * diffusive_flight_time +
+                      (new_velocity - u) / R_cx * (1 - std::exp(-R_cx_theta));
+
+    // TODO: add spatial derivative term
+
+    real_t D0 = background.plasma_temp[cell_id_intermediate] * constants::eV_to_Joules /
                 constants::m_p / (R_cx * R_cx);
-    D0 *=
-        (2. * std::exp(-R_cx_theta) + R_cx_theta + R_cx_theta * std::exp(-R_cx_theta) - 2.);
+    D0 *= (2. * std::exp(-R_cx_theta) + R_cx_theta +
+           R_cx_theta * std::exp(-R_cx_theta) - 2.);
 
     Vec2 D = Vec2(D0, D0);
     D += (new_velocity - u) * (new_velocity - u) / (R_cx * R_cx) *
-         (1. - 2. * R_cx_theta * std::exp(-R_cx_theta) - std::exp(-2. * R_cx_theta));
+         (1. - 2. * R_cx_theta * std::exp(-R_cx_theta) -
+          std::exp(-2. * R_cx_theta));
 
     if (D.x < 0) {
         D.x = 0;
