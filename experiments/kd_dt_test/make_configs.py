@@ -49,7 +49,7 @@ config["sources"] = [
         "type": "line",
         "pos_a": [0.5, 0.5],
         "pos_b": [0.5, 0.5],
-        "n_particles": 10000000,
+        "n_particles": 1000000,
         "intensity": 1.0e10,
         "angle_min": -math.pi,
         "angle_max": math.pi,

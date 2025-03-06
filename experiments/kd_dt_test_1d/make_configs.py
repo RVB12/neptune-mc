@@ -4,8 +4,8 @@ import json
 
 config = {}
 
-Lx = 20
-Ly = 20
+Lx = 40
+Ly = 40
 nx = 101
 ny = 1
 
@@ -24,12 +24,19 @@ plasma_temp = np.zeros(ncells, dtype=np.float64)
 plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
 
+eps_array = [0.1, 1, 10]
+m_p = 1.67e-27
+eV_to_Joules = 1.602176634e-19
+epsilon = 1
+T = 1/(epsilon*epsilon) * m_p / eV_to_Joules
+dens = 1/(epsilon*epsilon) / (3.2e-15 * np.sqrt(T/0.026))
+
 
 for i in range(ncells):
-    plasma_dens[i] = 1.0e17
+    plasma_dens[i] = dens
 
 for i in range(ncells):
-    plasma_temp[i] = 1.0e-8
+    plasma_temp[i] = T
 
 for i in range(ncells):
     plasma_vel_x[i] = 0
@@ -47,10 +54,18 @@ config["background"] = {
 config["sources"] = [
     {
         "type": "point",
-        "n_particles": 100000,
+        "n_particles": 50000000,
         "intensity": 1.0e10,
-        "pos": [10, 10],
-        "vel_mean": [0, 0],
+        "pos": [20, 20],
+        "vel_mean": [-15, 0],
+        "vel_stddev": 1,
+    },
+    {
+        "type": "point",
+        "n_particles": 50000000,
+        "intensity": 1.0e10,
+        "pos": [20, 20],
+        "vel_mean": [5, 0],
         "vel_stddev": 1,
     }
 ]
