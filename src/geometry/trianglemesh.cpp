@@ -9,17 +9,19 @@ TriangleIndices TriangleMesh::get_triangle_indices(index_t cell_index) const
     return triangles[cell_index];
 }
 
-bool TriangleMesh::is_in_cell(Vec2 pos, index_t cell_index) const
+bool TriangleMesh::is_in_cell(Vec3 pos, index_t cell_index) const
 {
     TriangleIndices tind = triangles[cell_index];
     Triangle t(vertices[tind.ind1], vertices[tind.ind2], vertices[tind.ind3]);
 
-    return t.contains(pos);
+    return t.contains(Vec2(pos.x, pos.z));
 }
 
-index_t TriangleMesh::get_cell_index(Vec2 pos) const
+index_t TriangleMesh::get_cell_index(Vec3 pos) const
 {
-    auto candidates = spatialindex.query(pos);
+    Vec2 pos2d(pos.x, pos.z);
+
+    auto candidates = spatialindex.query(pos2d);
 
     for (index_t i = 0; i < candidates.size(); i++) {
         index_t cell_index = candidates[i];
@@ -88,26 +90,29 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];
 
+    Vec2 pos2d(p.position.x, p.position.z);
+    Vec2 vel2d(p.velocity.x, p.velocity.z);
+
     // Time till intersection with edge 0
     real_t t0;
     if(p.boundary_id == 0){
         t0 = -1;
     } else {
-        t0 = find_edge_intersection(p1, p2, p.position, p.velocity);
+        t0 = find_edge_intersection(p1, p2, pos2d, vel2d);
     }
 
     real_t t1;
     if(p.boundary_id == 1){
         t1 = -1;
     } else {
-        t1 = find_edge_intersection(p2, p3, p.position, p.velocity);
+        t1 = find_edge_intersection(p2, p3, pos2d, vel2d);
     }
 
     real_t t2;
     if(p.boundary_id == 2){
         t2 = -1;
     } else {
-        t2 = find_edge_intersection(p3, p1, p.position, p.velocity);
+        t2 = find_edge_intersection(p3, p1, pos2d, vel2d);
     }
 
     // t0, t1, and t2 are now the times until the intersection with the edges
@@ -134,7 +139,7 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
         throw std::runtime_error("Failed to find next crossing");
     }
 
-    Vec2 pos_new = p.position + p.velocity * t_new;
+    Vec3 pos_new = p.position + p.velocity * t_new;
 
     CellCrossing crossing = CellCrossing(pos_new, t_new, surface_id);
 
@@ -270,7 +275,7 @@ void make_neighborlist(const vector<Vec2>& vertices,
     }
 }
 
-Vec2 TriangleMesh::get_surface_normal(index_t cell_index,
+Vec3 TriangleMesh::get_surface_normal(index_t cell_index,
                                       index_t surface_id) const
 {
     TriangleIndices t = triangles[cell_index];
@@ -278,16 +283,16 @@ Vec2 TriangleMesh::get_surface_normal(index_t cell_index,
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];
 
-    Vec2 normal;
+    Vec3 normal;
     switch (surface_id) {
         case 0:
-            normal = Vec2(p2.y - p1.y, p1.x - p2.x);
+            normal = Vec3(p2.y - p1.y, 0, p1.x - p2.x);
             break;
         case 1:
-            normal = Vec2(p3.y - p2.y, p2.x - p3.x);
+            normal = Vec3(p3.y - p2.y, 0, p2.x - p3.x);
             break;
         case 2:
-            normal = Vec2(p1.y - p3.y, p3.x - p1.x);
+            normal = Vec3(p1.y - p3.y, 0, p3.x - p1.x);
             break;
         default:
             throw std::runtime_error("Invalid surface id");

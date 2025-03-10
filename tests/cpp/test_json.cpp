@@ -57,7 +57,7 @@ TEST_CASE("Vector json conversion works", "[vector][json]")
 
 TEST_CASE("LineSource json conversion works", "[vector][json]")
 {
-    LineSource a(10, 100, Vec2(1.5, 2.5), Vec2(3.5, 4.5), 0.1, 0.2);
+    LineSource a(10, 100, Vec3(1.5, 2.5, 15.4), Vec3(3.5, 4.5, 1.5), 0.1, 0.2);
 
     nlohmann::json j = a;
 
@@ -78,7 +78,7 @@ TEST_CASE("LineSource json conversion works", "[vector][json]")
 
 TEST_CASE("Source json conversion works", "[vector][json]")
 {
-    LineSource a(10, 100, Vec2(1.5, 2.5), Vec2(3.5, 4.5), 0.1, 0.2);
+    LineSource a(10, 100, Vec3(1.5, 2.5, 15.4), Vec3(3.5, 4.5, 1.5), 0.1, 0.2);
 
     nlohmann::json j = a;
 
@@ -101,7 +101,7 @@ TEST_CASE("Source json conversion works", "[vector][json]")
 
 TEST_CASE("VoxelMesh json conversion works", "[vector][json]")
 {
-    VoxelMesh a(1.5, 2.5, 10, 20);
+    VoxelMesh a(1.5, 2.5, 3.5, 10, 20, 30);
 
     nlohmann::json j = a;
 
@@ -109,10 +109,13 @@ TEST_CASE("VoxelMesh json conversion works", "[vector][json]")
 
     REQUIRE(a.Lx == b.Lx);
     REQUIRE(a.Ly == b.Ly);
+    REQUIRE(a.Lz == b.Lz);
     REQUIRE(a.nx == b.nx);
     REQUIRE(a.ny == b.ny);
+    REQUIRE(a.nz == b.nz);
     REQUIRE(a.dx == b.dx);
     REQUIRE(a.dy == b.dy);
+    REQUIRE(a.dz == b.dz);
 
     std::string s_expected =
         R"({"Lx":1.5,"Ly":2.5,"nx":10,"ny":20,"type":"voxel"})";

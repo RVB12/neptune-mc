@@ -6,8 +6,10 @@ import time
 
 nx = 21
 ny = 21
+nz = 1
 Lx = 1
 Ly = 1
+Lz = 1
 
 f = open("outputs/reference.json", "r")
 output = json.load(f)

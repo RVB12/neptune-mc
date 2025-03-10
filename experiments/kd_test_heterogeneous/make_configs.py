@@ -7,37 +7,44 @@ config = {}
 
 Lx = 2
 Ly = 1
+Lz = 1
 nx = 101
 ny = 1
+nz = 1
 
 config["mesh"] = {
     "type": "voxel",
     "Lx": Lx,
     "Ly": Ly,
+    "Lz": Lz,
     "nx": nx,
-    "ny": ny
+    "ny": ny,
+    "nz": nz
 }
 
-ncells = nx * ny
+ncells = nx * ny * nz
 
 plasma_dens = np.zeros(ncells, dtype=np.float64)
 plasma_temp = np.zeros(ncells, dtype=np.float64)
 plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
+plasma_vel_z = np.zeros(ncells, dtype=np.float64)
 
 config["sources"] = [
     {
         "type": "point",
         "n_particles": 10000,
         "intensity": 1.0e10,
-        "pos": [0.9, 0.5],
-        "vel_mean": [-1, 0],
+        "pos": [0.9, 0.5, 0.5],
+        "vel_mean": [-1, 0, 0],
         "vel_stddev": 1000,
     }
 ]
 
 config["boundary_conditions"] = [
     "absorbing",
+    "reflective",
+    "reflective",
     "reflective",
     "reflective",
     "reflective"
@@ -70,7 +77,8 @@ config["background"] = {
     "plasma_dens": plasma_dens.tolist(),
     "plasma_temp": plasma_temp.tolist(),
     "plasma_vel_x": plasma_vel_x.tolist(),
-    "plasma_vel_y": plasma_vel_y.tolist()
+    "plasma_vel_y": plasma_vel_y.tolist(),
+    "plasma_vel_z": plasma_vel_z.tolist()
 }
 
 

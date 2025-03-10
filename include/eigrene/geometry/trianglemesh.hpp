@@ -114,7 +114,7 @@ class TriangleMesh : public Mesh {
     /**
      * @brief Return the id of the cell that a given position is in.
      */
-    index_t get_cell_index(Vec2 position) const;
+    index_t get_cell_index(Vec3 position) const;
 
     /**
      * @brief Return the triangle indices corresponding to the given index
@@ -129,7 +129,7 @@ class TriangleMesh : public Mesh {
     /**
      * Check if a given position is inside of the cell with the given index
      */
-    bool is_in_cell(Vec2 p, index_t cell_index) const;
+    bool is_in_cell(Vec3 p, index_t cell_index) const;
 
     /**
      * @brief Return the volume of a given cell
@@ -139,7 +139,7 @@ class TriangleMesh : public Mesh {
     /**
      * @brief Return the normal of a given surface
      */
-    Vec2 get_surface_normal(index_t cell_index, index_t surface_id) const;
+    Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const;
 
    private:
     // Member variables

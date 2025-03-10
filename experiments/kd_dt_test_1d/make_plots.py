@@ -6,8 +6,10 @@ import time
 
 Lx = 20
 Ly = 20
+Lz = 20
 nx = 101
 ny = 1
+nz = 1
 
 x_pts = np.linspace(0,Lx,nx)
 

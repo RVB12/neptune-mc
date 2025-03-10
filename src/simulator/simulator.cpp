@@ -70,6 +70,17 @@ void simulate(Mesh& mesh,
                         break;
                     }
                 }
+                
+                #ifdef _OPENMP
+                auto thread_id = omp_get_thread_num();
+                if(thread_id == 0)
+                {
+                    if (i_particle % 1000 == 0) {
+                        std::cout.flush();
+                        std::cout << "Progress: " << i_particle / ((float) sources[i_source]->num_particles()) * 100  << "% \r";
+                    }
+                }
+                #endif
             }
 
             for (index_t i = 0; i < mesh.n_cells(); i++) {

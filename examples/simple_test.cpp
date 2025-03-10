@@ -11,10 +11,12 @@ int main()
 {
     real_t Lx = 1;
     real_t Ly = 1;
+    real_t Lz = 1;
     index_t nx = 10;
     index_t ny = 1;
+    index_t nz = 1;
 
-    VoxelMesh mesh(Lx, Ly, nx, ny);
+    VoxelMesh mesh(Lx, Ly, Lz, nx, ny, nz);
 
     index_t n_cells = mesh.n_cells();
 
@@ -34,7 +36,7 @@ int main()
 
     index_t particles_per_cell = 100;
     LineSource line =
-        LineSource(n_cells * particles_per_cell, 1, Vec2(0, 0), Vec2(0, 1));
+        LineSource(n_cells * particles_per_cell, 1, Vec3(0, 0, 0), Vec3(0, 1, 0));
     vector<std::unique_ptr<Source>> sources(1);
     sources[0] = std::make_unique<LineSource>(line);
 

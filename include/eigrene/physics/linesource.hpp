@@ -25,15 +25,15 @@ class LineSource : public Source {
    public:
     LineSource(index_t num_particles_,
                real_t intensity_,
-               Vec2 pos_a_,
-               Vec2 pos_b_)
+               Vec3 pos_a_,
+               Vec3 pos_b_)
         : Source(num_particles_, intensity_), pos_a(pos_a_), pos_b(pos_b_)
     {}
 
     LineSource(index_t num_particles_,
                real_t intensity_,
-               Vec2 pos_a_,
-               Vec2 pos_b_,
+               Vec3 pos_a_,
+               Vec3 pos_b_,
                real_t angle_min_,
                real_t angle_max_)
         : Source(num_particles_, intensity_),
@@ -50,8 +50,8 @@ class LineSource : public Source {
      */
     Particle generate_particle(index_t i_particle);
 
-    Vec2 pos_a;                    // start of the line that defines this source
-    Vec2 pos_b;                    // end of the line that defines this source
+    Vec3 pos_a;                    // start of the line that defines this source
+    Vec3 pos_b;                    // end of the line that defines this source
     real_t angle_min = -M_PI / 2;  // minimum angle of the velocity vector
     real_t angle_max = M_PI / 2;   // maximum angle of the velocity vector
 };

@@ -29,13 +29,13 @@ TEST_CASE("TriangleMesh::get_cell_index", "[TriangleMesh]") {
     vector<TriangleIndices> triangles = {TriangleIndices(0, 1, 2), TriangleIndices(1, 3, 2)};
     TriangleMesh mesh(vertices, triangles);
 
-    REQUIRE(mesh.get_cell_index(Vec2(0.1, 0.1)) == 0);
-    REQUIRE(mesh.get_cell_index(Vec2(0.9, 0.9)) == 1);
-    REQUIRE(mesh.get_cell_index(Vec2(0.5, 0.1)) == 0);
-    REQUIRE(mesh.get_cell_index(Vec2(0.1, 0.5)) == 0);
-    REQUIRE(mesh.get_cell_index(Vec2(0.9, 0.12)) == 1);
-    REQUIRE(mesh.get_cell_index(Vec2(0.5, 0.9)) == 1);
-    REQUIRE(mesh.get_cell_index(Vec2(0.9, 0.5)) == 1);
+    REQUIRE(mesh.get_cell_index(Vec3(0.1, 0., 0.1)) == 0);
+    REQUIRE(mesh.get_cell_index(Vec3(0.9, 0., 0.9)) == 1);
+    REQUIRE(mesh.get_cell_index(Vec3(0.5, 0., 0.1)) == 0);
+    REQUIRE(mesh.get_cell_index(Vec3(0.1, 0., 0.5)) == 0);
+    REQUIRE(mesh.get_cell_index(Vec3(0.9, 0., 0.12)) == 1);
+    REQUIRE(mesh.get_cell_index(Vec3(0.5, 0., 0.9)) == 1);
+    REQUIRE(mesh.get_cell_index(Vec3(0.9, 0., 0.5)) == 1);
 
     // These values are on the boundary of the cells
     // Commented out because they can be either 0 or 1
@@ -48,15 +48,15 @@ TEST_CASE("TriangleMesh::is_in_cell", "[TriangleMesh]") {
     vector<TriangleIndices> triangles = {TriangleIndices(0, 1, 2), TriangleIndices(1, 3, 2)};
     TriangleMesh mesh(vertices, triangles);
 
-    REQUIRE(mesh.is_in_cell(Vec2(0.1, 0.1), 0));
-    REQUIRE(mesh.is_in_cell(Vec2(0.5, 0.5), 0));
-    REQUIRE(mesh.is_in_cell(Vec2(0.9, 0.9), 1));
-    REQUIRE(mesh.is_in_cell(Vec2(0.5, 0.1), 0));
-    REQUIRE(mesh.is_in_cell(Vec2(0.1, 0.5), 0));
-    REQUIRE(mesh.is_in_cell(Vec2(0.9, 0.1), 1));
-    REQUIRE(mesh.is_in_cell(Vec2(0.1, 0.9), 1));
-    REQUIRE(mesh.is_in_cell(Vec2(0.5, 0.9), 1));
-    REQUIRE(mesh.is_in_cell(Vec2(0.9, 0.5), 1));
+    REQUIRE(mesh.is_in_cell(Vec3(0.1, 0., 0.1), 0));
+    REQUIRE(mesh.is_in_cell(Vec3(0.5, 0., 0.5), 0));
+    REQUIRE(mesh.is_in_cell(Vec3(0.9, 0., 0.9), 1));
+    REQUIRE(mesh.is_in_cell(Vec3(0.5, 0., 0.1), 0));
+    REQUIRE(mesh.is_in_cell(Vec3(0.1, 0., 0.5), 0));
+    REQUIRE(mesh.is_in_cell(Vec3(0.9, 0., 0.1), 1));
+    REQUIRE(mesh.is_in_cell(Vec3(0.1, 0., 0.9), 1));
+    REQUIRE(mesh.is_in_cell(Vec3(0.5, 0., 0.9), 1));
+    REQUIRE(mesh.is_in_cell(Vec3(0.9, 0., 0.5), 1));
 }
 
 TEST_CASE("TriangleMesh::get_volume", "[TriangleMesh]") {
@@ -73,12 +73,13 @@ TEST_CASE("TriangleMesh::get_next_crossing", "[TriangleMesh]") {
     vector<TriangleIndices> triangles = {TriangleIndices(0, 1, 2), TriangleIndices(1, 3, 2)};
     TriangleMesh mesh(vertices, triangles);
 
-    ParticleGeometry p(Vec2(0.1, 0.1), Vec2(1, 1), 0);
+    ParticleGeometry p(Vec3(0.1, 0.0, 0.1), Vec3(1, 0., 1), 0);
     CellCrossing c = mesh.get_next_crossing(p);
 
-    Vec2 expected_pos = Vec2(0.5, 0.5);
+    Vec3 expected_pos = Vec3(0.5, 0.0, 0.5);
     REQUIRE(c.position.x == expected_pos.x);
     REQUIRE(c.position.y == expected_pos.y);
+    REQUIRE(c.position.z == expected_pos.z);
     REQUIRE(c.t == 0.4);
     REQUIRE(c.next_cell_id == 1);
     REQUIRE(c.boundary_condition_id == -1);

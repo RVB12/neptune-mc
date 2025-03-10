@@ -6,23 +6,28 @@ config = {}
 
 Lx = 40
 Ly = 40
+Lz = 40
 nx = 101
 ny = 1
+nz = 1
 
 config["mesh"] = {
     "type": "voxel",
     "Lx": Lx,
     "Ly": Ly,
+    "Lz": Lz,
     "nx": nx,
-    "ny": ny
+    "ny": ny,
+    "nz": nz
 }
 
-ncells = nx * ny
+ncells = nx * ny * nz
 
 plasma_dens = np.zeros(ncells, dtype=np.float64)
 plasma_temp = np.zeros(ncells, dtype=np.float64)
 plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
+plasma_vel_z = np.zeros(ncells, dtype=np.float64)
 
 eps_array = [0.1, 1, 10]
 m_p = 1.67e-27
@@ -48,29 +53,32 @@ config["background"] = {
     "plasma_dens": plasma_dens.tolist(),
     "plasma_temp": plasma_temp.tolist(),
     "plasma_vel_x": plasma_vel_x.tolist(),
-    "plasma_vel_y": plasma_vel_y.tolist()
+    "plasma_vel_y": plasma_vel_y.tolist(),
+    "plasma_vel_z": plasma_vel_z.tolist()
 }
 
 config["sources"] = [
     {
         "type": "point",
-        "n_particles": 50000000,
+        "n_particles": 5000000,
         "intensity": 1.0e10,
-        "pos": [20, 20],
-        "vel_mean": [-15, 0],
+        "pos": [20, 20, 20],
+        "vel_mean": [-15, 0, 0],
         "vel_stddev": 1,
     },
     {
         "type": "point",
-        "n_particles": 50000000,
+        "n_particles": 5000000,
         "intensity": 1.0e10,
-        "pos": [20, 20],
-        "vel_mean": [5, 0],
+        "pos": [20, 20, 20],
+        "vel_mean": [5, 0, 0],
         "vel_stddev": 1,
     }
 ]
 
 config["boundary_conditions"] = [
+    "reflective",
+    "reflective",
     "reflective",
     "reflective",
     "reflective",

@@ -25,8 +25,8 @@ class PointSource : public Source {
    public:
     PointSource(index_t num_particles_,
                real_t intensity_,
-               Vec2 pos_,
-               Vec2 vel_mean_,
+               Vec3 pos_,
+               Vec3 vel_mean_,
                real_t vel_stddev_)
         : Source(num_particles_, intensity_), pos(pos_), vel_mean(vel_mean_), vel_stddev(vel_stddev_)
     {}
@@ -38,8 +38,8 @@ class PointSource : public Source {
      */
     Particle generate_particle(index_t i_particle);
 
-    Vec2 pos; // Initial position of the particles
-    Vec2 vel_mean; // Mean velocity of the particles
+    Vec3 pos; // Initial position of the particles
+    Vec3 vel_mean; // Mean velocity of the particles
     real_t vel_stddev; // Standard deviation of the velocity of the particles
 };
 

@@ -33,7 +33,7 @@ class Mesh {
     /**
      * Check if a given position is inside of the cell with the given index
      */
-    virtual bool is_in_cell(Vec2 p, index_t cell_index) const = 0;
+    virtual bool is_in_cell(Vec3 p, index_t cell_index) const = 0;
 
     /**
      * Find the cell index corresponding to a given position.
@@ -41,7 +41,7 @@ class Mesh {
      * 
      * returns -1 if no cell was found.
      */
-    virtual index_t get_cell_index(Vec2 position) const = 0;
+    virtual index_t get_cell_index(Vec3 position) const = 0;
 
     /**
      * @brief Return the volume of a given cell
@@ -51,7 +51,7 @@ class Mesh {
     /**
      * @brief Return the normal of a given surface
      */
-    virtual Vec2 get_surface_normal(index_t cell_index, index_t surface_id) const = 0;
+    virtual Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const = 0;
 };
 
 }  // namespace eigrene

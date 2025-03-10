@@ -4,7 +4,7 @@
 #include <cassert>
 
 #include "eigrene/common/utils.hpp"
-#include "eigrene/geometry/vec2.hpp"
+#include "eigrene/geometry/vec3.hpp"
 
 namespace eigrene {
 
@@ -18,10 +18,10 @@ class CellCrossing {
    public:
     // Contructors
     CellCrossing() = default;
-    CellCrossing(Vec2 position_, real_t t_, index_t surface_id_)
+    CellCrossing(Vec3 position_, real_t t_, index_t surface_id_)
         : position(position_), t(t_), surface_id(surface_id_)
     {}
-    CellCrossing(Vec2 position_,
+    CellCrossing(Vec3 position_,
                  real_t t_,
                  index_t surface_id_,
                  index_t next_cell_id_,
@@ -40,7 +40,7 @@ class CellCrossing {
     //
 
     // The position of the crossing
-    Vec2 position;
+    Vec3 position;
     // The time it will take to reach the crossing
     real_t t = 0;
     // The id of the surface in the current cell the particle is crossing

@@ -7,44 +7,51 @@ config = {}
 
 Lx = 40
 Ly = 40
+Lz = 40
 nx = 201
 ny = 201
+nz = 1
 
 config["mesh"] = {
     "type": "voxel",
     "Lx": Lx,
     "Ly": Ly,
+    "Lz": Lz,
     "nx": nx,
-    "ny": ny
+    "ny": ny,
+    "nz": nz
 }
 
-ncells = nx * ny
+ncells = nx * ny * nz
 
 plasma_dens = np.zeros(ncells, dtype=np.float64)
 plasma_temp = np.zeros(ncells, dtype=np.float64)
 plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
+plasma_vel_z = np.zeros(ncells, dtype=np.float64)
 
 config["sources"] = [
     {
         "type": "point",
         "n_particles": 500000,
         "intensity": 1.0e10,
-        "pos": [20, 20],
-        "vel_mean": [-5, 3],
+        "pos": [20, 20, 20],
+        "vel_mean": [-5, 3, 0],
         "vel_stddev": 1,
     },
     {
         "type": "point",
         "n_particles": 500000,
         "intensity": 1.0e10,
-        "pos": [20, 20],
-        "vel_mean": [15, -4],
+        "pos": [20, 20, 20],
+        "vel_mean": [15, -4, 0],
         "vel_stddev": 1,
     }
 ]
 
 config["boundary_conditions"] = [
+    "reflective",
+    "reflective",
     "reflective",
     "reflective",
     "reflective",
@@ -82,7 +89,8 @@ for epsilon in eps_array:
         "plasma_dens": plasma_dens.tolist(),
         "plasma_temp": plasma_temp.tolist(),
         "plasma_vel_x": plasma_vel_x.tolist(),
-        "plasma_vel_y": plasma_vel_y.tolist()
+        "plasma_vel_y": plasma_vel_y.tolist(),
+        "plasma_vel_z": plasma_vel_z.tolist()
     }
 
     config["dt"] = 1.0

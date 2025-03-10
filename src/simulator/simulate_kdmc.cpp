@@ -45,7 +45,9 @@ void update_particle_kdmc(const Mesh& mesh,
                                              stddev);
     std::normal_distribution<real_t> dist_vy(background.plasma_vel_y[cell_id],
                                              stddev);
-    Vec2 new_velocity(dist_vx(p.rng), dist_vy(p.rng));
+    std::normal_distribution<real_t> dist_vz(background.plasma_vel_z[cell_id],
+                                             stddev);
+    Vec3 new_velocity(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
 
     // Diffusive flight time: part of the timestep using diffusive model
     real_t diffusive_flight_time = std::max(0.0, dt2 - kinetic_flight_time);
@@ -61,14 +63,15 @@ void update_particle_kdmc(const Mesh& mesh,
     // First step, calculate initial drift term and use it to calculate
     // an intermediate position.
     //
-    Vec2 u0 = Vec2(background.plasma_vel_x[cell_id],
-                   background.plasma_vel_y[cell_id]);
+    Vec3 u0 = Vec3(background.plasma_vel_x[cell_id],
+                   background.plasma_vel_y[cell_id],
+                   background.plasma_vel_z[cell_id]);
     real_t R_cx_theta0 = R_cx0 * diffusive_flight_time;
 
-    Vec2 drift_term0 = 0.5 * (u0 * dt2 + (new_velocity - u0) / R_cx0 *
+    Vec3 drift_term0 = 0.5 * (u0 * dt2 + (new_velocity - u0) / R_cx0 *
                                              (1 - std::exp(-R_cx_theta0)));
 
-    Vec2 pos_intermediate = p.geometry.position + drift_term0;
+    Vec3 pos_intermediate = p.geometry.position + drift_term0;
 
     index_t cell_id_intermediate = mesh.get_cell_index(pos_intermediate);
 
@@ -82,10 +85,11 @@ void update_particle_kdmc(const Mesh& mesh,
     real_t R_cx = K_cx * background.plasma_dens[cell_id_intermediate];
     real_t R_cx_theta = R_cx * diffusive_flight_time;
 
-    Vec2 u = Vec2(background.plasma_vel_x[cell_id_intermediate],
-                  background.plasma_vel_y[cell_id_intermediate]);
+    Vec3 u = Vec3(background.plasma_vel_x[cell_id_intermediate],
+                  background.plasma_vel_y[cell_id_intermediate],
+                  background.plasma_vel_z[cell_id_intermediate]);
 
-    Vec2 drift_term = u * diffusive_flight_time +
+    Vec3 drift_term = u * diffusive_flight_time +
                       (new_velocity - u) / R_cx * (1 - std::exp(-R_cx_theta));
 
     // TODO: add spatial derivative term
@@ -95,7 +99,7 @@ void update_particle_kdmc(const Mesh& mesh,
     D0 *= (2. * std::exp(-R_cx_theta) + R_cx_theta +
            R_cx_theta * std::exp(-R_cx_theta) - 2.);
 
-    Vec2 D = Vec2(D0, D0);
+    Vec3 D = Vec3(D0, D0, D0);
     D += (new_velocity - u) * (new_velocity - u) / (R_cx * R_cx) *
          (1. - 2. * R_cx_theta * std::exp(-R_cx_theta) -
           std::exp(-2. * R_cx_theta));
@@ -106,12 +110,16 @@ void update_particle_kdmc(const Mesh& mesh,
     if (D.y < 0) {
         D.y = 0;
     }
+    if (D.z < 0) {
+        D.z = 0;
+    }
 
-    Vec2 diffusion_term = 2.0 * D;
+    Vec3 diffusion_term = 2.0 * D;
     diffusion_term.x = std::sqrt(diffusion_term.x) * r_normal(p.rng);
     diffusion_term.y = std::sqrt(diffusion_term.y) * r_normal(p.rng);
+    diffusion_term.z = std::sqrt(diffusion_term.z) * r_normal(p.rng);
 
-    Vec2 new_position = p.geometry.position + drift_term + diffusion_term +
+    Vec3 new_position = p.geometry.position + drift_term + diffusion_term +
                         kinetic_flight_time * p.geometry.velocity;
 
     // Check if the new position is outside the mesh
@@ -207,6 +215,17 @@ void simulate_kdmc(Mesh& mesh,
                         break;
                     }
                 }
+
+                #ifdef _OPENMP
+                auto thread_id = omp_get_thread_num();
+                if(thread_id == 0)
+                {
+                    if (i_particle % 1000 == 0) {
+                        std::cout.flush();
+                        std::cout << "Progress: " << i_particle / ((float) sources[i_source]->num_particles()) * 100  << "% \r";
+                    }
+                }
+                #endif
             }
 
             for (index_t i = 0; i < mesh.n_cells(); i++) {

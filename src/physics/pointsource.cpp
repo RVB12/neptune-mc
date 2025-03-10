@@ -19,8 +19,9 @@ Particle PointSource::generate_particle(index_t i_particle)
 
     std::normal_distribution<real_t> dist_vx(vel_mean.x, vel_stddev);
     std::normal_distribution<real_t> dist_vy(vel_mean.y, vel_stddev);
+    std::normal_distribution<real_t> dist_vz(vel_mean.z, vel_stddev);
 
-    p.geometry.velocity = Vec2(dist_vx(p.rng), dist_vy(p.rng));
+    p.geometry.velocity = Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
 
     return p;
 }

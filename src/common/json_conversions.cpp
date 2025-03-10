@@ -187,10 +187,13 @@ void from_json(const nlohmann::json& j, VoxelMesh& m)
     }
     j.at("Lx").get_to(m.Lx);
     j.at("Ly").get_to(m.Ly);
+    j.at("Lz").get_to(m.Lz);
     j.at("nx").get_to(m.nx);
     j.at("ny").get_to(m.ny);
+    j.at("nz").get_to(m.nz);
     m.dx = m.Lx / m.nx;
     m.dy = m.Ly / m.ny;
+    m.dz = m.Lz / m.nz;
 }
 
 void from_json(const nlohmann::json& j, std::unique_ptr<Mesh>& m)
@@ -216,6 +219,7 @@ void to_json(nlohmann::json& j, const PlasmaBackground& m)
         {"plasma_temp", m.plasma_temp},
         {"plasma_vel_x", m.plasma_vel_x},
         {"plasma_vel_y", m.plasma_vel_y},
+        {"plasma_vel_z", m.plasma_vel_z},
     };
 }
 
@@ -225,10 +229,12 @@ void from_json(const nlohmann::json& j, PlasmaBackground& m)
     j.at("plasma_temp").get_to(m.plasma_temp);
     j.at("plasma_vel_x").get_to(m.plasma_vel_x);
     j.at("plasma_vel_y").get_to(m.plasma_vel_y);
+    j.at("plasma_vel_z").get_to(m.plasma_vel_z);
 
     if (m.plasma_dens.size() != m.plasma_temp.size() ||
         m.plasma_dens.size() != m.plasma_vel_x.size() ||
-        m.plasma_dens.size() != m.plasma_vel_y.size()) {
+        m.plasma_dens.size() != m.plasma_vel_y.size() ||
+        m.plasma_dens.size() != m.plasma_vel_z.size()) {
         throw std::runtime_error(
             "Plasma background arrays must have the same size");
     }

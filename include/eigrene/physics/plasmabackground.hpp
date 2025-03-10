@@ -14,7 +14,8 @@ class PlasmaBackground {
         : plasma_dens(n_cells),
           plasma_temp(n_cells),
           plasma_vel_x(n_cells),
-          plasma_vel_y(n_cells)
+          plasma_vel_y(n_cells),
+          plasma_vel_z(n_cells)
     {}
 
     // The background plasma density (in m^-3)
@@ -25,6 +26,8 @@ class PlasmaBackground {
     vector<real_t> plasma_vel_x;
     // The background plasma velocity (in m/s)
     vector<real_t> plasma_vel_y;
+    // The background plasma velocity (in m/s)
+    vector<real_t> plasma_vel_z;
 };
 
 }

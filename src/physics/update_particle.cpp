@@ -40,7 +40,9 @@ void update_particle(const Mesh& mesh,
             background.plasma_vel_x[cell_id], stddev);
         std::normal_distribution<real_t> dist_vy(
             background.plasma_vel_y[cell_id], stddev);
-        p.geometry.velocity = Vec2(dist_vx(p.rng), dist_vy(p.rng));
+        std::normal_distribution<real_t> dist_vz(
+            background.plasma_vel_z[cell_id], stddev);
+        p.geometry.velocity = Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
 
         // Reset boundary id (we are no longer at a boundary)
         p.geometry.boundary_id = -1;
@@ -66,7 +68,7 @@ void update_particle(const Mesh& mesh,
 
             if (bc == BoundaryCondition::REFLECTIVE) {
                 // Reflect the particle
-                Vec2 normal =
+                Vec3 normal =
                     mesh.get_surface_normal(cell_id, crossing.surface_id);
                 p.geometry.velocity =
                     p.geometry.velocity -
@@ -146,7 +148,9 @@ void update_particle_fixed_time(
             background.plasma_vel_x[cell_id], stddev);
         std::normal_distribution<real_t> dist_vy(
             background.plasma_vel_y[cell_id], stddev);
-        p.geometry.velocity = Vec2(dist_vx(p.rng), dist_vy(p.rng));
+        std::normal_distribution<real_t> dist_vz(
+            background.plasma_vel_z[cell_id], stddev);
+        p.geometry.velocity = Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
 
         // Reset boundary id (we are no longer at a boundary)
         p.geometry.boundary_id = -1;
@@ -172,7 +176,7 @@ void update_particle_fixed_time(
 
             if (bc == BoundaryCondition::REFLECTIVE) {
                 // Reflect the particle
-                Vec2 normal =
+                Vec3 normal =
                     mesh.get_surface_normal(cell_id, crossing.surface_id);
                 p.geometry.velocity =
                     p.geometry.velocity -
