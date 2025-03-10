@@ -50,6 +50,7 @@ plasma_dens = np.zeros(ncells, dtype=np.float64)
 plasma_temp = np.zeros(ncells, dtype=np.float64)
 plasma_vel_x = np.zeros(ncells, dtype=np.float64)
 plasma_vel_y = np.zeros(ncells, dtype=np.float64)
+plasma_vel_z = np.zeros(ncells, dtype=np.float64)
 
 
 for i in range(ncells):
@@ -69,7 +70,8 @@ config["background"] = {
     "plasma_dens": plasma_dens.tolist(),
     "plasma_temp": plasma_temp.tolist(),
     "plasma_vel_x": plasma_vel_x.tolist(),
-    "plasma_vel_y": plasma_vel_y.tolist()
+    "plasma_vel_y": plasma_vel_y.tolist(),
+    "plasma_vel_z": plasma_vel_z.tolist(),
 }
 
 config["mesh"] = {
@@ -84,8 +86,8 @@ config["sources"] = [
         "type": "point",
         "n_particles": 1000,
         "intensity": 1.0e10,
-        "pos": [0.55, -0.3],
-        "vel_mean": [2, 0],
+        "pos": [0.55, 0.0, -0.3],
+        "vel_mean": [2, 0., 0],
         "vel_stddev": 100,
     },
 ]
