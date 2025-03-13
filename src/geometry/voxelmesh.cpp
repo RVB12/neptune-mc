@@ -39,7 +39,7 @@ real_t VoxelMesh::get_volume(index_t) const {
 index_t VoxelMesh::get_cell_index(Vec3 p) const
 {
     Index3D ind;
-    if(p.x >= Lx || p.y >= Ly || p.x < 0 || p.y < 0 || p.z >= Lz || p.z < 0){
+    if(p.x >= Lx || p.y >= Ly || p.z >= Lz || p.x < 0 || p.y < 0 || p.z < 0){
         return -1;
     }
 

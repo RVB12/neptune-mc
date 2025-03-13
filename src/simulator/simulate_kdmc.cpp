@@ -36,21 +36,50 @@ void update_particle_kdmc(const Mesh& mesh,
     if (kinetic_flight_time > dt2) {
         kinetic_flight_time = dt2;
     }
-
-    // Draw the velocity that will be used for the post-diffusive step
-    // velocity
-    real_t stddev =
-        constants::calculate_BGK_stddev(background.plasma_temp[cell_id]);
-    std::normal_distribution<real_t> dist_vx(background.plasma_vel_x[cell_id],
-                                             stddev);
-    std::normal_distribution<real_t> dist_vy(background.plasma_vel_y[cell_id],
-                                             stddev);
-    std::normal_distribution<real_t> dist_vz(background.plasma_vel_z[cell_id],
-                                             stddev);
-    Vec3 new_velocity(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
-
+    
     // Diffusive flight time: part of the timestep using diffusive model
-    real_t diffusive_flight_time = std::max(0.0, dt2 - kinetic_flight_time);
+    // For now, this is a simple and relatively inefficient way to sample
+    // Should be improved in the future
+    // real_t diffusive_flight_time = 0;
+    // while (true) {
+    //     real_t time2 = -std::log(r_unif(p.rng)) / (R_cx0);
+    //     if (kinetic_flight_time + diffusive_flight_time + time2 > dt2) {
+    //         break;
+    //     }
+    //     diffusive_flight_time += time2;
+    // }
+
+    // real_t kinetic_flight_time2 =
+    //     dt2 - kinetic_flight_time - diffusive_flight_time;
+
+
+    real_t kinetic_flight_time2 = -std::log(r_unif(p.rng)) / (R_cx0);
+    if (kinetic_flight_time2 > dt2 - kinetic_flight_time) {
+        kinetic_flight_time2 = dt2 - kinetic_flight_time;
+    }
+    // real_t kinetic_flight_time2 = 0;
+    real_t diffusive_flight_time = dt2 - kinetic_flight_time - kinetic_flight_time2;
+
+
+    Vec3 pos2 = p.geometry.position + kinetic_flight_time * p.geometry.velocity;
+
+    // Check if the new position is outside the mesh
+    index_t cell_id2 = mesh.get_cell_index(pos2);
+    bool do_mc = false;
+    if(cell_id2 == -1){
+        do_mc = true;
+        // TODO, this is just a kinetic step, we could properly handle
+        // the boundary here
+    }
+
+    // std::cout << "dt2: " << dt2 << std::endl;
+    // std::cout << "kinetic_flight_time: " << kinetic_flight_time << std::endl;
+    // std::cout << "diffusive_flight_time: " << diffusive_flight_time <<
+    // std::endl; std::cout << "kinetic_flight_time2: " << kinetic_flight_time2
+    // << std::endl; std::cout << std::endl;
+
+    // real_t diffusive_flight_time = dt2 - kinetic_flight_time;
+    // real_t kinetic_flight_time2 = 0;
 
     //
     // Calculate the drift and diffusion terms.
@@ -59,72 +88,110 @@ void update_particle_kdmc(const Mesh& mesh,
     // to just remove epsilon from the equations.
     //
 
-    //
-    // First step, calculate initial drift term and use it to calculate
-    // an intermediate position.
-    //
-    Vec3 u0 = Vec3(background.plasma_vel_x[cell_id],
-                   background.plasma_vel_y[cell_id],
-                   background.plasma_vel_z[cell_id]);
-    real_t R_cx_theta0 = R_cx0 * diffusive_flight_time;
-
-    Vec3 drift_term0 = 0.5 * (u0 * dt2 + (new_velocity - u0) / R_cx0 *
-                                             (1 - std::exp(-R_cx_theta0)));
-
-    Vec3 pos_intermediate = p.geometry.position + drift_term0;
-
-    index_t cell_id_intermediate = mesh.get_cell_index(pos_intermediate);
-
-    if (cell_id_intermediate == -1) {
-        cell_id_intermediate = p.geometry.cell_id;
-    }
-
     // Charge exchange rate coefficient at the intermediate cell
-    real_t K_cx =
-        constants::calculate_K_cx(background.plasma_temp[cell_id_intermediate]);
-    real_t R_cx = K_cx * background.plasma_dens[cell_id_intermediate];
+    real_t K_cx = constants::calculate_K_cx(background.plasma_temp[cell_id]);
+    real_t R_cx = K_cx * background.plasma_dens[cell_id];
     real_t R_cx_theta = R_cx * diffusive_flight_time;
 
-    Vec3 u = Vec3(background.plasma_vel_x[cell_id_intermediate],
-                  background.plasma_vel_y[cell_id_intermediate],
-                  background.plasma_vel_z[cell_id_intermediate]);
+    Vec3 u =
+        Vec3(background.plasma_vel_x[cell_id], background.plasma_vel_y[cell_id],
+             background.plasma_vel_z[cell_id]);
 
-    Vec3 drift_term = u * diffusive_flight_time +
-                      (new_velocity - u) / R_cx * (1 - std::exp(-R_cx_theta));
+    Vec3 drift_term = u * diffusive_flight_time;
 
     // TODO: add spatial derivative term
 
-    real_t D0 = background.plasma_temp[cell_id_intermediate] * constants::eV_to_Joules /
-                constants::m_p / (R_cx * R_cx);
-    D0 *= (2. * std::exp(-R_cx_theta) + R_cx_theta +
-           R_cx_theta * std::exp(-R_cx_theta) - 2.);
+    real_t D = background.plasma_temp[cell_id] * constants::eV_to_Joules /
+               constants::m_p / (R_cx * R_cx_theta);
+    D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
 
-    Vec3 D = Vec3(D0, D0, D0);
-    D += (new_velocity - u) * (new_velocity - u) / (R_cx * R_cx) *
-         (1. - 2. * R_cx_theta * std::exp(-R_cx_theta) -
-          std::exp(-2. * R_cx_theta));
+    // real_t D_diffusive = background.plasma_temp[cell_id] *
+    //                      constants::eV_to_Joules / constants::m_p / R_cx;
 
-    if (D.x < 0) {
-        D.x = 0;
+    // real_t D_kinetic = background.plasma_temp[cell_id] *
+    //                    constants::eV_to_Joules / constants::m_p *
+    //                    std::sqrt(diffusive_flight_time) * 0.5;
+
+    // real_t D = std::exp(-R_cx_theta*0.2) * D_kinetic +
+    //            (1 - std::exp(-R_cx_theta*0.2)) * D_diffusive;
+    // real_t D = D_kinetic;
+    if (D < 0) {
+        D = 0;
     }
-    if (D.y < 0) {
-        D.y = 0;
-    }
-    if (D.z < 0) {
-        D.z = 0;
+    D = std::sqrt(2 * D * diffusive_flight_time);
+
+    // real_t D = background.plasma_temp[cell_id] *
+    //            constants::eV_to_Joules / constants::m_p / (R_cx * R_cx);
+    // D *= (2 * std::exp(-R_cx_theta) + R_cx_theta + R_cx_theta * std::exp(-R_cx_theta) - 2);
+
+    Vec3 diffusion_term;
+    diffusion_term.x = D * r_normal(p.rng);
+    diffusion_term.y = D * r_normal(p.rng);
+    diffusion_term.z = D * r_normal(p.rng);
+
+    Vec3 new_position =
+        p.geometry.position + kinetic_flight_time * p.geometry.velocity;
+
+    if (diffusive_flight_time > 0) {
+        new_position += drift_term + diffusion_term;
     }
 
-    Vec3 diffusion_term = 2.0 * D;
-    diffusion_term.x = std::sqrt(diffusion_term.x) * r_normal(p.rng);
-    diffusion_term.y = std::sqrt(diffusion_term.y) * r_normal(p.rng);
-    diffusion_term.z = std::sqrt(diffusion_term.z) * r_normal(p.rng);
+    Vec3 new_velocity;
+    if (kinetic_flight_time2 > 0) {
+        // Draw new velocity (todo, update the cell id)
+        real_t stddev =
+            constants::calculate_BGK_stddev(background.plasma_temp[cell_id]);
+        std::normal_distribution<real_t> dist_vx(
+            background.plasma_vel_x[cell_id], stddev);
+        std::normal_distribution<real_t> dist_vy(
+            background.plasma_vel_y[cell_id], stddev);
+        std::normal_distribution<real_t> dist_vz(
+            background.plasma_vel_z[cell_id], stddev);
 
-    Vec3 new_position = p.geometry.position + drift_term + diffusion_term +
-                        kinetic_flight_time * p.geometry.velocity;
+        new_velocity = Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+
+        new_position += new_velocity * kinetic_flight_time2;
+    }
+
+    // Don't just check if the new position is outside the mesh
+    // but check if any position that could realistically be drawn
+    // is outside the mesh
+    // we check the 99.9% confidence interval of the position
+    VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
+
+    Vec3 temp_pos = p.geometry.position + drift_term + kinetic_flight_time * p.geometry.velocity;
+    // std::cout << "D" << D << std::endl;
+    Vec3 temp_diff(D, D, D);
+    Vec3 temp_min = temp_pos - 3.291 * temp_diff;
+    Vec3 temp_max = temp_pos + 3.291 * temp_diff;
+    if(temp_min.x < 0 or temp_max.x > vmesh.Lx or
+       temp_min.y < 0 or temp_max.y > vmesh.Ly or
+       temp_min.z < 0 or temp_max.z > vmesh.Lz)
+    {
+        do_mc = true;
+    }
+
+    // // now do the same including the final flight
+    // temp_pos = p.geometry.position + drift_term + kinetic_flight_time * p.geometry.velocity + kinetic_flight_time2 * new_velocity;
+    // temp_min = temp_pos - 2.57 * temp_diff;
+    // temp_max = temp_pos + 2.57 * temp_diff;
+    // if(temp_min.x < 0 or temp_max.x > vmesh.Lx or
+    //    temp_min.y < 0 or temp_max.y > vmesh.Ly or
+    //    temp_min.z < 0 or temp_max.z > vmesh.Lz)
+    // {
+    //     do_mc = true;
+    // }
+
+
 
     // Check if the new position is outside the mesh
     index_t new_cell_id = mesh.get_cell_index(new_position);
-    if (new_cell_id == -1) {
+    if(new_cell_id == -1)
+    {
+        do_mc = true;
+    }
+
+    if (do_mc) {
         // Particle is outside the mesh
         // Good handling of the boundary is still in the works
         // For now, we just switch to normal MC

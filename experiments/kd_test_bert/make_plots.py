@@ -27,6 +27,9 @@ for eps in eps_array:
     output = json.load(f)
     neutral_density = np.array(output["density"])
 
+    err = np.linalg.norm(neutral_density_exact - neutral_density) / np.linalg.norm(neutral_density_exact)
+    print("Error for epsilon = ", eps, " is ", err)
+
     plt.figure()
     plt.plot(x_pts, neutral_density_exact, label="MC")
     plt.plot(x_pts, neutral_density, label="KD")

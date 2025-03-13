@@ -33,7 +33,7 @@ plasma_vel_z = np.zeros(ncells, dtype=np.float64)
 config["sources"] = [
     {
         "type": "point",
-        "n_particles": 500000,
+        "n_particles": 5000000,
         "intensity": 1.0e10,
         "pos": [15, 20, 20],
         "vel_mean": [-5, 0, 0],
@@ -41,7 +41,7 @@ config["sources"] = [
     },
     {
         "type": "point",
-        "n_particles": 500000,
+        "n_particles": 5000000,
         "intensity": 1.0e10,
         "pos": [15, 20, 20],
         "vel_mean": [15, 0, 0],

@@ -40,7 +40,7 @@ def time_since_last_event_fast(T, lamb):
 n_samples = 100000
 
 T = 1
-lamb = 1
+lamb = 10
 
 times = np.zeros(n_samples)
 n_events = np.zeros(n_samples)
@@ -63,30 +63,36 @@ print("Accept rate: ", n_samples / accept_rate)
 # chance = lamb**2 * np.exp(-lamb * T) / 2
 # prob += lamb**2 *  np.exp(-lamb * t_plot) * chance
 
-fig, ax = plt.subplots(2, 2)
-ax[0,0].hist(times, bins=30, density=True)
-ax[0,0].set_ylabel('Density')
-ax[0,0].set_xlabel('Time since last event (direct)')
-ax[0,1].hist(n_events, bins=30, density=True)
-ax[0,1].set_ylabel('Density')
-ax[0,1].set_xlabel('Number of events')
-
-ax[1,0].hist(times2, bins=30, density=True)
-ax[1,0].set_ylabel('Density')
-ax[1,0].set_xlabel('Time since last event (fancy sample)')
-ax[1,1].hist(n_events2, bins=30, density=True)
-ax[1,1].set_ylabel('Density')
-ax[1,1].set_xlabel('Number of events')
+plt.hist(times, bins=30, density=True)
+plt.ylabel('Density')
+plt.xlabel('Final free flight time')
+plt.title(r'$\epsilon = 0.1$')
 plt.show()
 
-fig, ax = plt.subplots(1, 1)
+# fig, ax = plt.subplots(2, 2)
+# ax[0,0].hist(times, bins=30, density=True)
+# ax[0,0].set_ylabel('Density')
+# ax[0,0].set_xlabel('Time since last event (direct)')
+# ax[0,1].hist(n_events, bins=30, density=True)
+# ax[0,1].set_ylabel('Density')
+# ax[0,1].set_xlabel('Number of events')
 
-counts, bin_edges = np.histogram(times, bins=30, density=True)
-bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-ax.plot(bin_centers, counts, label='Direct')
+# ax[1,0].hist(times2, bins=30, density=True)
+# ax[1,0].set_ylabel('Density')
+# ax[1,0].set_xlabel('Time since last event (fancy sample)')
+# ax[1,1].hist(n_events2, bins=30, density=True)
+# ax[1,1].set_ylabel('Density')
+# ax[1,1].set_xlabel('Number of events')
+# plt.show()
 
-counts, bin_edges = np.histogram(times2, bins=30, density=True)
-bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-ax.plot(bin_centers, counts, label='Fancy sample')
+# fig, ax = plt.subplots(1, 1)
 
-plt.show()
+# counts, bin_edges = np.histogram(times, bins=30, density=True)
+# bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+# ax.plot(bin_centers, counts, label='Direct')
+
+# counts, bin_edges = np.histogram(times2, bins=30, density=True)
+# bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+# ax.plot(bin_centers, counts, label='Fancy sample')
+
+# plt.show()
