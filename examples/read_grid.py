@@ -61,6 +61,7 @@ ion_density_plasma_grid = []
 electron_density_plasma_grid = []
 ion_temp_plasma_grid = []
 ion_vel_parallel_plasma_grid = []
+ion_flux_plasma_grid = []
 current_array = None
 with open(background_file, "r") as f:
     for line in f:
@@ -77,6 +78,8 @@ with open(background_file, "r") as f:
                 current_array = ion_temp_plasma_grid
             elif tag == "ua":
                 current_array = ion_vel_parallel_plasma_grid
+            elif tag == "fna":
+                current_array = ion_flux_plasma_grid
             else:
                 current_array = None  # Ignore other types
         
@@ -88,15 +91,12 @@ with open(background_file, "r") as f:
 # only keep the latter half
 ion_density_plasma_grid = ion_density_plasma_grid[len(ion_density_plasma_grid)//2:]
 
-print("ion density")
-print(ion_density_plasma_grid[0:10])
-
 # ion temp is defined in joules but we need it in eV
 ion_temp_plasma_grid = [x / 1.602176634e-19 for x in ion_temp_plasma_grid]
 
-print("ion temp")
-print(ion_temp_plasma_grid[0:10])
-print(max(ion_temp_plasma_grid))
+ion_flux_plasma_grid = ion_flux_plasma_grid[len(ion_flux_plasma_grid)//2:]
+ion_flux_plasma_grid = np.reshape(ion_flux_plasma_grid, (-1, 2))
+
 
 # Create the triangulation
 x = np.array([v[0] for v in vertices])
@@ -114,6 +114,11 @@ plasma_vel_parallel = np.zeros(ncells, dtype=np.float64)
 
 # Read the mapping
 ind = -1
+
+boundaries = []
+boundary_mask = np.ones(ncells, dtype=np.bool)
+boundary_cond = np.zeros(ncells, dtype=np.float64)
+sources = []
 with open(mapping_file, "r") as f:
     # Skip the first line (it is the number of triangles)
     f.readline()
@@ -137,8 +142,77 @@ with open(mapping_file, "r") as f:
         plasma_vel_y[ind] = ion_vel_parallel_plasma_grid[plasma_cell_index] * magnetic_unit[1]
         plasma_vel_z[ind] = ion_vel_parallel_plasma_grid[plasma_cell_index] * magnetic_unit[2]
 
+        # neighbor1 = int(s[1])
+        # neighbor2 = int(s[4])
+        # neighbor3 = int(s[7])
+
+        # if(neighbor1 == 0 or neighbor2 == 0 or neighbor3 == 0):
+        #     boundaries.append(ind)
+        #     boundary_mask[ind] = False
+
+        boundary_condition1 = int(s[3])
+        boundary_condition2 = int(s[6])
+        boundary_condition3 = int(s[9])
+
+        boundary_plasma_grid1 = int(s[-3])
+        boundary_plasma_grid2 = int(s[-2])
+        boundary_plasma_grid3 = int(s[-1])
+
+        x1 = x[triangles[ind][0]]
+        y1 = y[triangles[ind][0]]
+        x2 = x[triangles[ind][1]]
+        y2 = y[triangles[ind][1]]
+        x3 = x[triangles[ind][2]]
+        y3 = y[triangles[ind][2]]
 
 
+        xmid = (x1 + x2 + x3) / 3
+        ymid = (y1 + y2 + y3) / 3
+
+        if(boundary_condition1 == -2 or boundary_condition1 == -3):
+            boundary_mask[ind] = False
+            if(boundary_plasma_grid1 > 0):
+                boundary_cond[ind] = ion_flux_plasma_grid[boundary_plasma_grid1-1, 0]
+            elif(boundary_plasma_grid1 < 0):
+                boundary_cond[ind] = -ion_flux_plasma_grid[-boundary_plasma_grid1-1, 0]
+            sources.append({
+                "type": "point",
+                "n_particles": 10000,
+                "intensity": np.abs(boundary_cond[ind]),
+                "pos": [xmid, 0.0, ymid],
+                "vel_mean": [0, 0., 0],
+                "vel_stddev": 100,
+            })
+
+        if(boundary_condition2 == -2 or boundary_condition2 == -3):
+            boundary_mask[ind] = False
+            if(boundary_plasma_grid2 > 0):
+                boundary_cond[ind] = ion_flux_plasma_grid[boundary_plasma_grid2-1, 0]
+            elif(boundary_plasma_grid2 < 0):
+                boundary_cond[ind] = -ion_flux_plasma_grid[-boundary_plasma_grid2-1, 0]
+            sources.append({
+                "type": "point",
+                "n_particles": 10000,
+                "intensity": np.abs(boundary_cond[ind]),
+                "pos": [xmid, 0.0, ymid],
+                "vel_mean": [0, 0., 0],
+                "vel_stddev": 100,
+            })
+
+        if(boundary_condition3 == -2 or boundary_condition3 == -3):
+            boundary_mask[ind] = False
+            if(boundary_plasma_grid3 > 0):
+                boundary_cond[ind] = ion_flux_plasma_grid[boundary_plasma_grid3-1, 0]
+            elif(boundary_plasma_grid3 < 0):
+                boundary_cond[ind] = -ion_flux_plasma_grid[-boundary_plasma_grid3-1, 0]
+            sources.append({
+                "type": "point",
+                "n_particles": 10000,
+                "intensity": np.abs(boundary_cond[ind]),
+                "pos": [xmid, 0.0, ymid],
+                "vel_mean": [0, 0., 0],
+                "vel_stddev": 100,
+            })
 
 # print("Vertices:")
 # for vertex in vertices:
@@ -180,16 +254,7 @@ config["mesh"] = {
     "triangles": np.array(triangles).tolist()
 }
 
-config["sources"] = [
-    {
-        "type": "point",
-        "n_particles": 100000,
-        "intensity": 1.0e19,
-        "pos": [0.441, 0.0, -0.2],
-        "vel_mean": [0, 0., 0],
-        "vel_stddev": 100,
-    },
-]
+config["sources"] = sources
 
 config["boundary_conditions"] = [
     "reflective"
@@ -200,6 +265,9 @@ config["seed"] = 0
 
 
 inputstring = json.dumps(config)
+
+with open("input.json", "w") as f:
+    f.write(inputstring)
 
 start_time = time.time()
 outputstring = eigrene.simulate(inputstring)
@@ -219,37 +287,43 @@ neutral_density = np.array(output["density"])
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, np.log10(plasma_dens+1), triangles=triangles, shading='flat', vmin=19, vmax=21)
+tpc = ax1.tripcolor(x, y, np.log10(plasma_dens+1), triangles=triangles, shading='flat', vmin=19, vmax=21, cmap='jet')
 fig1.colorbar(tpc)
 ax1.set_title('ion density (m^-3)')
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, plasma_temp, triangles=triangles, shading='flat')
+tpc = ax1.tripcolor(x, y, plasma_temp, triangles=triangles, shading='flat', cmap='jet')
 fig1.colorbar(tpc)
 ax1.set_title('ion temp (eV)')
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, np.log10(np.abs(plasma_vel_x) + 1), triangles=triangles, shading='flat')
+tpc = ax1.tripcolor(x, y, np.log10(np.abs(plasma_vel_x) + 1), triangles=triangles, shading='flat', cmap='jet')
 fig1.colorbar(tpc)
 ax1.set_title('background velocity (x)')
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, np.log10(np.abs(plasma_vel_y) + 1), triangles=triangles, shading='flat')
+tpc = ax1.tripcolor(x, y, boundary_cond, triangles=triangles, mask=boundary_mask ,shading='flat', cmap='jet')
+fig1.colorbar(tpc)
+ax1.set_title('boundary')
+
+fig1, ax1 = plt.subplots()
+ax1.set_aspect('equal')
+tpc = ax1.tripcolor(x, y, np.log10(np.abs(plasma_vel_y) + 1), triangles=triangles, shading='flat', cmap='jet')
 fig1.colorbar(tpc)
 ax1.set_title('background velocity (y)')
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, np.log10(np.abs(plasma_vel_z) + 1), triangles=triangles, shading='flat')
+tpc = ax1.tripcolor(x, y,np.abs(plasma_vel_z), triangles=triangles, shading='flat', cmap='jet')
 fig1.colorbar(tpc)
 ax1.set_title('background velocity (z)')
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, neutral_density, triangles=triangles, shading='flat')
+tpc = ax1.tripcolor(x, y, np.log10(neutral_density), triangles=triangles, shading='flat', cmap='jet')
 fig1.colorbar(tpc)
 ax1.set_title('neutral density (m^-3)')
 
