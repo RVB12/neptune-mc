@@ -212,33 +212,55 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Mesh>& m)
     }
 }
 
-void to_json(nlohmann::json& j, const PlasmaBackground& m)
-{
-    j = nlohmann::json{
-        {"plasma_dens", m.plasma_dens},
-        {"plasma_temp", m.plasma_temp},
-        {"plasma_vel_x", m.plasma_vel_x},
-        {"plasma_vel_y", m.plasma_vel_y},
-        {"plasma_vel_z", m.plasma_vel_z},
-    };
-}
+// void to_json(nlohmann::json& j, const PlasmaBackground& m)
+// {
+//     j = nlohmann::json{
+//         {"plasma_dens", m.plasma_dens},
+//         {"plasma_temp", m.plasma_temp},
+//         {"plasma_vel_x", m.plasma_vel_x},
+//         {"plasma_vel_y", m.plasma_vel_y},
+//         {"plasma_vel_z", m.plasma_vel_z},
+//     };
+// }
 
-void from_json(const nlohmann::json& j, PlasmaBackground& m)
-{
-    j.at("plasma_dens").get_to(m.plasma_dens);
-    j.at("plasma_temp").get_to(m.plasma_temp);
-    j.at("plasma_vel_x").get_to(m.plasma_vel_x);
-    j.at("plasma_vel_y").get_to(m.plasma_vel_y);
-    j.at("plasma_vel_z").get_to(m.plasma_vel_z);
+// void from_json(const nlohmann::json& j, PlasmaBackground& m)
+// {
+//     j.at("plasma_dens").get_to(m.plasma_dens);
+//     j.at("plasma_temp").get_to(m.plasma_temp);
+//     j.at("plasma_vel_x").get_to(m.plasma_vel_x);
+//     j.at("plasma_vel_y").get_to(m.plasma_vel_y);
+//     j.at("plasma_vel_z").get_to(m.plasma_vel_z);
 
-    if (m.plasma_dens.size() != m.plasma_temp.size() ||
-        m.plasma_dens.size() != m.plasma_vel_x.size() ||
-        m.plasma_dens.size() != m.plasma_vel_y.size() ||
-        m.plasma_dens.size() != m.plasma_vel_z.size()) {
-        throw std::runtime_error(
-            "Plasma background arrays must have the same size");
-    }
-}
+//     if(j.contains("neutral_dens")) {
+//         j.at("neutral_dens").get_to(m.neutral_dens);
+//         j.at("neutral_temp").get_to(m.neutral_temp);
+//         j.at("neutral_vel_x").get_to(m.neutral_vel_x);
+//         j.at("neutral_vel_y").get_to(m.neutral_vel_y);
+//         j.at("neutral_vel_z").get_to(m.neutral_vel_z);
+//     } else {
+//         // set all the values to zero
+//         m.neutral_dens.resize(m.plasma_dens.size());
+//         m.neutral_temp.resize(m.plasma_dens.size());
+//         m.neutral_vel_x.resize(m.plasma_dens.size());
+//         m.neutral_vel_y.resize(m.plasma_dens.size());
+//         m.neutral_vel_z.resize(m.plasma_dens.size());
+//         for(int i = 0; i < m.plasma_dens.size(); i++) {
+//             m.neutral_dens[i] = 0;
+//             m.neutral_temp[i] = 0;
+//             m.neutral_vel_x[i] = 0;
+//             m.neutral_vel_y[i] = 0;
+//             m.neutral_vel_z[i] = 0;
+//         }
+//     }
+
+//     if (m.plasma_dens.size() != m.plasma_temp.size() ||
+//         m.plasma_dens.size() != m.plasma_vel_x.size() ||
+//         m.plasma_dens.size() != m.plasma_vel_y.size() ||
+//         m.plasma_dens.size() != m.plasma_vel_z.size()) {
+//         throw std::runtime_error(
+//             "Plasma background arrays must have the same size");
+//     }
+// }
 
 void from_json(const nlohmann::json& j, vector<std::unique_ptr<Source>>& v)
 {

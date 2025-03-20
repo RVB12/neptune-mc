@@ -5,18 +5,17 @@
 #include <random>
 #include <vector>
 
+#include "eigrene/common/utils.hpp"
 #include "eigrene/common/vector.hpp"
 #include "eigrene/geometry/cellcrossing.hpp"
 #include "eigrene/geometry/mesh.hpp"
-#include "eigrene/physics/particle.hpp"
-#include "eigrene/physics/source.hpp"
-#include "eigrene/common/utils.hpp"
 #include "eigrene/physics/boundarycondition.hpp"
-#include "eigrene/simulator/execution_statistics.hpp"
+#include "eigrene/physics/particle.hpp"
 #include "eigrene/physics/plasmabackground.hpp"
+#include "eigrene/physics/source.hpp"
+#include "eigrene/simulator/execution_statistics.hpp"
 
 namespace eigrene {
-
 
 struct SimulationParams {
     int64_t seed = 0;
@@ -38,24 +37,23 @@ void simulate(Mesh& mesh,
               ExecutionStatistics& stats);
 
 void simulate_fixed_time(Mesh& mesh,
-              PlasmaBackground& background,
-              vector<std::unique_ptr<Source>>& sources,
-              vector<real_t>& density,
-              vector<BoundaryCondition>& boundary_conditions,
-              SimulationParams params,
-              ExecutionStatistics& stats,
-              real_t t_final);
+                         PlasmaBackground& background,
+                         vector<std::unique_ptr<Source>>& sources,
+                         vector<real_t>& density,
+                         vector<BoundaryCondition>& boundary_conditions,
+                         SimulationParams params,
+                         ExecutionStatistics& stats,
+                         real_t t_final);
 
 void simulate_kdmc(Mesh& mesh,
-              PlasmaBackground& background,
-              vector<std::unique_ptr<Source>>& sources,
-              vector<real_t>& density,
-              vector<BoundaryCondition>& boundary_conditions,
-              SimulationParams params,
-              ExecutionStatistics& stats,
-              real_t t_final,
-              real_t dt);
-
+                   PlasmaBackground& background,
+                   vector<std::unique_ptr<Source>>& sources,
+                   vector<real_t>& density,
+                   vector<BoundaryCondition>& boundary_conditions,
+                   SimulationParams params,
+                   ExecutionStatistics& stats,
+                   real_t t_final,
+                   real_t dt);
 
 }  // namespace eigrene
 

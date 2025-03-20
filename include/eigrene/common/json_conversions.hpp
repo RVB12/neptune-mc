@@ -69,6 +69,29 @@ struct adl_serializer<eigrene::PlasmaBackground> {
         j.at("plasma_vel_y").get_to(m.plasma_vel_y);
         j.at("plasma_vel_z").get_to(m.plasma_vel_z);
 
+        if (j.contains("neutral_dens")) {
+            j.at("neutral_dens").get_to(m.neutral_dens);
+            j.at("neutral_temp").get_to(m.neutral_temp);
+            j.at("neutral_vel_x").get_to(m.neutral_vel_x);
+            j.at("neutral_vel_y").get_to(m.neutral_vel_y);
+            j.at("neutral_vel_z").get_to(m.neutral_vel_z);
+        }
+        else {
+            // set all the values to zero
+            m.neutral_dens.resize(m.plasma_dens.size());
+            m.neutral_temp.resize(m.plasma_dens.size());
+            m.neutral_vel_x.resize(m.plasma_dens.size());
+            m.neutral_vel_y.resize(m.plasma_dens.size());
+            m.neutral_vel_z.resize(m.plasma_dens.size());
+            for (int i = 0; i < m.plasma_dens.size(); i++) {
+                m.neutral_dens[i] = 0;
+                m.neutral_temp[i] = 0;
+                m.neutral_vel_x[i] = 0;
+                m.neutral_vel_y[i] = 0;
+                m.neutral_vel_z[i] = 0;
+            }
+        }
+
         return m;
     }
 
@@ -115,7 +138,6 @@ struct adl_serializer<eigrene::LineSource> {
     }
 };
 
-
 template <>
 struct adl_serializer<eigrene::PointSource> {
     static eigrene::PointSource from_json(const json& j)
@@ -126,7 +148,8 @@ struct adl_serializer<eigrene::PointSource> {
         eigrene::Vec3 vel_mean = j.at("vel_mean");
         eigrene::real_t vel_stddev = j.at("vel_stddev");
 
-        eigrene::PointSource s(num_particles, intensity, pos, vel_mean, vel_stddev);
+        eigrene::PointSource s(num_particles, intensity, pos, vel_mean,
+                               vel_stddev);
 
         return s;
     }

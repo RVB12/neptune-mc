@@ -177,7 +177,7 @@ with open(mapping_file, "r") as f:
                 boundary_cond[ind] = -ion_flux_plasma_grid[-boundary_plasma_grid1-1, 0]
             sources.append({
                 "type": "point",
-                "n_particles": 10000,
+                "n_particles": 1000,
                 "intensity": np.abs(boundary_cond[ind]),
                 "pos": [xmid, 0.0, ymid],
                 "vel_mean": [0, 0., 0],
@@ -192,7 +192,7 @@ with open(mapping_file, "r") as f:
                 boundary_cond[ind] = -ion_flux_plasma_grid[-boundary_plasma_grid2-1, 0]
             sources.append({
                 "type": "point",
-                "n_particles": 10000,
+                "n_particles": 1000,
                 "intensity": np.abs(boundary_cond[ind]),
                 "pos": [xmid, 0.0, ymid],
                 "vel_mean": [0, 0., 0],
@@ -207,7 +207,7 @@ with open(mapping_file, "r") as f:
                 boundary_cond[ind] = -ion_flux_plasma_grid[-boundary_plasma_grid3-1, 0]
             sources.append({
                 "type": "point",
-                "n_particles": 10000,
+                "n_particles": 1000,
                 "intensity": np.abs(boundary_cond[ind]),
                 "pos": [xmid, 0.0, ymid],
                 "vel_mean": [0, 0., 0],
@@ -263,18 +263,17 @@ config["boundary_conditions"] = [
 config["max_steps"] = 10000000
 config["seed"] = 0
 
-
 inputstring = json.dumps(config)
 
-with open("input.json", "w") as f:
+with open("build/input.json", "w") as f:
     f.write(inputstring)
 
+# first run, determine the neutral background
 start_time = time.time()
 outputstring = eigrene.simulate(inputstring)
 end_time = time.time()
 
 print("Simulation took", end_time - start_time, "seconds")
-
 
 output = json.loads(outputstring)
 
@@ -283,49 +282,97 @@ print(stats)
 
 neutral_density = np.array(output["density"])
 
+# # second run, with the neutral background
+# config["background"]["neutral_dens"] = (0.1 * neutral_density).tolist()
+# config["background"]["neutral_temp"] = np.ones(ncells, dtype=np.float64).tolist()
+# config["background"]["neutral_vel_x"] = plasma_vel_x.tolist()
+# config["background"]["neutral_vel_y"] = plasma_vel_y.tolist()
+# config["background"]["neutral_vel_z"] = plasma_vel_z.tolist()
+
+# inputstring = json.dumps(config)
+
+# with open("build/input.json", "w") as f:
+#     f.write(inputstring)
+
+# start_time = time.time()
+# outputstring = eigrene.simulate(inputstring)
+# end_time = time.time()
+
+# print("Second simulation took", end_time - start_time, "seconds")
+
+# output = json.loads(outputstring)
+
+# stats = output["stats"]
+# print(stats)
+
+# neutral_density2 = np.array(output["density"])
+
+
+x_center = np.array([1/3 * (x[triangles[i][0]] + x[triangles[i][1]] + x[triangles[i][2]]) for i in range(ncells)])
+y_center = np.array([1/3 * (y[triangles[i][0]] + y[triangles[i][1]] + y[triangles[i][2]]) for i in range(ncells)])
+
 #
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, np.log10(plasma_dens+1), triangles=triangles, shading='flat', vmin=19, vmax=21, cmap='jet')
+tpc = ax1.tripcolor(x, y, np.log10(plasma_dens+1), triangles=triangles, shading='flat', vmin=17, vmax=21)
 fig1.colorbar(tpc)
 ax1.set_title('ion density (m^-3)')
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, plasma_temp, triangles=triangles, shading='flat', cmap='jet')
+tpc = ax1.tripcolor(x, y, plasma_temp, triangles=triangles, shading='flat')
 fig1.colorbar(tpc)
 ax1.set_title('ion temp (eV)')
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, np.log10(np.abs(plasma_vel_x) + 1), triangles=triangles, shading='flat', cmap='jet')
+tpc = ax1.tripcolor(x, y, np.log10(plasma_dens+1), triangles=triangles, shading='flat', vmin=19, vmax=21)
 fig1.colorbar(tpc)
-ax1.set_title('background velocity (x)')
+# Normalize the velocities for quiver plot
+vel_magnitude = np.sqrt(plasma_vel_x**2 + plasma_vel_y**2 + plasma_vel_z**2)
+log_vel_magnitude = np.log10(vel_magnitude + 1)
+norm_plasma_vel_x = plasma_vel_x / vel_magnitude * log_vel_magnitude
+norm_plasma_vel_y = plasma_vel_y / vel_magnitude * log_vel_magnitude
+norm_plasma_vel_z = plasma_vel_z / vel_magnitude * log_vel_magnitude
+ax1.quiver(x_center, y_center, norm_plasma_vel_x, norm_plasma_vel_z, scale=200)
+ax1.set_title('background velocity quiver plot')
+
+# fig1, ax1 = plt.subplots()
+# ax1.set_aspect('equal')
+# tpc = ax1.tripcolor(x, y, np.log10(np.abs(plasma_vel_x) + 1), triangles=triangles, shading='flat')
+# fig1.colorbar(tpc)
+# ax1.set_title('background velocity (x)')
+
+# fig1, ax1 = plt.subplots()
+# ax1.set_aspect('equal')
+# tpc = ax1.tripcolor(x, y, boundary_cond, triangles=triangles, mask=boundary_mask ,shading='flat')
+# fig1.colorbar(tpc)
+# ax1.set_title('boundary')
+
+# fig1, ax1 = plt.subplots()
+# ax1.set_aspect('equal')
+# tpc = ax1.tripcolor(x, y, np.log10(np.abs(plasma_vel_y) + 1), triangles=triangles, shading='flat')
+# fig1.colorbar(tpc)
+# ax1.set_title('background velocity (y)')
+
+# fig1, ax1 = plt.subplots()
+# ax1.set_aspect('equal')
+# tpc = ax1.tripcolor(x, y,np.log10(np.abs(plasma_vel_z) + 1), triangles=triangles, shading='flat')
+# fig1.colorbar(tpc)
+# ax1.set_title('background velocity (z)')
 
 fig1, ax1 = plt.subplots()
 ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, boundary_cond, triangles=triangles, mask=boundary_mask ,shading='flat', cmap='jet')
-fig1.colorbar(tpc)
-ax1.set_title('boundary')
-
-fig1, ax1 = plt.subplots()
-ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, np.log10(np.abs(plasma_vel_y) + 1), triangles=triangles, shading='flat', cmap='jet')
-fig1.colorbar(tpc)
-ax1.set_title('background velocity (y)')
-
-fig1, ax1 = plt.subplots()
-ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y,np.abs(plasma_vel_z), triangles=triangles, shading='flat', cmap='jet')
-fig1.colorbar(tpc)
-ax1.set_title('background velocity (z)')
-
-fig1, ax1 = plt.subplots()
-ax1.set_aspect('equal')
-tpc = ax1.tripcolor(x, y, np.log10(neutral_density), triangles=triangles, shading='flat', cmap='jet')
+tpc = ax1.tripcolor(x, y, np.log10(neutral_density), triangles=triangles, shading='flat')
 fig1.colorbar(tpc)
 ax1.set_title('neutral density (m^-3)')
+
+# fig1, ax1 = plt.subplots()
+# ax1.set_aspect('equal')
+# tpc = ax1.tripcolor(x, y, np.log10(neutral_density2), triangles=triangles, shading='flat')
+# fig1.colorbar(tpc)
+# ax1.set_title('neutral density (m^-3)')
 
 plt.show()
 

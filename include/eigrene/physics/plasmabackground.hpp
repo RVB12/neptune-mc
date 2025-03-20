@@ -28,6 +28,16 @@ class PlasmaBackground {
     vector<real_t> plasma_vel_y;
     // The background plasma velocity (in m/s)
     vector<real_t> plasma_vel_z;
+    // The background neutral density (in m^-3)
+    vector<real_t> neutral_dens;
+    // The background neutral temperature (in eV)
+    vector<real_t> neutral_temp;
+    // The background neutral velocity (in m/s)
+    vector<real_t> neutral_vel_x;
+    // The background neutral velocity (in m/s)
+    vector<real_t> neutral_vel_y;
+    // The background neutral velocity (in m/s)
+    vector<real_t> neutral_vel_z;
 };
 
 }
