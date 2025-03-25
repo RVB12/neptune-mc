@@ -95,23 +95,26 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
 
     // Time till intersection with edge 0
     real_t t0;
-    if(p.boundary_id == 0){
+    if (p.boundary_id == 0) {
         t0 = -1;
-    } else {
+    }
+    else {
         t0 = find_edge_intersection(p1, p2, pos2d, vel2d);
     }
 
     real_t t1;
-    if(p.boundary_id == 1){
+    if (p.boundary_id == 1) {
         t1 = -1;
-    } else {
+    }
+    else {
         t1 = find_edge_intersection(p2, p3, pos2d, vel2d);
     }
 
     real_t t2;
-    if(p.boundary_id == 2){
+    if (p.boundary_id == 2) {
         t2 = -1;
-    } else {
+    }
+    else {
         t2 = find_edge_intersection(p3, p1, pos2d, vel2d);
     }
 
@@ -244,9 +247,9 @@ void make_neighborlist(const vector<Vec2>& vertices,
 
         vector<index_t> candidates = spatialindex.query(box);
 
-        for(index_t j = 0; j < candidates.size(); j++){
+        for (index_t j = 0; j < candidates.size(); j++) {
             index_t k = candidates[j];
-            if(i == k) continue;
+            if (i == k) continue;
             TriangleIndices t2 = triangles[k];
 
             bool has_ind1 =

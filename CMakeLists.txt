@@ -97,7 +97,7 @@ target_link_libraries(simple_test_trianglemesh PRIVATE eigrene)
 find_package(Catch2 3)
 
 if(Catch2_FOUND)
-    add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp tests/cpp/test_trianglemesh.cpp tests/cpp/test_json.cpp tests/cpp/test_spatialindex.cpp)
+    add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp tests/cpp/test_trianglemesh.cpp tests/cpp/test_json.cpp tests/cpp/test_spatialindex.cpp tests/cpp/test_first_exit_time.cpp)
     target_link_libraries(all_tests PRIVATE Catch2::Catch2WithMain)
     target_link_libraries(all_tests PRIVATE eigrene)
 
