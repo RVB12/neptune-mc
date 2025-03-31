@@ -8,7 +8,7 @@ config = {}
 Lx = 35
 Ly = 40
 Lz = 40
-nx = 51
+nx = 101
 ny = 1
 nz = 1
 

@@ -180,4 +180,44 @@ Vec3 VoxelMesh::get_surface_normal(index_t cell_index, index_t surface_id) const
     }
 }
 
+vector<index_t> VoxelMesh::get_neighbours(index_t cell_index) const{
+    Index3D ind = linear_to_tuple(cell_index);
+    vector<index_t> neighbours(6);
+
+    neighbours[0] = (ind.i > 0) ? tuple_to_linear(Index3D(ind.i - 1, ind.j, ind.k)) : -1;
+    neighbours[1] = (ind.j > 0) ? tuple_to_linear(Index3D(ind.i, ind.j - 1, ind.k)) : -1;
+    neighbours[2] = (ind.k > 0) ? tuple_to_linear(Index3D(ind.i, ind.j, ind.k - 1)) : -1;
+    neighbours[3] = (ind.i < nx - 1) ? tuple_to_linear(Index3D(ind.i + 1, ind.j, ind.k)) : -1;
+    neighbours[4] = (ind.j < ny - 1) ? tuple_to_linear(Index3D(ind.i, ind.j + 1, ind.k)) : -1;
+    neighbours[5] = (ind.k < nz - 1) ? tuple_to_linear(Index3D(ind.i, ind.j, ind.k + 1)) : -1;
+
+    return neighbours;
+}
+
+real_t VoxelMesh::get_surface_area(index_t, index_t surface_id) const {
+
+    switch (surface_id) {
+        case 0:
+        case 3:
+            return dy * dz;
+        case 1:
+        case 4:
+            return dx * dz;
+        case 2:
+        case 5:
+            return dx * dy;
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
+
+}
+
+Vec3 VoxelMesh::get_center(index_t cell_index) const
+{
+    Index3D ind = linear_to_tuple(cell_index);
+    return Vec3((ind.i + 0.5) * dx, (ind.j + 0.5) * dy, (ind.k + 0.5) * dz);
+}
+
+
+
 }  // namespace eigrene

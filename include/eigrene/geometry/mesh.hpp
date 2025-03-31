@@ -4,6 +4,7 @@
 #include "eigrene/geometry/cellcrossing.hpp"
 #include "eigrene/geometry/particlegeometry.hpp"
 #include "eigrene/geometry/vec2.hpp"
+#include "eigrene/common/vector.hpp"
 #include "eigrene/common/utils.hpp"
 
 namespace eigrene {
@@ -52,6 +53,22 @@ class Mesh {
      * @brief Return the normal of a given surface
      */
     virtual Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const = 0;
+
+    /**
+     * @brief Return the indices of the neighbours of a given cell
+     * The neighbours are ordered in the same way as the surfaces of the cell
+     */
+    virtual vector<index_t> get_neighbours(index_t cell_index) const = 0;
+
+    /**
+     * @brief Return the surface area of a given surface of a cell
+     */
+    virtual real_t get_surface_area(index_t cell_index, index_t surface_id) const = 0;
+
+    /**
+     * @brief Return the center of a given cell
+     */
+    virtual Vec3 get_center(index_t cell_index) const = 0;
 };
 
 }  // namespace eigrene

@@ -304,4 +304,39 @@ Vec3 TriangleMesh::get_surface_normal(index_t cell_index,
     return normal / normal.norm();
 }
 
+vector<index_t> TriangleMesh::get_neighbours(index_t cell_index) const
+{
+    vector<index_t> n(3);
+    n[0] = neighbors[3 * cell_index];
+    n[1] = neighbors[3 * cell_index + 1];
+    n[2] = neighbors[3 * cell_index + 2];
+    return n;
+}
+
+real_t TriangleMesh::get_surface_area(index_t cell_index,
+                                      index_t surface_id) const
+{
+    TriangleIndices t = triangles[cell_index];
+    Vec2 p1 = vertices[t.ind1];
+    Vec2 p2 = vertices[t.ind2];
+    Vec2 p3 = vertices[t.ind3];
+
+    Vec2 v1 = p2 - p1;
+    Vec2 v2 = p3 - p1;
+
+    real_t area = 0.5 * std::abs(v1.x * v2.y - v1.y * v2.x);
+
+    return area;
+}
+
+Vec3 TriangleMesh::get_center(index_t cell_index) const
+{
+    TriangleIndices t = triangles[cell_index];
+    Vec2 p1 = vertices[t.ind1];
+    Vec2 p2 = vertices[t.ind2];
+    Vec2 p3 = vertices[t.ind3];
+
+    return Vec3((p1.x + p2.x + p3.x) / 3, 0, (p1.y + p2.y + p3.y) / 3);
+}
+
 }  // namespace eigrene

@@ -60,7 +60,7 @@ config["background"] = {
 config["sources"] = [
     {
         "type": "point",
-        "n_particles": 5000000,
+        "n_particles": 50000000,
         "intensity": 1.0e10,
         "pos": [20, 20, 20],
         "vel_mean": [-15, 0, 0],
@@ -68,7 +68,7 @@ config["sources"] = [
     },
     {
         "type": "point",
-        "n_particles": 5000000,
+        "n_particles": 50000000,
         "intensity": 1.0e10,
         "pos": [20, 20, 20],
         "vel_mean": [5, 0, 0],

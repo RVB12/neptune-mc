@@ -52,6 +52,10 @@ for eps in eps_array:
     ax[1,0].set_ylabel("y")
     fig.colorbar(c, ax=ax[1,0])
 
+
+    err = np.linalg.norm(diff) / np.linalg.norm(neutral_density_exact)
+    print("Error for epsilon = ", eps, " is ", err)
+
     plt.savefig("outputs/mc_eps_" + str(eps) + ".png")
 
 plt.show()

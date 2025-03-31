@@ -34,8 +34,7 @@ class vector {
     /**
      * @brief Construct an empty vector
      */
-    vector() : _n(0), _data(nullptr)
-    {}
+    vector() : _n(0), _data(nullptr) {}
 
     /**
      * @brief Construct a new vector
@@ -212,12 +211,12 @@ class vector {
 
     /**
      * @brief Resize the vector, the old data will be lost.
-     * 
+     *
      * @param n integer
      */
     void resize(index_t n)
     {
-        if(n == _n) {
+        if (n == _n) {
             return;
         }
         _n = n;
@@ -242,7 +241,9 @@ class vector {
      * though the returned object is not const. Solving this problem would
      * require either an inefficient or a more complex design.
      */
-    inline vectorview<T> subvector(index_t start, index_t end, index_t stride = 1) const
+    inline vectorview<T> subvector(index_t start,
+                                   index_t end,
+                                   index_t stride = 1) const
     {
         assert(start >= 0);
         assert(end <= _n);
@@ -300,9 +301,7 @@ class vectorview {
     typedef T val_t;
 
     // Constructor
-    vectorview()
-        : _n(0), _stride(1), _data(nullptr)
-    {}
+    vectorview() : _n(0), _stride(1), _data(nullptr) {}
 
     vectorview(index_t n, T* data, index_t stride = 1)
         : _n(n), _stride(stride), _data(data)
@@ -341,9 +340,7 @@ class vectorview {
      * @param v vector
      *          vector to move
      */
-    vectorview(vectorview&& v)
-        : _n(v._n), _stride(v._stride), _data(v._data)
-    {}
+    vectorview(vectorview&& v) : _n(v._n), _stride(v._stride), _data(v._data) {}
 
     /**
      * @brief Assign the data of another vector to this vector
@@ -432,13 +429,16 @@ class vectorview {
      * though the returned object is not const. Solving this problem would
      * require either an inefficient or a more complex design.
      */
-    inline vectorview subvector(index_t start, index_t end, index_t stride = 1) const
+    inline vectorview subvector(index_t start,
+                                index_t end,
+                                index_t stride = 1) const
     {
         assert(start >= 0);
         assert(end <= _n);
         assert(start < end);
         assert(stride > 0);
-        return vectorview((end - start) / stride, &_data[start * _stride], _stride * stride);
+        return vectorview((end - start) / stride, &_data[start * _stride],
+                          _stride * stride);
     }
 
     /**
@@ -457,6 +457,44 @@ class vectorview {
     T* _data;
 };
 
-}  // namespace tws
+/**
+ * Search for a value in a sorted vector
+ * 
+ * if the value is found, the function returns the index of the value
+ * if the value is not found, the function returns the index where the value should be inserted
+ */
+template <typename T>
+    index_t binary_search(const vectorview<T>& v, T value)
+{
+    index_t left = 0;
+    index_t right = v.size();
+    while (left < right) {
+        index_t mid = left + (right - left) / 2;
+        if (v[mid] == value) {
+            return mid;
+        } else if (v[mid] < value) {
+            left = mid + 1;
+        } else {
+            right = mid;
+        }
+    }
+    return left;
+}
+
+/**
+ * Insert a value into a vector a position i
+ * The value at position size - 1 will be lost
+ */
+template<typename T>
+void insert_sorted(vector<T>& v, T value, index_t i){
+    assert(i >= 0);
+    assert(i <= v.size());
+    for(index_t j = v.size() - 1; j > i; --j){
+        v[j] = v[j - 1];
+    }
+    v[i] = value;
+}
+
+}  // namespace eigrene
 
 #endif

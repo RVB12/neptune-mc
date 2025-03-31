@@ -36,6 +36,7 @@ add_library(eigrene ${eigrene_SOURCES})
 target_include_directories(eigrene PUBLIC include)
 target_compile_options(eigrene PRIVATE -O3)
 target_compile_options(eigrene PRIVATE -fPIC)
+target_compile_options(eigrene PRIVATE -DNDEBUG)
 
 # JSON
 include(FetchContent)

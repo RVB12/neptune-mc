@@ -55,6 +55,16 @@ void simulate_kdmc(Mesh& mesh,
                    real_t t_final,
                    real_t dt);
 
+void simulate_kdmc2(Mesh& mesh,
+                    PlasmaBackground& background,
+                    vector<std::unique_ptr<Source>>& sources,
+                    vector<real_t>& density,
+                    vector<BoundaryCondition>& boundary_conditions,
+                    SimulationParams params,
+                    ExecutionStatistics& stats,
+                    real_t t_final,
+                    real_t dt);
+
 }  // namespace eigrene
 
 #endif

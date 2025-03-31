@@ -6,7 +6,7 @@ import time
 
 Lx = 35
 Ly = 1
-nx = 51
+nx = 101
 ny = 1
 
 x_pts = np.linspace(0,Lx,nx)

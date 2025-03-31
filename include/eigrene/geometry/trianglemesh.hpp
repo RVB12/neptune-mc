@@ -141,6 +141,21 @@ class TriangleMesh : public Mesh {
      */
     Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const;
 
+    /**
+     * @brief Return the indices of the neighbours of a given cell
+     */
+    vector<index_t> get_neighbours(index_t cell_index) const;
+
+    /**
+     * @brief Return the area of a given surface
+     */
+    real_t get_surface_area(index_t cell_index, index_t surface_id) const;
+
+    /**
+     * @brief Return the center of a given cell
+     */
+    Vec3 get_center(index_t cell_index) const;
+
    private:
     // Member variables
 

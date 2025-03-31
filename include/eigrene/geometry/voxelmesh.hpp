@@ -2,6 +2,7 @@
 #define EIGRENE_VOXELMESH_HPP
 
 #include "eigrene/common/utils.hpp"
+#include "eigrene/common/vector.hpp"
 #include "eigrene/geometry/vec2.hpp"
 #include "eigrene/geometry/cellcrossing.hpp"
 #include "eigrene/geometry/mesh.hpp"
@@ -71,6 +72,21 @@ class VoxelMesh : public Mesh {
      * @brief Return the normal of a given surface
      */
     Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const;
+
+    /**
+     * @brief Return the indices of the neighbours of a given cell
+     */
+    vector<index_t> get_neighbours(index_t cell_index) const;
+
+    /**
+     * @brief Return the area of a given surface
+     */
+    real_t get_surface_area(index_t cell_index, index_t surface_id) const;
+
+    /**
+     * @brief Return the center of a given cell
+     */
+    Vec3 get_center(index_t cell_index) const;
 
     // Member variables
     real_t Lx = 0.;  // Length of the mesh in x direction
