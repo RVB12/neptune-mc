@@ -218,6 +218,57 @@ Vec3 VoxelMesh::get_center(index_t cell_index) const
     return Vec3((ind.i + 0.5) * dx, (ind.j + 0.5) * dy, (ind.k + 0.5) * dz);
 }
 
+std::pair<index_t, index_t> VoxelMesh::get_boundary_crossing(Vec3 position, Vec3 direction) const{
+    //
+    // Calculate the "time" until collision for each surface
+    //
+
+    real_t tx;  // Time till collision with boundary in x direction
+    if (direction.x >= 0) {
+        tx = (Lx - position.x) / direction.x;
+    }
+    else {
+        tx = (-position.x) / direction.x;
+    }
+
+    real_t ty;  // Time till collision with boundary in y direction
+    if (direction.y >= 0) {
+        ty = (Ly - position.y) / direction.y;
+    }
+    else {
+        ty = (-position.y) / direction.y;
+    }
+
+    real_t tz;  // Time till collision with boundary in z direction
+    if (direction.z >= 0) {
+        tz = (Lz - position.z) / direction.z;
+    }
+    else {
+        tz = (-position.z) / direction.z;
+    }
+
+    // Calculate position of the boundary crossing
+    Vec3 new_pos;
+    index_t surface;
+    if (tx <= ty and tx <= tz) {
+        new_pos = position + direction * tx;
+        surface = (direction.x >= 0) ? 3 : 0;
+    }
+    else if (ty <= tx and ty <= tz) {
+        new_pos = position + direction * ty;
+        surface = (direction.y >= 0) ? 4 : 1;
+    }
+    else {
+        new_pos = position + direction * tz;
+        surface = (direction.z >= 0) ? 5 : 2;
+    }
+
+    // Calculate index of the cell that crossing is in
+    index_t cell_id = get_cell_index(new_pos);
+
+    return std::make_pair(cell_id, surface);
+}
+
 
 
 }  // namespace eigrene

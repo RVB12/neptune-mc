@@ -88,6 +88,12 @@ class VoxelMesh : public Mesh {
      */
     Vec3 get_center(index_t cell_index) const;
 
+    /**
+     * @brief Return the first boundary crossing (i.e. an actual boundary, not a cell boundary)
+     * That a particle will cross.
+     */
+    std::pair<index_t, index_t> get_boundary_crossing(Vec3 position, Vec3 direction) const;
+
     // Member variables
     real_t Lx = 0.;  // Length of the mesh in x direction
     real_t Ly = 0.;  // Length of the mesh in y direction

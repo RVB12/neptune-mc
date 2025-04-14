@@ -5,361 +5,335 @@
 #include "eigrene/physics/physicalconstants.hpp"
 #include "eigrene/physics/update_particle.hpp"
 #include "eigrene/simulator/simulator.hpp"
-
 namespace eigrene {
 
-/**
- * The kinetic part of a kdmc update
- *
- * return true if the last event was a collision
- * return false if the last event was a crossing/boundary event
- */
-bool update_particle_kdmc_kinetic(
-    const Mesh& mesh,
-    const PlasmaBackground& background,
-    const vector<BoundaryCondition>& boundary_conditions,
-    Particle& p,
-    index_t& num_crossings,
-    index_t& num_collisions,
-    real_t t_final)
+void update_particle_kdmc2(const Mesh& mesh,
+                           const PlasmaBackground& background,
+                           const vector<BoundaryCondition>& boundary_conditions,
+                           Particle& p,
+                           index_t& num_crossings,
+                           index_t& num_collisions,
+                           real_t t_final,
+                           real_t dt)
 {
-    bool ended_in_collision = false;
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
 
     index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
-    // random number to determine time till collision
-    real_t eps = r_unif(p.rng);
-    // time till collision
-    real_t tc = -std::log(eps) /
-                (constants::calculate_K_cx(background.plasma_temp[cell_id]) *
-                 background.plasma_dens[cell_id]);
+    // Limit the time step to the final time
+    real_t dt2 = std::min(dt, t_final - p.t);
 
-    // Calculate the next cell crossing
-    CellCrossing crossing = mesh.get_next_crossing(p.geometry);
+    //
+    // Step 1: Kinetic simulation until a collision occurs
+    //
 
-    // Check which one is earlier, charge exchange, cell crossing or final time
-    real_t time_left = t_final - p.t;
-    if (time_left < tc && time_left < crossing.t) {
-        // We will not hit the boundary before the time is up
-        p.geometry.position += time_left * p.geometry.velocity;
-        p.geometry.boundary_id = -1;
-        p.t = t_final;
-        p.weight =
-            p.weight *
-            std::exp(-time_left *
-                     constants::calculate_K_i(background.plasma_temp[cell_id]) *
-                     background.plasma_dens[cell_id]);
-        return;
-    }
-    real_t dt;
-    if (tc < crossing.t) {
-        num_collisions++;
-        ended_in_collision = true;
-        // Move the particle until the collision
-        p.geometry.position += tc * p.geometry.velocity;
-        // Generate new velocity from plasma background (BGK
-        // operator)
-        real_t stddev =
-            constants::calculate_BGK_stddev(background.plasma_temp[cell_id]);
-        std::normal_distribution<real_t> dist_vx(
-            background.plasma_vel_x[cell_id], stddev);
-        std::normal_distribution<real_t> dist_vy(
-            background.plasma_vel_y[cell_id], stddev);
-        std::normal_distribution<real_t> dist_vz(
-            background.plasma_vel_z[cell_id], stddev);
-        p.geometry.velocity =
-            Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+    real_t t_kinetic = 0;
+    while (true) {
+        // random number to determine time till collision
+        real_t eps = r_unif(p.rng);
+        // time till collision
+        real_t tc =
+            -std::log(eps) /
+            (constants::calculate_K_cx(background.plasma_temp[cell_id]) *
+             background.plasma_dens[cell_id]);
 
-        // Reset boundary id (we are no longer at a boundary)
-        p.geometry.boundary_id = -1;
+        CellCrossing crossing = mesh.get_next_crossing(p.geometry);
 
-        dt = tc;
-    }
-    else {
-        num_crossings++;
-        dt = crossing.t;
-        if (crossing.next_cell_id != -1) {
-            // Regular grid crossing, move the particle to the next
-            // cell
-            p.geometry.position = crossing.position;
-            p.geometry.cell_id = crossing.next_cell_id;
-            p.geometry.boundary_id = crossing.next_surface_id;
+        // Check which one is earlier, charge exchange, cell crossing or final
+        // time
+        real_t time_left = dt2 - t_kinetic;
+        if (time_left < tc && time_left < crossing.t) {
+            // We will not hit the boundary before the time is up
+            // This is the final iteration
+            p.geometry.position += time_left * p.geometry.velocity;
+            p.geometry.boundary_id = -1;
+            t_kinetic = dt2;
+            p.weight =
+                p.weight * std::exp(-time_left *
+                                    constants::calculate_K_i(
+                                        background.plasma_temp[cell_id]) *
+                                    background.plasma_dens[cell_id]);
+            break;
+        }
+        if (tc < crossing.t) {
+            num_collisions++;
+            // Move the particle until the collision
+            p.geometry.position += tc * p.geometry.velocity;
+            // Generate new velocity from plasma background (BGK
+            // operator)
+            real_t stddev = constants::calculate_BGK_stddev(
+                background.plasma_temp[cell_id]);
+            std::normal_distribution<real_t> dist_vx(
+                background.plasma_vel_x[cell_id], stddev);
+            std::normal_distribution<real_t> dist_vy(
+                background.plasma_vel_y[cell_id], stddev);
+            std::normal_distribution<real_t> dist_vz(
+                background.plasma_vel_z[cell_id], stddev);
+            p.geometry.velocity =
+                Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+
+            // Reset boundary id (we are no longer at a boundary)
+            p.geometry.boundary_id = -1;
+            t_kinetic += tc;
+            // We've had a collision, time for the diffusive step
+            break;
         }
         else {
-            // Boundary crossing
-            p.geometry.position = crossing.position;
-            p.geometry.boundary_id = crossing.surface_id;
-            BoundaryCondition bc =
-                boundary_conditions[crossing.boundary_condition_id];
-
-            if (bc == BoundaryCondition::REFLECTIVE) {
-                // Reflect the particle
-                Vec3 normal =
-                    mesh.get_surface_normal(cell_id, crossing.surface_id);
-                p.geometry.velocity =
-                    p.geometry.velocity -
-                    2 * dot(p.geometry.velocity, normal) * normal;
-            }
-            else if (bc == BoundaryCondition::ABSORBING) {
-                // Absorb the particle
-                p.weight = 0;
+            num_crossings++;
+            t_kinetic += crossing.t;
+            if (crossing.next_cell_id != -1) {
+                // Regular grid crossing, move the particle to the next
+                // cell
+                p.geometry.position = crossing.position;
+                p.geometry.cell_id = crossing.next_cell_id;
+                p.geometry.boundary_id = crossing.next_surface_id;
             }
             else {
-                throw std::runtime_error(
-                    "Using a boundary condition that is not (yet) implemented");
+                // Boundary crossing
+                p.geometry.position = crossing.position;
+                p.geometry.boundary_id = crossing.surface_id;
+                BoundaryCondition bc =
+                    boundary_conditions[crossing.boundary_condition_id];
+
+                if (bc == BoundaryCondition::REFLECTIVE) {
+                    // Reflect the particle
+                    Vec3 normal =
+                        mesh.get_surface_normal(cell_id, crossing.surface_id);
+                    p.geometry.velocity =
+                        p.geometry.velocity -
+                        2 * dot(p.geometry.velocity, normal) * normal;
+                }
+                else if (bc == BoundaryCondition::ABSORBING) {
+                    // Absorb the particle
+                    p.weight = 0;
+                    break;
+                }
+                else {
+                    throw std::runtime_error(
+                        "Using a boundary condition that is not (yet) "
+                        "implemented");
+                }
             }
         }
     }
 
-    p.t += dt;
-
-    return ended_in_collision;
-}
-
-real_t sample_inverse_gaussian(real_t mu, real_t lambda, rng_t& rng)
-{
-    std::uniform_real_distribution<real_t> r_unif(0, 1);
-    std::normal_distribution<real_t> r_normal(0, 1);
-    real_t n = r_normal(rng);
-    real_t y = n * n;
-    real_t x =
-        mu + (mu * mu * y) / (2 * lambda) -
-        (mu / (2 * lambda)) * std::sqrt(4 * mu * lambda * y + mu * mu * y * y);
-
-    real_t u = r_unif(rng);
-
-    if (u <= mu / (mu + x)) {
-        return x;
-    }
-    else {
-        return mu * mu / x;
-    }
-}
-
-std::pair<real_t, index_t> sample_first_exit_time(
-    const Mesh& mesh, index_t cell_id, Vec3 pos, Vec3 u, real_t D, rng_t& rng)
-{
-    VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
-
-    real_t dx = vmesh.dx;
-    real_t dy = vmesh.dy;
-    real_t dz = vmesh.dz;
-
-    Index3D ij = vmesh.linear_to_tuple(cell_id);
-
-    index_t boundary = -1;
-    real_t t = std::numeric_limits<real_t>::infinity();
-
-    // check x 1
-    real_t d = pos.x - ij.i * dx;
-    real_t v = -u.x;
-    real_t t_temp;
-    if (std::abs(v) > 0) {
-        t_temp = sample_inverse_gaussian(d / v, (d * d) / (2 * D), rng);
-    }
-    else {
-        t_temp = sample_inverse_gaussian(d / D, (d * d) / (2 * D), rng);
-    }
-    if (t_temp < t) {
-        t = t_temp;
-        boundary = 0;
-    }
-    // check y 1
-    d = pos.y - ij.j * dy;
-    v = -u.y;
-    if (std::abs(v) > 0) {
-        t_temp = sample_inverse_gaussian(d / v, (d * d) / (2 * D), rng);
-    }
-    else {
-        t_temp = sample_inverse_gaussian(d / D, (d * d) / (2 * D), rng);
-    }
-    if (t_temp < t) {
-        t = t_temp;
-        boundary = 1;
-    }
-    // check z 1
-    d = pos.z - ij.k * dz;
-    v = -u.z;
-    if (std::abs(v) > 0) {
-        t_temp = sample_inverse_gaussian(d / v, (d * d) / (2 * D), rng);
-    }
-    else {
-        t_temp = sample_inverse_gaussian(d / D, (d * d) / (2 * D), rng);
-    }
-    if (t_temp < t) {
-        t = t_temp;
-        boundary = 2;
-    }
-    // check x 2
-    d = (ij.i + 1) * dx - pos.x;
-    v = u.x;
-    if (std::abs(v) > 0) {
-        t_temp = sample_inverse_gaussian(d / v, (d * d) / (2 * D), rng);
-    }
-    else {
-        t_temp = sample_inverse_gaussian(d / D, (d * d) / (2 * D), rng);
-    }
-    if (t_temp < t) {
-        t = t_temp;
-        boundary = 3;
-    }
-    // check y 2
-    d = (ij.j + 1) * dy - pos.y;
-    v = u.y;
-    if (std::abs(v) > 0) {
-        t_temp = sample_inverse_gaussian(d / v, (d * d) / (2 * D), rng);
-    }
-    else {
-        t_temp = sample_inverse_gaussian(d / D, (d * d) / (2 * D), rng);
-    }
-    if (t_temp < t) {
-        t = t_temp;
-        boundary = 4;
-    }
-    // check z 2
-    d = (ij.k + 1) * dz - pos.z;
-    v = u.z;
-    if (std::abs(v) > 0) {
-        t_temp = sample_inverse_gaussian(d / v, (d * d) / (2 * D), rng);
-    }
-    else {
-        t_temp = sample_inverse_gaussian(d / D, (d * d) / (2 * D), rng);
-    }
-    if (t_temp < t) {
-        t = t_temp;
-        boundary = 5;
-    }
-
-    return std::make_pair(t, boundary);
-}
-
-void update_particle_kdmc_diffusive(
-    const Mesh& mesh,
-    const PlasmaBackground& background,
-    const vector<BoundaryCondition>& boundary_conditions,
-    Particle& p,
-    index_t& num_crossings,
-    index_t& num_collisions,
-    real_t t_final,
-    real_t dt,
-    real_t t_kinetic)
-{
-    std::uniform_real_distribution<real_t> r_unif(0, 1);
-    std::normal_distribution<real_t> r_normal(0, 1);
-
-    index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
-
-    real_t diffusive_flight_time = dt - t_kinetic;
-    diffusive_flight_time = std::min(diffusive_flight_time, t_final - p.t);
-
-    if (diffusive_flight_time <= 0) {
+    if (t_kinetic >= dt2 or std::abs(p.weight) <= 0) {
+        // We've reached the final time, no need to do the diffusive step
+        p.t += t_kinetic;
         return;
     }
 
     //
-    // Calculate the drift and diffusion terms.
-    // This is equation 3.1 -- 3.6 in the KDMC paper.
-    // We don't do scaling with epsilon here, it should be safe
-    // to just remove epsilon from the equations.
+    // Step 2: Diffusive simulation for the rest of the time step
     //
 
-    // Charge exchange rate coefficient at the intermediate cell
-    real_t K_cx = constants::calculate_K_cx(background.plasma_temp[cell_id]);
-    real_t R_cx = K_cx * background.plasma_dens[cell_id];
-    real_t R_cx_theta = R_cx * diffusive_flight_time;
+    // The particle will not actually move diffusively for the
+    // entire diffusive time. We will also take the time between
+    // the final collision in the diffusive step and the end of the
+    // time step into account.
+    //
+    // In a homogeneous medium, we can sample this as
+    // 1. Draw the number of collisions from a Poisson distribution
+    // 2. Draw the time of the final collision from a beta distribution
+    // In a heterogeneous medium, this gets more complicated, but
+    // we will just use the time from the homogeneous case.
+    real_t t_diffusive = dt2 - t_kinetic;
 
-    Vec3 u =
-        Vec3(background.plasma_vel_x[cell_id], background.plasma_vel_y[cell_id],
-             background.plasma_vel_z[cell_id]);
+    real_t Rcx = constants::calculate_K_cx(background.plasma_temp[cell_id]) *
+                 background.plasma_dens[cell_id];
 
+    // Commented out for now until final kinetic time is fixed
+    // std::poisson_distribution<int> poisson_dist(Rcx * t_diffusive);
+    // int num_collisions = poisson_dist(p.rng);
+    // {
+    //     // Draw sample from beta distribution
+    //     // C++ doesn't have a built-in beta distribution, so we will
+    //     // use two gamma distributions
+    //     std::gamma_distribution<real_t> gamma_dist1(num_collisions, 1);
+    //     std::gamma_distribution<real_t> gamma_dist2(1, 1);
+
+    //     real_t gamma1 = gamma_dist1(p.rng);
+    //     real_t gamma2 = gamma_dist2(p.rng);
+    //     t_diffusive = gamma1 / (gamma1 + gamma2) * t_diffusive;
+    // }
+
+    //
+    // During a diffusive step, the particle behaves fluidly according to the
+    // SDE: dX = u(X) dt + D(X) dW For now, we just take one large timestep
+    // (this is exact for homogeneous grids) but in the future we should look
+    // into higher order schemes and/or smaller timesteps to sample from this
+    // SDE.
+    //
+
+    // The diffusion coefficient is not just the expected diffusion of the fluid
+    // we add an exponential term to that for long timesteps, it converges to
+    // the diffusive limit, but converges to kinetic behavior for small
+    // timesteps
+    real_t Rcx_theta = Rcx * t_diffusive;
     real_t D = background.plasma_temp[cell_id] * constants::eV_to_Joules /
-               constants::m_p / (R_cx * R_cx_theta);
-    D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
-
+               constants::m_p / (Rcx * Rcx_theta);
+    D *= (std::exp(-Rcx_theta) - 1 + Rcx_theta);
     if (D < 0) {
         D = 0;
     }
 
-    // Calculate times to hit the boundaries
-    // This only works for voxelmeshes for now although the math should also
-    // work for triangles
-    auto [t_exit, boundary] = sample_first_exit_time(
-        mesh, cell_id, p.geometry.position, u, D, p.rng);
+    // The drift is equal to the velocity of the plasma background
+    Vec3 u =
+        Vec3(background.plasma_vel_x[cell_id], background.plasma_vel_y[cell_id],
+             background.plasma_vel_z[cell_id]);
 
-    // Check if we hit a boundary before the time is up
-    if (diffusive_flight_time < t_exit) {
-        // draw a new position, but make sure it is within the current cell
-        while(true){
-            Vec3 new_pos = p.geometry.position + diffusive_flight_time * u + std::sqrt(2 * D * diffusive_flight_time) * Vec3(r_normal(p.rng), r_normal(p.rng), r_normal(p.rng));
-            if(mesh.is_in_cell(new_pos, cell_id)){
-                p.geometry.position = new_pos;
-                break;
+    // Sample brownian step
+    Vec3 W = Vec3(r_normal(p.rng), r_normal(p.rng), r_normal(p.rng)) *
+             std::sqrt(t_diffusive);
+
+    // Compute the new position
+    Vec3 new_position = p.geometry.position + u * t_diffusive + std::sqrt(2 * D) * W;
+    index_t new_cell_id = mesh.get_cell_index(new_position);
+
+    // Now handle boundary conditions
+    // Assume the boundary conditions are the same everywhere
+    if (boundary_conditions[0] == BoundaryCondition::REFLECTIVE) {
+        if (new_cell_id == -1) {
+            VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
+
+            // Reflect the particle back inside the mesh
+            // This may have to be done multiple times
+            while (true) {
+                if (new_position.x < 0) {
+                    new_position.x = -new_position.x;
+                }
+                else if (new_position.x > vmesh.Lx) {
+                    new_position.x = 2 * vmesh.Lx - new_position.x;
+                }
+                if (new_position.y < 0) {
+                    new_position.y = -new_position.y;
+                }
+                else if (new_position.y > vmesh.Ly) {
+                    new_position.y = 2 * vmesh.Ly - new_position.y;
+                }
+                if (new_position.z < 0) {
+                    new_position.z = -new_position.z;
+                }
+                else if (new_position.z > vmesh.Lz) {
+                    new_position.z = 2 * vmesh.Lz - new_position.z;
+                }
+
+                new_cell_id = mesh.get_cell_index(new_position);
+                if (new_cell_id != -1) {
+                    break;
+                }
             }
         }
-        p.t += diffusive_flight_time;
     } else {
-        // Sample the position at the boundary
-        // one coordinate is already fixed by the boundary
-        // we assume the other are independent
+        if (new_cell_id == -1) {
+            VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
 
-        VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
-        Index3D ij = vmesh.linear_to_tuple(cell_id);
-        Vec3 new_pos;
-        if(boundary == 0 or boundary == 3){
-            new_pos.x = (boundary == 0) ? ij.i * vmesh.dx : (ij.i + 1) * vmesh.dx;
-            while(true){
-                new_pos.y = p.geometry.position.y + t_exit * u.y + std::sqrt(2 * D * t_exit) * r_normal(p.rng);
-                if(new_pos.y >= ij.j * vmesh.dy and new_pos.y <= (ij.j + 1) * vmesh.dy){
-                    break;
+            // Reflect the particle back inside the mesh
+            // This may have to be done multiple times
+            while (true) {
+                if (new_position.x < 0) {
+                    new_position.x = -new_position.x;
                 }
-            }
-            while(true){
-                new_pos.z = p.geometry.position.z + t_exit * u.z + std::sqrt(2 * D * t_exit) * r_normal(p.rng);
-                if(new_pos.z >= ij.k * vmesh.dz and new_pos.z <= (ij.k + 1) * vmesh.dz){
-                    break;
+                else if (new_position.x > vmesh.Lx) {
+                    new_position.x = 2 * vmesh.Lx - new_position.x;
                 }
-            }
-        }
-        else if(boundary == 1 or boundary == 4){
-            new_pos.y = (boundary == 1) ? ij.j * vmesh.dy : (ij.j + 1) * vmesh.dy;
-            while(true){
-                new_pos.x = p.geometry.position.x + t_exit * u.x + std::sqrt(2 * D * t_exit) * r_normal(p.rng);
-                if(new_pos.x >= ij.i * vmesh.dx and new_pos.x <= (ij.i + 1) * vmesh.dx){
-                    break;
+                if (new_position.y < 0) {
+                    new_position.y = -new_position.y;
                 }
-            }
-            while(true){
-                new_pos.z = p.geometry.position.z + t_exit * u.z + std::sqrt(2 * D * t_exit) * r_normal(p.rng);
-                if(new_pos.z >= ij.k * vmesh.dz and new_pos.z <= (ij.k + 1) * vmesh.dz){
-                    break;
+                else if (new_position.y > vmesh.Ly) {
+                    new_position.y = 2 * vmesh.Ly - new_position.y;
                 }
-            }
-        }
-        else if(boundary == 2 or boundary == 5){
-            new_pos.z = (boundary == 2) ? ij.k * vmesh.dz : (ij.k + 1) * vmesh.dz;
-            while(true){
-                new_pos.x = p.geometry.position.x + t_exit * u.x + std::sqrt(2 * D * t_exit) * r_normal(p.rng);
-                if(new_pos.x >= ij.i * vmesh.dx and new_pos.x <= (ij.i + 1) * vmesh.dx){
-                    break;
+                if (new_position.z < 0) {
+                    new_position.z = -new_position.z;
                 }
-            }
-            while(true){
-                new_pos.y = p.geometry.position.y + t_exit * u.y + std::sqrt(2 * D * t_exit) * r_normal(p.rng);
-                if(new_pos.y >= ij.j * vmesh.dy and new_pos.y <= (ij.j + 1) * vmesh.dy){
-                    break;
+                else if (new_position.z > vmesh.Lz) {
+                    new_position.z = 2 * vmesh.Lz - new_position.z;
                 }
-            }
-        }
-        p.geometry.position = new_pos;
-        p.t += t_exit;
-        p.geometry.boundary_id = boundary;
 
-        // now handle boundary conditions
+                new_cell_id = mesh.get_cell_index(new_position);
+                if (new_cell_id != -1) {
+                    break;
+                }
+            }
 
+            // make the weight negative, not just zero
+            p.weight = -p.weight;
+        }
+        // Absorbing boundary condition
+        // if (new_cell_id == -1) {
+        //     p.weight = 0;
+        //     p.t += dt2;
+        //     return;
+        // } else {
+        //     // Even if the new position is inside the mesh
+        //     // it could have crossed the boundary and gone back
+        //     // in the diffusive time step. We need to correct for that
+        //     // Using the method of images, the new pdf would be the unconstrained
+        //     // pdf - the reflected pdf. We have sampled from the original pdf
+        //     // so we need to subtract all the reflected pdfs and do accept-reject
+
+        //     // Note: these equations still need to be fixed for drift cases
+        //     // and also for other boundaries
+
+        //     real_t x_center = p.geometry.position.x;
+
+        //     real_t x_new = new_position.x;
+
+        //     real_t p_original = 
+        //         std::exp(-(x_new - x_center)*(x_new - x_center)/(2 * D * t_diffusive)) / std::sqrt(4 * M_PI * D * t_diffusive);
+
+        //     VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
+
+        //     real_t x_image = 2 * vmesh.Lx - x_center;
+
+        //     real_t p_reflected = 
+        //         std::exp(-(x_new - x_image)*(x_new - x_image)/(2 * D * t_diffusive)) / std::sqrt(4 * M_PI * D * t_diffusive);
+        //     real_t p_total = p_original - p_reflected;
+
+        //     // std::cout << "p_original: " << p_original << std::endl;
+        //     // std::cout << "p_reflected: " << p_reflected << std::endl;
+        //     // std::cout << "p_total: " << p_total << std::endl;
+
+        //     // real_t u = r_unif(p.rng);
+        //     // if( u * p_original > p_total) {
+        //     //     // We have to reject the sample
+        //     //     p.weight = 0;
+        //     //     p.t += dt2;
+        //     //     return;
+        //     // }
+
+
+        // }
     }
 
+    p.geometry.position = new_position;
+    p.geometry.cell_id = new_cell_id;
+
+    //
+    // Step 3: Final free flight time
+    //
+
+    real_t t_kinetic2 = dt2 - t_kinetic - t_diffusive;
+
+    // First, sample a new velocity
+
+    real_t stddev =
+        constants::calculate_BGK_stddev(background.plasma_temp[new_cell_id]);
+    std::normal_distribution<real_t> dist_vx(
+        background.plasma_vel_x[new_cell_id], stddev);
+    std::normal_distribution<real_t> dist_vy(
+        background.plasma_vel_y[new_cell_id], stddev);
+    std::normal_distribution<real_t> dist_vz(
+        background.plasma_vel_z[new_cell_id], stddev);
+
+    p.geometry.velocity = Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+
+    // // Now simulate the particle kinetically for the rest of the time step
+    // // However, we don't need to check for charge exchange as we have already
+    // // determined that no charge exchange will occur.
+
+    p.t += dt2;
 }
 
 void simulate_kdmc2(Mesh& mesh,
@@ -415,15 +389,15 @@ void simulate_kdmc2(Mesh& mesh,
                                           particle, num_crossings_local,
                                           num_collisions_local, t_final, dt);
 
+                    if (std::abs(particle.weight) < 1.0e-4) {
+                        break;
+                    }
+
                     // Tally
                     if (particle.t >= t_final) {
                         real_t v = mesh.get_volume(particle.geometry.cell_id);
                         density_local[particle.geometry.cell_id] +=
-                            intensity_multiplier / v;
-                        break;
-                    }
-
-                    if (particle.weight < 1.0e-4) {
+                            intensity_multiplier / v * particle.weight;
                         break;
                     }
                 }

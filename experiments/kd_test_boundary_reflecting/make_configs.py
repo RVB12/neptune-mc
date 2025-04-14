@@ -72,7 +72,7 @@ for epsilon in eps_array:
         plasma_temp[i] = T
 
     for i in range(ncells):
-        plasma_vel_x[i] = 0
+        plasma_vel_x[i] = 2
 
     for i in range(ncells):
         plasma_vel_y[i] = 0

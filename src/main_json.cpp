@@ -3,7 +3,6 @@
 
 #include "eigrene/common/json_conversions.hpp"
 #include "eigrene/simulator/simulator.hpp"
-#include "eigrene/simulator/simulator.hpp"
 
 using namespace eigrene;
 
@@ -66,7 +65,7 @@ int main(int argc, char** argv)
         real_t t_final = j["t_final"];
         if (j.contains("dt")) {
             real_t dt = j["dt"];
-            simulate_kdmc(*mesh_ptr, background, sources, density,
+            simulate_kdmc2(*mesh_ptr, background, sources, density,
                           boundary_conditions, params, stats, t_final, dt);
         }
         else {

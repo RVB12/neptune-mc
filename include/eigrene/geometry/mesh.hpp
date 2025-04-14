@@ -69,6 +69,12 @@ class Mesh {
      * @brief Return the center of a given cell
      */
     virtual Vec3 get_center(index_t cell_index) const = 0;
+
+    /**
+     * @brief Return the first boundary crossing (i.e. an actual boundary, not a cell boundary)
+     * That a particle will cross.
+     */
+    virtual std::pair<index_t, index_t> get_boundary_crossing(Vec3 position, Vec3 direction) const = 0;
 };
 
 }  // namespace eigrene

@@ -165,6 +165,11 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     return crossing;
 }
 
+std::pair<index_t, index_t> TriangleMesh::get_boundary_crossing(Vec3 position, Vec3 direction) const{
+    // This function is not implemented yet
+    throw std::runtime_error("get_boundary_crossing is not implemented");
+}
+
 void make_neighborlist(const vector<TriangleIndices>& triangles,
                        vector<index_t>& neighbors)
 {
