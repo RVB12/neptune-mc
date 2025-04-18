@@ -86,6 +86,11 @@ int main(int argc, char** argv)
     nlohmann::json output;
 
     output["density"] = estimator.density;
+    output["density_final"] = estimator.density_final;
+    output["momentum_x"] = estimator.momentum_x;
+    output["momentum_y"] = estimator.momentum_y;
+    output["momentum_z"] = estimator.momentum_z;
+    output["energy"] = estimator.energy;
 
     output["stats"] = stats;
 

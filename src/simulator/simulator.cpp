@@ -61,7 +61,7 @@ void simulate(Mesh& mesh,
                         break;
                     }
 
-                    if (params.t_final > 0 and particle.t > params.t_final) {
+                    if (params.t_final > 0 and particle.t >= params.t_final) {
                         estimator_local.add_final(particle, mesh);
                         particle.weight = 0;
                         break;

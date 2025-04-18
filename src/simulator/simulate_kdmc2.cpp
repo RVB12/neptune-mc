@@ -365,15 +365,16 @@ void simulate_kdmc2(Mesh& mesh,
             for (int i_particle = 0;
                  i_particle < sources[i_source]->num_particles();
                  i_particle++) {
-                real_t intensity_multiplier =
-                    sources[i_source]->intensity() /
-                    sources[i_source]->num_particles();
 
                 // Generate particle
                 Particle particle =
                     sources[i_source]->generate_particle(i_particle);
                 particle.geometry.cell_id =
                     mesh.get_cell_index(particle.geometry.position);
+
+
+                particle.intensity = sources[i_source]->intensity() /
+                                     sources[i_source]->num_particles();
 
                 if (particle.geometry.cell_id == -1) {
                     throw std::runtime_error(
@@ -398,7 +399,6 @@ void simulate_kdmc2(Mesh& mesh,
 
                     // Tally
                     if (particle.t >= params.t_final) {
-                        real_t v = mesh.get_volume(particle.geometry.cell_id);
                         estimator_local.add_final(particle, mesh);
                         break;
                     }
