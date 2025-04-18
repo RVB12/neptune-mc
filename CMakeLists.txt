@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15...3.27)
 project(
-    eigrene
+    neptune
     VERSION 0.1
     LANGUAGES CXX
 )
@@ -16,7 +16,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 #
 # Main library
 #
-list(APPEND eigrene_SOURCES
+list(APPEND neptune_SOURCES
     src/geometry/vec2.cpp
     src/geometry/vec3.cpp
     src/geometry/voxelmesh.cpp
@@ -33,11 +33,11 @@ list(APPEND eigrene_SOURCES
     src/estimation/estimators.cpp
 )
 
-add_library(eigrene ${eigrene_SOURCES})
-target_include_directories(eigrene PUBLIC include)
-target_compile_options(eigrene PRIVATE -O3)
-target_compile_options(eigrene PRIVATE -fPIC)
-target_compile_options(eigrene PRIVATE -DNDEBUG)
+add_library(neptune ${neptune_SOURCES})
+target_include_directories(neptune PUBLIC include)
+target_compile_options(neptune PRIVATE -O3)
+target_compile_options(neptune PRIVATE -fPIC)
+target_compile_options(neptune PRIVATE -DNDEBUG)
 
 # JSON
 include(FetchContent)
@@ -45,17 +45,17 @@ include(FetchContent)
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
-target_link_libraries(eigrene PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(neptune PUBLIC nlohmann_json::nlohmann_json)
 
 find_package(OpenMP)
 
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(eigrene PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(neptune PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 # Main runner
-add_executable(eigrene-json src/main_json.cpp)
-target_link_libraries(eigrene-json PRIVATE eigrene)
+add_executable(neptune-mc src/main_json.cpp)
+target_link_libraries(neptune-mc PRIVATE neptune)
 
 #
 # Tests
@@ -65,7 +65,7 @@ find_package(Catch2 3)
 if(Catch2_FOUND)
     add_executable(all_tests tests/cpp/test_vec2.cpp tests/cpp/test_vec3.cpp tests/cpp/test_voxelmesh.cpp tests/cpp/test_trianglemesh.cpp tests/cpp/test_json.cpp tests/cpp/test_spatialindex.cpp tests/cpp/test_first_exit_time.cpp)
     target_link_libraries(all_tests PRIVATE Catch2::Catch2WithMain)
-    target_link_libraries(all_tests PRIVATE eigrene)
+    target_link_libraries(all_tests PRIVATE neptune)
 
     # target_link_libraries(all_tests PRIVATE nlohmann_json::nlohmann_json)
     include(CTest)

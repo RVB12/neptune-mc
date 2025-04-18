@@ -1,6 +1,6 @@
-#include "eigrene/estimation/estimators.hpp"
+#include "neptune/estimation/estimators.hpp"
 
-namespace eigrene {
+namespace neptune {
 
     void Estimator::add_track_length(
         Particle& particle,

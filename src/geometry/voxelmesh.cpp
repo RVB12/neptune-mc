@@ -1,6 +1,6 @@
-#include "eigrene/geometry/voxelmesh.hpp"
+#include "neptune/geometry/voxelmesh.hpp"
 
-namespace eigrene {
+namespace neptune {
 
 index_t VoxelMesh::n_cells() const { return nx * ny * nz; }
 
@@ -271,4 +271,4 @@ std::pair<index_t, index_t> VoxelMesh::get_boundary_crossing(Vec3 position, Vec3
 
 
 
-}  // namespace eigrene
+}  // namespace neptune

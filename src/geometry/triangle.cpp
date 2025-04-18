@@ -1,8 +1,8 @@
-#include "eigrene/geometry/triangle.hpp"
+#include "neptune/geometry/triangle.hpp"
 
 #include <algorithm>
 
-namespace eigrene {
+namespace neptune {
 
 /**
  * Determine the side of a line that a point is on.
@@ -62,4 +62,4 @@ BoundingBox Triangle::bounding_box() const
     return BoundingBox(Vec2(min_x, min_y), Vec2(max_x, max_y));
 }
 
-}  // namespace eigrene
+}  // namespace neptune

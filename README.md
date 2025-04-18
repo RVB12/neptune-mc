@@ -1,6 +1,13 @@
-# EIGRENE
+# NEPTUNE-MC
 
-This package simulates neutral particles in a fusion reactor. The name is energie backwards.
+NEPTUNE-MC (NEutral Particle Tracing Using New and Efficient Monte Carlo code) is a package that simulates neutral particles in a background of ions.
+
+This package is meant as a step between pure research code and more applied production codes. It specifically tests Kinetic Diffusion Monte Carlo (KDMC), which has previously only been tested in 1D cases, on more complex 3D cases with realistic parameters.
+
+The focus of the software design is on:
+1. Simplicity and clean design
+2. Speed
+3. Extendability
 
 ### Installation
 
@@ -15,7 +22,7 @@ To build, run:
 - `cmake -B build .`
 - `cmake --build build`
 
-This should have made a file `./build/eigrene-json`. This will read a json file with input parameters and write a json file with the output. Detailed documentation for the json file is pending, but you can have a look at the examples folder in the meantime.
+This should have made a file `./build/neptune-json`. This will read a json file with input parameters and write a json file with the output. Detailed documentation for the json file is pending, but you can have a look at the examples folder in the meantime.
 
 ### General design
 

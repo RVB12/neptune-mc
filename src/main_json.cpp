@@ -1,10 +1,10 @@
 #include <chrono>
 #include <fstream>
 
-#include "eigrene/common/json_conversions.hpp"
-#include "eigrene/simulator/simulator.hpp"
+#include "neptune/common/json_conversions.hpp"
+#include "neptune/simulator/simulator.hpp"
 
-using namespace eigrene;
+using namespace neptune;
 
 int main(int argc, char** argv)
 {

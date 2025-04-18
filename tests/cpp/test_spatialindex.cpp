@@ -2,10 +2,10 @@
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
 
-#include "eigrene/geometry/vec2.hpp"
-#include "eigrene/geometry/spatialindex.hpp"
+#include "neptune/geometry/vec2.hpp"
+#include "neptune/geometry/spatialindex.hpp"
 
-using namespace eigrene;
+using namespace neptune;
 
 TEST_CASE("Spatial index constructor works (only one value)",
           "[geometry][2Dspatialindex]")

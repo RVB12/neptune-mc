@@ -1,10 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include "eigrene/geometry/vec2.hpp"
-#include "eigrene/geometry/voxelmesh.hpp"
+#include "neptune/geometry/vec2.hpp"
+#include "neptune/geometry/voxelmesh.hpp"
 
-using namespace eigrene;
+using namespace neptune;
 
 TEST_CASE("voxelmesh constructor works", "[voxelmesh][mesh]")
 {

@@ -1,6 +1,6 @@
-#include "eigrene/geometry/trianglemesh.hpp"
+#include "neptune/geometry/trianglemesh.hpp"
 
-namespace eigrene {
+namespace neptune {
 
 index_t TriangleMesh::n_cells() const { return triangles.size(); }
 
@@ -344,4 +344,4 @@ Vec3 TriangleMesh::get_center(index_t cell_index) const
     return Vec3((p1.x + p2.x + p3.x) / 3, 0, (p1.y + p2.y + p3.y) / 3);
 }
 
-}  // namespace eigrene
+}  // namespace neptune

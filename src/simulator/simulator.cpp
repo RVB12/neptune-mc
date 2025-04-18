@@ -1,12 +1,12 @@
-#include "eigrene/simulator/simulator.hpp"
+#include "neptune/simulator/simulator.hpp"
 
 #include <omp.h>
 
-#include "eigrene/estimation/estimators.hpp"
-#include "eigrene/geometry/voxelmesh.hpp"
-#include "eigrene/physics/linesource.hpp"
-#include "eigrene/physics/update_particle.hpp"
-namespace eigrene {
+#include "neptune/estimation/estimators.hpp"
+#include "neptune/geometry/voxelmesh.hpp"
+#include "neptune/physics/linesource.hpp"
+#include "neptune/physics/update_particle.hpp"
+namespace neptune {
 
 void simulate(Mesh& mesh,
               PlasmaBackground& background,
@@ -83,4 +83,4 @@ void simulate(Mesh& mesh,
     }
 }
 
-}  // namespace eigrene
+}  // namespace neptune

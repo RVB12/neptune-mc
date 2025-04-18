@@ -1,8 +1,8 @@
-#include "eigrene/common/json_conversions.hpp"
+#include "neptune/common/json_conversions.hpp"
 
 #include <fstream>
 
-namespace eigrene {
+namespace neptune {
 
 void to_json(nlohmann::json& j, const Vec2& v) { j = nlohmann::json{v.x, v.y}; }
 
@@ -270,4 +270,4 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<Source>>& v)
     }
 }
 
-}  // namespace eigrene
+}  // namespace neptune

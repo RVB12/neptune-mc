@@ -1,11 +1,11 @@
 #include <omp.h>
 
-#include "eigrene/geometry/voxelmesh.hpp"
-#include "eigrene/physics/linesource.hpp"
-#include "eigrene/physics/physicalconstants.hpp"
-#include "eigrene/physics/update_particle.hpp"
-#include "eigrene/simulator/simulator.hpp"
-namespace eigrene {
+#include "neptune/geometry/voxelmesh.hpp"
+#include "neptune/physics/linesource.hpp"
+#include "neptune/physics/physicalconstants.hpp"
+#include "neptune/physics/update_particle.hpp"
+#include "neptune/simulator/simulator.hpp"
+namespace neptune {
 
 void update_particle_kdmc(const Mesh& mesh,
                           const PlasmaBackground& background,
@@ -546,4 +546,4 @@ void simulate_kdmc(Mesh& mesh,
 //     }
 // }
 
-}  // namespace eigrene
+}  // namespace neptune

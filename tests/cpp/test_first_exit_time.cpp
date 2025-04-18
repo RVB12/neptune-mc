@@ -1,10 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include "eigrene/common/utils.hpp"
-#include "eigrene/common/vector.hpp"
+#include "neptune/common/utils.hpp"
+#include "neptune/common/vector.hpp"
 
-using namespace eigrene;
+using namespace neptune;
 TEST_CASE("FET: no drift works", "[FET]") {
 
     real_t D = 0.5;

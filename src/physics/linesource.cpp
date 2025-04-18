@@ -1,9 +1,9 @@
-#include "eigrene/physics/linesource.hpp"
-#include "eigrene/physics/physicalconstants.hpp"
+#include "neptune/physics/linesource.hpp"
+#include "neptune/physics/physicalconstants.hpp"
 
 #include <iostream>
 
-namespace eigrene {
+namespace neptune {
 
 Particle LineSource::generate_particle(index_t i_particle)
 {
@@ -41,4 +41,4 @@ Particle LineSource::generate_particle(index_t i_particle)
     return p;
 }
 
-}  // namespace eigrene
+}  // namespace neptune

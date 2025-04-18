@@ -3,10 +3,10 @@
 #include <cmath>
 #include <cassert>
 
-#include "eigrene/common/utils.hpp"
-#include "eigrene/geometry/vec2.hpp"
+#include "neptune/common/utils.hpp"
+#include "neptune/geometry/vec2.hpp"
 
-namespace eigrene {
+namespace neptune {
 
 real_t& Vec2::operator[](index_t i)
 {
@@ -119,4 +119,4 @@ std::ostream& operator<<(std::ostream& os, Vec2 const& v)
     return os;
 }
 
-}  // namespace eigrene
+}  // namespace neptune

@@ -1,6 +1,6 @@
-#include "eigrene/geometry/cone.hpp"
+#include "neptune/geometry/cone.hpp"
 
-namespace eigrene {
+namespace neptune {
 
 real_t ray_cone_intersection(
     Vec3 pos, Vec3 vel, real_t r_a, real_t z_a, real_t r_b, real_t z_b)
@@ -75,4 +75,4 @@ real_t ray_cone_intersection(
     }
 }
 
-}  // namespace eigrene
+}  // namespace neptune

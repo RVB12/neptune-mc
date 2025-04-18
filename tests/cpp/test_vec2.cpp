@@ -1,9 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include "eigrene/geometry/vec2.hpp"
+#include "neptune/geometry/vec2.hpp"
 
-using namespace eigrene;
+using namespace neptune;
 
 TEST_CASE("Default vec2 constructor works", "[vector]")
 {

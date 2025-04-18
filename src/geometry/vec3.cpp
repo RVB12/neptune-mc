@@ -3,10 +3,10 @@
 #include <cmath>
 #include <cassert>
 
-#include "eigrene/common/utils.hpp"
-#include "eigrene/geometry/vec3.hpp"
+#include "neptune/common/utils.hpp"
+#include "neptune/geometry/vec3.hpp"
 
-namespace eigrene {
+namespace neptune {
 
 real_t& Vec3::operator[](index_t i)
 {
@@ -125,4 +125,4 @@ real_t Vec3::norm() const {
     return std::sqrt(norm2());    
 }
 
-}  // namespace eigrene
+}  // namespace neptune

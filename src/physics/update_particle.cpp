@@ -1,8 +1,8 @@
-#include "eigrene/physics/update_particle.hpp"
+#include "neptune/physics/update_particle.hpp"
 
-#include "eigrene/physics/physicalconstants.hpp"
+#include "neptune/physics/physicalconstants.hpp"
 
-namespace eigrene {
+namespace neptune {
 
 void update_particle(const Mesh& mesh,
                      const PlasmaBackground& background,
@@ -113,4 +113,4 @@ void update_particle(const Mesh& mesh,
     p.t += dt;
 }
 
-}  // namespace eigrene
+}  // namespace neptune
