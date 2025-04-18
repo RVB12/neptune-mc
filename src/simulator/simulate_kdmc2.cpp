@@ -19,66 +19,33 @@ void kdmc_fluid_step(const Mesh& mesh,
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
 
-    //
-    // During a diffusive step, the particle behaves according to the SDE:
-    // dX = V dt
-    // dV = gamma(X) * (mu(X) - V) dt + sqrt(2 * gamma(x)) * sigma(X) dW
-    //
-    // here, gamma is the charge exchange rate, mu is the velocity of the plasma
-    // background and sigma standard deviation of the velocity distribution
-    //
-    // If we assume that gamma, mu and sigma are constant during the time step,
-    // we can use the analytical solution to the SDE:
-    //
-    // Mean of X(t) = X(0) + mu * t + (V(0) - mu) * (1 - e^(-gamma * t)) / gamma
-    // Variance of X(t) = 2 * sigma^2 / gamma * (t - 2/gamma*e^(-gamma * t) +
-    // 1/(2*gamma)*(1-e^(-2*gamma*t))) Mean of V(t) = V(0) * e^(-gamma * t) + mu
-    // * (1 - e^(-gamma * t)) Variance of V(t) = sigma^2 * (1 - e^(-2*gamma *
-    // t)) Covariance of X(t) and V(t) = sigma^2 / gamma * (1 - 2*e^(-gamma * t)
-    // + e^(-2*gamma * t))
-    //
-    // Of course, the true gamma, mu and sigma are not constant.
-    // We could use smaller timesteps, higher order methods or ad hoc
-    // corrections but this is still in the works.
-    //
+    index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
-    real_t gamma =
-        constants::calculate_K_cx(background.plasma_temp[p.geometry.cell_id]) *
-        background.plasma_dens[p.geometry.cell_id];
-    Vec3 mu = Vec3(background.plasma_vel_x[p.geometry.cell_id],
-                   background.plasma_vel_y[p.geometry.cell_id],
-                   background.plasma_vel_z[p.geometry.cell_id]);
-    real_t sigma = constants::calculate_BGK_stddev(
-        background.plasma_temp[p.geometry.cell_id]);
 
-    Vec3 mean_pos =
-        p.geometry.position + mu * dt +
-        (p.geometry.velocity - mu) * (1 - std::exp(-gamma * dt)) / gamma;
-    Vec3 mean_vel = p.geometry.velocity * std::exp(-gamma * dt) +
-                    mu * (1 - std::exp(-gamma * dt));
-    real_t var_pos = 2 * sigma * sigma / gamma *
-                     (dt - 2 / gamma * std::exp(-gamma * dt) +
-                      1 / (2 * gamma) * (1 - std::exp(-2 * gamma * dt)));
-    if(var_pos < 0) {
-        var_pos = 0;
+    real_t K_cx = constants::calculate_K_cx(background.plasma_temp[cell_id]);
+    real_t R_cx = K_cx * background.plasma_dens[cell_id];
+    real_t R_cx_theta = R_cx * dt;
+
+    Vec3 u =
+        Vec3(background.plasma_vel_x[cell_id], background.plasma_vel_y[cell_id],
+             background.plasma_vel_z[cell_id]);
+
+    Vec3 drift_term = u * dt;
+
+    real_t D = background.plasma_temp[cell_id] * constants::eV_to_Joules /
+               constants::m_p / (R_cx * R_cx_theta);
+    D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
+    if (D < 0) {
+        D = 0;
     }
-    real_t var_vel = sigma * sigma * (1 - std::exp(-2 * gamma * dt));
-    real_t cov_pos_vel =
-        sigma * sigma / gamma *
-        (1 - 2 * std::exp(-gamma * dt) + std::exp(-2 * gamma * dt));
+    D = std::sqrt(2 * D * dt);
 
-    Vec3 n1 = Vec3(r_normal(p.rng), r_normal(p.rng), r_normal(p.rng));
-    Vec3 n2 = Vec3(r_normal(p.rng), r_normal(p.rng), r_normal(p.rng));
+    Vec3 diffusion_term;
+    diffusion_term.x = D * r_normal(p.rng);
+    diffusion_term.y = D * r_normal(p.rng);
+    diffusion_term.z = D * r_normal(p.rng);
 
-    // Calculate the new position and velocity
-    Vec3 new_vel = mean_vel + std::sqrt(var_vel) * n1;
-    real_t corrected_var = var_pos - cov_pos_vel * cov_pos_vel / var_vel;
-    if (corrected_var < 0) {
-        corrected_var = 0;
-    }
-    Vec3 new_pos =
-        mean_pos + cov_pos_vel / std::sqrt(var_vel) * n1 +
-        std::sqrt(corrected_var) * n2;
+    Vec3 new_pos = p.geometry.position + drift_term + diffusion_term;
 
     index_t new_cell_id = mesh.get_cell_index(new_pos);
 
@@ -86,61 +53,54 @@ void kdmc_fluid_step(const Mesh& mesh,
     // This only works for VoxelMesh for now
     if (new_cell_id == -1) {
         return;
-        // VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
+        VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
 
-        // real_t A;
-        // if (boundary_conditions[0] == BoundaryCondition::ABSORBING) {
-        //     A = -1.;
-        // }
-        // else {
-        //     A = 1.;
-        // }
+        real_t A;
+        if (boundary_conditions[0] == BoundaryCondition::ABSORBING) {
+            A = -1.;
+        }
+        else {
+            A = 1.;
+        }
 
-        // // Reflect the particle back inside the mesh
-        // // This may have to be done multiple times
-        // while (true) {
-        //     if (new_pos.x < 0) {
-        //         new_pos.x = -new_pos.x;
-        //         new_vel.x = -new_vel.x;
-        //         p.weight *= A;
-        //     }
-        //     else if (new_pos.x > vmesh.Lx) {
-        //         new_pos.x = 2 * vmesh.Lx - new_pos.x;
-        //         new_vel.x = -new_vel.x;
-        //         p.weight *= A;
-        //     }
-        //     if (new_pos.y < 0) {
-        //         new_pos.y = -new_pos.y;
-        //         new_vel.y = -new_vel.y;
-        //         p.weight *= A;
-        //     }
-        //     else if (new_pos.y > vmesh.Ly) {
-        //         new_pos.y = 2 * vmesh.Ly - new_pos.y;
-        //         new_vel.y = -new_vel.y;
-        //         p.weight *= A;
-        //     }
-        //     if (new_pos.z < 0) {
-        //         new_pos.z = -new_pos.z;
-        //         new_vel.z = -new_vel.z;
-        //         p.weight *= A;
-        //     }
-        //     else if (new_pos.z > vmesh.Lz) {
-        //         new_pos.z = 2 * vmesh.Lz - new_pos.z;
-        //         new_vel.z = -new_vel.z;
-        //         p.weight *= A;
-        //     }
+        // Reflect the particle back inside the mesh
+        // This may have to be done multiple times
+        while (true) {
+            if (new_pos.x < 0) {
+                new_pos.x = -new_pos.x;
+                p.weight *= A;
+            }
+            else if (new_pos.x > vmesh.Lx) {
+                new_pos.x = 2 * vmesh.Lx - new_pos.x;
+                p.weight *= A;
+            }
+            if (new_pos.y < 0) {
+                new_pos.y = -new_pos.y;
+                p.weight *= A;
+            }
+            else if (new_pos.y > vmesh.Ly) {
+                new_pos.y = 2 * vmesh.Ly - new_pos.y;
+                p.weight *= A;
+            }
+            if (new_pos.z < 0) {
+                new_pos.z = -new_pos.z;
+                p.weight *= A;
+            }
+            else if (new_pos.z > vmesh.Lz) {
+                new_pos.z = 2 * vmesh.Lz - new_pos.z;
+                p.weight *= A;
+            }
 
-        //     new_cell_id = mesh.get_cell_index(new_pos);
-        //     if (new_cell_id != -1) {
-        //         break;
-        //     }
-        // }
+            new_cell_id = mesh.get_cell_index(new_pos);
+            if (new_cell_id != -1) {
+                break;
+            }
+        }
     }
 
     // Update the particle
     p.geometry.position = new_pos;
     p.geometry.cell_id = new_cell_id;
-    p.geometry.velocity = new_vel;
     p.geometry.boundary_id = -1;
     p.t += dt;
     p.weight *= std::exp(-dt * constants::calculate_K_i(
