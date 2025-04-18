@@ -36,7 +36,7 @@ void update_particle_kdmc(const Mesh& mesh,
     if (kinetic_flight_time > dt2) {
         kinetic_flight_time = dt2;
     }
-    
+
     // Diffusive flight time: part of the timestep using diffusive model
     // For now, this is a simple and relatively inefficient way to sample
     // Should be improved in the future
@@ -52,21 +52,20 @@ void update_particle_kdmc(const Mesh& mesh,
     // real_t kinetic_flight_time2 =
     //     dt2 - kinetic_flight_time - diffusive_flight_time;
 
-
     real_t kinetic_flight_time2 = -std::log(r_unif(p.rng)) / (R_cx0);
     if (kinetic_flight_time2 > dt2 - kinetic_flight_time) {
         kinetic_flight_time2 = dt2 - kinetic_flight_time;
     }
     // real_t kinetic_flight_time2 = 0;
-    real_t diffusive_flight_time = dt2 - kinetic_flight_time - kinetic_flight_time2;
-
+    real_t diffusive_flight_time =
+        dt2 - kinetic_flight_time - kinetic_flight_time2;
 
     Vec3 pos2 = p.geometry.position + kinetic_flight_time * p.geometry.velocity;
 
     // Check if the new position is outside the mesh
     index_t cell_id2 = mesh.get_cell_index(pos2);
     bool do_mc = false;
-    if(cell_id2 == -1){
+    if (cell_id2 == -1) {
         do_mc = true;
         // TODO, this is just a kinetic step, we could properly handle
         // the boundary here
@@ -122,7 +121,8 @@ void update_particle_kdmc(const Mesh& mesh,
 
     // real_t D = background.plasma_temp[cell_id] *
     //            constants::eV_to_Joules / constants::m_p / (R_cx * R_cx);
-    // D *= (2 * std::exp(-R_cx_theta) + R_cx_theta + R_cx_theta * std::exp(-R_cx_theta) - 2);
+    // D *= (2 * std::exp(-R_cx_theta) + R_cx_theta + R_cx_theta *
+    // std::exp(-R_cx_theta) - 2);
 
     Vec3 diffusion_term;
     diffusion_term.x = D * r_normal(p.rng);
@@ -159,22 +159,21 @@ void update_particle_kdmc(const Mesh& mesh,
     // we check the 99.9% confidence interval of the position
     VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
 
-    Vec3 temp_pos = p.geometry.position + drift_term + kinetic_flight_time * p.geometry.velocity;
+    Vec3 temp_pos = p.geometry.position + drift_term +
+                    kinetic_flight_time * p.geometry.velocity;
     // std::cout << "D" << D << std::endl;
     Vec3 temp_diff(D, D, D);
     Vec3 temp_min = temp_pos - 3.291 * temp_diff;
     Vec3 temp_max = temp_pos + 3.291 * temp_diff;
-    if(temp_min.x < 0 or temp_max.x > vmesh.Lx or
-       temp_min.y < 0 or temp_max.y > vmesh.Ly or
-       temp_min.z < 0 or temp_max.z > vmesh.Lz)
-    {
+    if (temp_min.x < 0 or temp_max.x > vmesh.Lx or temp_min.y < 0 or
+        temp_max.y > vmesh.Ly or temp_min.z < 0 or temp_max.z > vmesh.Lz) {
         do_mc = true;
     }
 
     // // now do the same including the final flight
-    // temp_pos = p.geometry.position + drift_term + kinetic_flight_time * p.geometry.velocity + kinetic_flight_time2 * new_velocity;
-    // temp_min = temp_pos - 2.57 * temp_diff;
-    // temp_max = temp_pos + 2.57 * temp_diff;
+    // temp_pos = p.geometry.position + drift_term + kinetic_flight_time *
+    // p.geometry.velocity + kinetic_flight_time2 * new_velocity; temp_min =
+    // temp_pos - 2.57 * temp_diff; temp_max = temp_pos + 2.57 * temp_diff;
     // if(temp_min.x < 0 or temp_max.x > vmesh.Lx or
     //    temp_min.y < 0 or temp_max.y > vmesh.Ly or
     //    temp_min.z < 0 or temp_max.z > vmesh.Lz)
@@ -182,12 +181,9 @@ void update_particle_kdmc(const Mesh& mesh,
     //     do_mc = true;
     // }
 
-
-
     // Check if the new position is outside the mesh
     index_t new_cell_id = mesh.get_cell_index(new_position);
-    if(new_cell_id == -1)
-    {
+    if (new_cell_id == -1) {
         do_mc = true;
     }
 
@@ -198,8 +194,16 @@ void update_particle_kdmc(const Mesh& mesh,
 
         real_t t_next = p.t + dt2;
         while (p.t < t_next) {
-            update_particle(mesh, background, boundary_conditions, p,
-                                       num_crossings, num_collisions, t_next);
+            EventType event = update_particle(mesh, background, boundary_conditions, p, t_next);
+            if(event == EventType::FINAL_TIME) {
+                break;
+            }
+            else if (event == EventType::CELL_CROSSING) {
+                num_crossings++;
+            }
+            else if (event == EventType::CHARGE_EXCHANGE) {
+                num_collisions++;
+            }
             if (p.weight < 1.0e-4) {
                 break;
             }
@@ -267,7 +271,8 @@ void simulate_kdmc(Mesh& mesh,
                     // Simulate the particle up to the next event
                     update_particle_kdmc(mesh, background, boundary_conditions,
                                          particle, num_crossings_local,
-                                         num_collisions_local, params.t_final, dt);
+                                         num_collisions_local, params.t_final,
+                                         dt);
 
                     // Tally
                     if (particle.t >= params.t_final) {
@@ -282,16 +287,20 @@ void simulate_kdmc(Mesh& mesh,
                     }
                 }
 
-                #ifdef _OPENMP
+#ifdef _OPENMP
                 auto thread_id = omp_get_thread_num();
-                if(thread_id == 0)
-                {
+                if (thread_id == 0) {
                     if (i_particle % 1000 == 0) {
                         std::cout.flush();
-                        std::cout << "Progress: " << i_particle / ((float) sources[i_source]->num_particles()) * 100  << "% \r";
+                        std::cout
+                            << "Progress: "
+                            << i_particle /
+                                   ((float)sources[i_source]->num_particles()) *
+                                   100
+                            << "% \r";
                     }
                 }
-                #endif
+#endif
             }
 
             for (index_t i = 0; i < mesh.n_cells(); i++) {

@@ -4,12 +4,10 @@
 
 namespace neptune {
 
-void update_particle(const Mesh& mesh,
+EventType update_particle(const Mesh& mesh,
                      const PlasmaBackground& background,
                      const vector<BoundaryCondition>& boundary_conditions,
                      Particle& p,
-                     index_t& num_crossings,
-                     index_t& num_collisions,
                      real_t t_final)
 {
     std::uniform_real_distribution<real_t> r_unif(0, 1);
@@ -41,12 +39,13 @@ void update_particle(const Mesh& mesh,
                                     constants::calculate_K_i(
                                         background.plasma_temp[cell_id]) *
                                     background.plasma_dens[cell_id]);
-            return;
+            return EventType::FINAL_TIME;
         }
     }
     real_t dt;
+    EventType event_type;
     if (tc < crossing.t) {
-        num_collisions++;
+        event_type = EventType::CHARGE_EXCHANGE;
         // Move the particle until the collision
         p.geometry.position += tc * p.geometry.velocity;
         // Generate new velocity from plasma background (BGK
@@ -68,7 +67,7 @@ void update_particle(const Mesh& mesh,
         dt = tc;
     }
     else {
-        num_crossings++;
+        event_type = EventType::CELL_CROSSING;
         dt = crossing.t;
         if (crossing.next_cell_id != -1) {
             // Regular grid crossing, move the particle to the next
@@ -111,6 +110,8 @@ void update_particle(const Mesh& mesh,
                  background.plasma_dens[cell_id]);
 
     p.t += dt;
+
+    return event_type;
 }
 
 }  // namespace neptune

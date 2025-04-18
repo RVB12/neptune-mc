@@ -50,9 +50,8 @@ void simulate(Mesh& mesh,
                 for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
                     Particle particle_old = particle;
                     // Simulate the particle up to the next event
-                    update_particle(mesh, background, boundary_conditions,
-                                    particle, num_crossings_local,
-                                    num_collisions_local, params.t_final);
+                    EventType event = update_particle(mesh, background, boundary_conditions,
+                                    particle, params.t_final);
 
                     estimator_local.add_track_length(particle, particle_old,
                                                      mesh);
@@ -61,7 +60,13 @@ void simulate(Mesh& mesh,
                         break;
                     }
 
-                    if (params.t_final > 0 and particle.t >= params.t_final) {
+                    if(event == EventType::CELL_CROSSING) {
+                        num_crossings_local++;
+                    }
+                    else if (event == EventType::CHARGE_EXCHANGE) {
+                        num_collisions_local++;
+                    }
+                    else if (event == EventType::FINAL_TIME) {
                         estimator_local.add_final(particle, mesh);
                         particle.weight = 0;
                         break;

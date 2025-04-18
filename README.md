@@ -22,7 +22,7 @@ To build, run:
 - `cmake -B build .`
 - `cmake --build build`
 
-This should have made a file `./build/neptune-json`. This will read a json file with input parameters and write a json file with the output. Detailed documentation for the json file is pending, but you can have a look at the examples folder in the meantime.
+This should have made a file `./build/neptune-mc`. This will read a json file with input parameters and write a json file with the output. Detailed documentation for the json file is pending, but you can have a look at the examples folder in the meantime.
 
 ### General design
 
