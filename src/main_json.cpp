@@ -56,25 +56,24 @@ int main(int argc, char** argv)
     params.max_steps = j["max_steps"];
     params.seed = j["seed"];
 
-    vector<real_t> density(mesh_ptr->n_cells());
-
     vector<BoundaryCondition> boundary_conditions = j["boundary_conditions"];
 
     start = std::chrono::high_resolution_clock::now();
-    if (j.contains("t_final")) {
-        real_t t_final = j["t_final"];
-        if (j.contains("dt")) {
-            real_t dt = j["dt"];
-            simulate_kdmc2(*mesh_ptr, background, sources, density,
-                          boundary_conditions, params, stats, t_final, dt);
-        }
-        else {
-            simulate_fixed_time(*mesh_ptr, background, sources, density,
-                                boundary_conditions, params, stats, t_final);
-        }
+    if (j.contains("t_final")){
+        params.t_final = j["t_final"];
     }
     else {
-        simulate(*mesh_ptr, background, sources, density, boundary_conditions,
+        params.t_final = -1;
+    }
+
+    Estimator estimator(mesh_ptr->n_cells());
+
+    if( j.contains("dt")){
+        real_t dt = j["dt"];
+        simulate_kdmc2(*mesh_ptr, background, sources, estimator,
+                      boundary_conditions, params, stats, dt);
+    } else {
+        simulate(*mesh_ptr, background, sources, estimator, boundary_conditions,
                  params, stats);
     }
 
@@ -86,7 +85,7 @@ int main(int argc, char** argv)
 
     nlohmann::json output;
 
-    output["density"] = density;
+    output["density"] = estimator.density;
 
     output["stats"] = stats;
 

@@ -2,6 +2,7 @@
 
 #include <omp.h>
 
+#include "eigrene/estimation/estimators.hpp"
 #include "eigrene/geometry/voxelmesh.hpp"
 #include "eigrene/physics/linesource.hpp"
 #include "eigrene/physics/update_particle.hpp"
@@ -10,18 +11,13 @@ namespace eigrene {
 void simulate(Mesh& mesh,
               PlasmaBackground& background,
               vector<std::unique_ptr<Source>>& sources,
-              vector<real_t>& density,
+              Estimator& estimator,
               vector<BoundaryCondition>& boundary_conditions,
               SimulationParams params,
               ExecutionStatistics& stats)
 {
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
-
-    // initialize the density array to zero
-    for (index_t i = 0; i < mesh.n_cells(); i++) {
-        density[i] = 0;
-    }
 
     // History based simulation (because its easy)
     for (int i_source = 0; i_source < sources.size(); i_source++) {
@@ -30,15 +26,12 @@ void simulate(Mesh& mesh,
             index_t num_crossings_local = 0;
             index_t num_collisions_local = 0;
 
-            // This should really be changed to a reduction clause instead of separate local variables
-            vector<real_t> density_local(mesh.n_cells(), 0);
+            Estimator estimator_local(mesh.n_cells());
+
 #pragma omp for
             for (int i_particle = 0;
                  i_particle < sources[i_source]->num_particles();
                  i_particle++) {
-                real_t intensity_multiplier =
-                    sources[i_source]->intensity() /
-                    sources[i_source]->num_particles();
 
                 // Generate particle
                 Particle particle =
@@ -46,47 +39,42 @@ void simulate(Mesh& mesh,
                 particle.geometry.cell_id =
                     mesh.get_cell_index(particle.geometry.position);
 
+                particle.intensity = sources[i_source]->intensity() /
+                sources[i_source]->num_particles();
+
                 if (particle.geometry.cell_id == -1) {
                     throw std::runtime_error(
                         "Particle generated outside of mesh");
                 }
 
                 for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
-                    real_t weight_old = particle.weight;
-                    real_t t_old = particle.t;
-                    index_t cell_id_old = particle.geometry.cell_id;
+                    Particle particle_old = particle;
                     // Simulate the particle up to the next event
                     update_particle(mesh, background, boundary_conditions,
                                     particle, num_crossings_local,
-                                    num_collisions_local);
+                                    num_collisions_local, params.t_final);
 
-                    // Tally
-                    real_t v = mesh.get_volume(cell_id_old);
-                    density_local[cell_id_old] += (particle.t - t_old) *
-                                                  weight_old / v *
-                                                  intensity_multiplier;
+                    estimator_local.add_track_length(particle, particle_old,
+                                                     mesh);
 
                     if (particle.weight < 1.0e-4) {
                         break;
                     }
-                }
-                
-                #ifdef _OPENMP
-                auto thread_id = omp_get_thread_num();
-                if(thread_id == 0)
-                {
-                    if (i_particle % 1000 == 0) {
-                        std::cout.flush();
-                        std::cout << "Progress: " << i_particle / ((float) sources[i_source]->num_particles()) * 100  << "% \r";
+
+                    if (params.t_final > 0 and particle.t > params.t_final) {
+                        estimator_local.add_final(particle, mesh);
+                        particle.weight = 0;
+                        break;
                     }
                 }
-                #endif
             }
 
-            for (index_t i = 0; i < mesh.n_cells(); i++) {
-#pragma omp atomic
-                density[i] += density_local[i];
+// Combine the results of the local estimators
+#pragma omp critical
+            {
+                estimator.combine(estimator_local);
             }
+
 #pragma omp atomic
             stats.num_crossings += num_crossings_local;
 #pragma omp atomic

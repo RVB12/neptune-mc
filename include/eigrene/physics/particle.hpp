@@ -31,6 +31,7 @@ class Particle {
     real_t t = 0;         // Time
     real_t weight = 1.0;  // Weight (used for continuous ionisation)
     real_t mass = 1.0;    // Mass of the particle [kg]
+    real_t intensity = 1.0; // How many particles this particle represents
     rng_t rng;            // Random number generator
 };
 

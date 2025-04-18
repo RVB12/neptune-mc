@@ -22,15 +22,8 @@ void update_particle(const Mesh& mesh,
                      const vector<BoundaryCondition>& boundary_conditions,
                      Particle& p,
                      index_t& num_crossings,
-                     index_t& num_collisions);
-
-void update_particle_fixed_time(const Mesh& mesh,
-                     const PlasmaBackground& background,
-                     const vector<BoundaryCondition>& boundary_conditions,
-                     Particle& p,
-                     index_t& num_crossings,
                      index_t& num_collisions,
-                     real_t t_final);
+                     real_t t_final = -1);
 
 }  // namespace eigrene
 

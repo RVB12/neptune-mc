@@ -30,7 +30,7 @@ list(APPEND eigrene_SOURCES
     src/geometry/triangle.cpp
     src/simulator/simulate_kdmc.cpp
     src/simulator/simulate_kdmc2.cpp
-    src/simulator/simulator_fixed_time.cpp
+    src/estimation/estimators.cpp
 )
 
 add_library(eigrene ${eigrene_SOURCES})
@@ -54,44 +54,8 @@ if(OpenMP_CXX_FOUND)
 endif()
 
 # Main runner
-add_executable(main_json src/main_json.cpp)
-target_link_libraries(main_json PRIVATE eigrene)
-
-#
-# Python bindings
-#
-find_package(Python COMPONENTS Interpreter Development.Module)
-find_package(pybind11 CONFIG)
-
-if(Python_FOUND AND pybind11_FOUND)
-    python_add_library(_core MODULE src/main_python.cpp WITH_SOABI)
-    target_link_libraries(_core PRIVATE pybind11::headers)
-    target_link_libraries(_core PRIVATE eigrene)
-
-    # Note, i just copied this install command from the scikit build example
-    # this may influence other things, need to check
-    install(TARGETS _core DESTINATION eigrene)
-endif()
-
-#
-# C++ Examples
-#
-add_executable(simple_test examples/simple_test.cpp)
-target_link_libraries(simple_test PRIVATE eigrene)
-
-add_executable(simple_test_trianglemesh examples/simple_test_trianglemesh.cpp)
-target_link_libraries(simple_test_trianglemesh PRIVATE eigrene)
-
-#
-# MPI Examples
-#
-
-# find_package(MPI)
-
-# if(MPI_CXX_FOUND)
-#     add_executable(domain_decomposition_test src/domain_decomposition_test.cpp)
-#     target_link_libraries(domain_decomposition_test PRIVATE eigrene MPI::MPI_CXX)
-# endif()
+add_executable(eigrene-json src/main_json.cpp)
+target_link_libraries(eigrene-json PRIVATE eigrene)
 
 #
 # Tests

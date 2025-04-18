@@ -198,7 +198,7 @@ void update_particle_kdmc(const Mesh& mesh,
 
         real_t t_next = p.t + dt2;
         while (p.t < t_next) {
-            update_particle_fixed_time(mesh, background, boundary_conditions, p,
+            update_particle(mesh, background, boundary_conditions, p,
                                        num_crossings, num_collisions, t_next);
             if (p.weight < 1.0e-4) {
                 break;
@@ -224,7 +224,6 @@ void simulate_kdmc(Mesh& mesh,
                    vector<BoundaryCondition>& boundary_conditions,
                    SimulationParams params,
                    ExecutionStatistics& stats,
-                   real_t t_final,
                    real_t dt)
 {
     std::uniform_real_distribution<real_t> r_unif(0, 1);
@@ -268,10 +267,10 @@ void simulate_kdmc(Mesh& mesh,
                     // Simulate the particle up to the next event
                     update_particle_kdmc(mesh, background, boundary_conditions,
                                          particle, num_crossings_local,
-                                         num_collisions_local, t_final, dt);
+                                         num_collisions_local, params.t_final, dt);
 
                     // Tally
-                    if (particle.t >= t_final) {
+                    if (particle.t >= params.t_final) {
                         real_t v = mesh.get_volume(particle.geometry.cell_id);
                         density_local[particle.geometry.cell_id] +=
                             intensity_multiplier / v;

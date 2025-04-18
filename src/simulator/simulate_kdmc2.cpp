@@ -188,7 +188,8 @@ void update_particle_kdmc2(const Mesh& mesh,
              std::sqrt(t_diffusive);
 
     // Compute the new position
-    Vec3 new_position = p.geometry.position + u * t_diffusive + std::sqrt(2 * D) * W;
+    Vec3 new_position =
+        p.geometry.position + u * t_diffusive + std::sqrt(2 * D) * W;
     index_t new_cell_id = mesh.get_cell_index(new_position);
 
     // Now handle boundary conditions
@@ -225,7 +226,8 @@ void update_particle_kdmc2(const Mesh& mesh,
                 }
             }
         }
-    } else {
+    }
+    else {
         if (new_cell_id == -1) {
             VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
 
@@ -269,9 +271,11 @@ void update_particle_kdmc2(const Mesh& mesh,
         //     // Even if the new position is inside the mesh
         //     // it could have crossed the boundary and gone back
         //     // in the diffusive time step. We need to correct for that
-        //     // Using the method of images, the new pdf would be the unconstrained
+        //     // Using the method of images, the new pdf would be the
+        //     unconstrained
         //     // pdf - the reflected pdf. We have sampled from the original pdf
-        //     // so we need to subtract all the reflected pdfs and do accept-reject
+        //     // so we need to subtract all the reflected pdfs and do
+        //     accept-reject
 
         //     // Note: these equations still need to be fixed for drift cases
         //     // and also for other boundaries
@@ -280,15 +284,17 @@ void update_particle_kdmc2(const Mesh& mesh,
 
         //     real_t x_new = new_position.x;
 
-        //     real_t p_original = 
-        //         std::exp(-(x_new - x_center)*(x_new - x_center)/(2 * D * t_diffusive)) / std::sqrt(4 * M_PI * D * t_diffusive);
+        //     real_t p_original =
+        //         std::exp(-(x_new - x_center)*(x_new - x_center)/(2 * D *
+        //         t_diffusive)) / std::sqrt(4 * M_PI * D * t_diffusive);
 
         //     VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
 
         //     real_t x_image = 2 * vmesh.Lx - x_center;
 
-        //     real_t p_reflected = 
-        //         std::exp(-(x_new - x_image)*(x_new - x_image)/(2 * D * t_diffusive)) / std::sqrt(4 * M_PI * D * t_diffusive);
+        //     real_t p_reflected =
+        //         std::exp(-(x_new - x_image)*(x_new - x_image)/(2 * D *
+        //         t_diffusive)) / std::sqrt(4 * M_PI * D * t_diffusive);
         //     real_t p_total = p_original - p_reflected;
 
         //     // std::cout << "p_original: " << p_original << std::endl;
@@ -302,7 +308,6 @@ void update_particle_kdmc2(const Mesh& mesh,
         //     //     p.t += dt2;
         //     //     return;
         //     // }
-
 
         // }
     }
@@ -339,20 +344,14 @@ void update_particle_kdmc2(const Mesh& mesh,
 void simulate_kdmc2(Mesh& mesh,
                     PlasmaBackground& background,
                     vector<std::unique_ptr<Source>>& sources,
-                    vector<real_t>& density,
+                    Estimator& estimator,
                     vector<BoundaryCondition>& boundary_conditions,
                     SimulationParams params,
                     ExecutionStatistics& stats,
-                    real_t t_final,
                     real_t dt)
 {
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
-
-    // initialize the density array to zero
-    for (index_t i = 0; i < mesh.n_cells(); i++) {
-        density[i] = 0;
-    }
 
     // History based simulation (because its easy)
     for (int i_source = 0; i_source < sources.size(); i_source++) {
@@ -361,9 +360,7 @@ void simulate_kdmc2(Mesh& mesh,
             index_t num_crossings_local = 0;
             index_t num_collisions_local = 0;
 
-            // This should really be changed to a reduction clause instead of
-            // separate local variables
-            vector<real_t> density_local(mesh.n_cells(), 0);
+            Estimator estimator_local(mesh.n_cells());
 #pragma omp for
             for (int i_particle = 0;
                  i_particle < sources[i_source]->num_particles();
@@ -384,43 +381,34 @@ void simulate_kdmc2(Mesh& mesh,
                 }
 
                 for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
+                    Particle particle_old = particle;
                     // Simulate the particle up to the next event
                     update_particle_kdmc2(mesh, background, boundary_conditions,
                                           particle, num_crossings_local,
-                                          num_collisions_local, t_final, dt);
+                                          num_collisions_local, params.t_final,
+                                          dt);
+
+                    // TODO: add fluid estimator
+                    estimator_local.add_track_length(particle, particle_old,
+                                                     mesh);
 
                     if (std::abs(particle.weight) < 1.0e-4) {
                         break;
                     }
 
                     // Tally
-                    if (particle.t >= t_final) {
+                    if (particle.t >= params.t_final) {
                         real_t v = mesh.get_volume(particle.geometry.cell_id);
-                        density_local[particle.geometry.cell_id] +=
-                            intensity_multiplier / v * particle.weight;
+                        estimator_local.add_final(particle, mesh);
                         break;
                     }
                 }
-
-#ifdef _OPENMP
-                auto thread_id = omp_get_thread_num();
-                if (thread_id == 0) {
-                    if (i_particle % 1000 == 0) {
-                        std::cout.flush();
-                        std::cout
-                            << "Progress: "
-                            << i_particle /
-                                   ((float)sources[i_source]->num_particles()) *
-                                   100
-                            << "% \r";
-                    }
-                }
-#endif
             }
 
-            for (index_t i = 0; i < mesh.n_cells(); i++) {
-#pragma omp atomic
-                density[i] += density_local[i];
+#pragma omp critical
+            {
+                // Add the local results to the global results
+                estimator.combine(estimator_local);
             }
 #pragma omp atomic
             stats.num_crossings += num_crossings_local;
