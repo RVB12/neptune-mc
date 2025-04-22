@@ -19,6 +19,11 @@ void simulate(Mesh& mesh,
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
 
+    // Calculate total number of particles
+    for(int i_source = 0; i_source < sources.size(); i_source++) {
+        stats.total_particles += sources[i_source]->num_particles();
+    }
+
     // History based simulation (because its easy)
     for (int i_source = 0; i_source < sources.size(); i_source++) {
 #pragma omp parallel

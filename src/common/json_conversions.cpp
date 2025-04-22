@@ -150,6 +150,7 @@ void to_json(nlohmann::json& j, const ExecutionStatistics& stats)
     j = nlohmann::json{
         {"num_crossings", stats.num_crossings},
         {"num_collisions", stats.num_collisions},
+        {"total_particles", stats.total_particles},
         {"grid_building_time", stats.grid_building_time},
         {"trace_time", stats.trace_time},
         {"total_time", stats.total_time},

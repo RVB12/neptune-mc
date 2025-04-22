@@ -10,6 +10,8 @@ struct ExecutionStatistics {
     index_t num_crossings = 0;
     // The number of charge exchange collisions
     index_t num_collisions = 0;
+    // The number of particles that have been simulated
+    index_t total_particles = 0;
     // The time spent building the spatial index and neighbor list (in seconds)
     real_t grid_building_time = 0;
     // The time spent tracing the particles (in seconds)
