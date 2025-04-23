@@ -4,11 +4,11 @@
 #include <cassert>
 
 #include "neptune/common/utils.hpp"
-#include "neptune/geometry/vec2.hpp"
 #include "neptune/geometry/mesh.hpp"
+#include "neptune/geometry/vec2.hpp"
+#include "neptune/physics/event.hpp"
 #include "neptune/physics/particle.hpp"
 #include "neptune/simulator/simulator.hpp"
-#include "neptune/physics/event.hpp"
 
 namespace neptune {
 
@@ -19,11 +19,13 @@ namespace neptune {
  *
  * @param p
  */
-EventType update_particle(const Mesh& mesh,
-                     const PlasmaBackground& background,
-                     const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
-                     Particle& p,
-                     real_t t_final = -1);
+EventType update_particle(
+    const Mesh& mesh,
+    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
+    const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
+    Particle& p,
+    real_t t_final = -1);
 
 }  // namespace neptune
 

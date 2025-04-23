@@ -4,12 +4,14 @@
 
 #include "neptune/estimation/estimators.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
+#include "neptune/physics/collision_processes.hpp"
 #include "neptune/physics/linesource.hpp"
 #include "neptune/physics/update_particle.hpp"
 namespace neptune {
 
 void simulate(Mesh& mesh,
-              PlasmaBackground& background,
+              const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+              const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
               vector<std::unique_ptr<Source>>& sources,
               Estimator& estimator,
               vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
@@ -20,7 +22,7 @@ void simulate(Mesh& mesh,
     std::normal_distribution<real_t> r_normal(0, 1);
 
     // Calculate total number of particles
-    for(int i_source = 0; i_source < sources.size(); i_source++) {
+    for (int i_source = 0; i_source < sources.size(); i_source++) {
         stats.total_particles += sources[i_source]->num_particles();
     }
 
@@ -37,7 +39,6 @@ void simulate(Mesh& mesh,
             for (int i_particle = 0;
                  i_particle < sources[i_source]->num_particles();
                  i_particle++) {
-
                 // Generate particle
                 Particle particle =
                     sources[i_source]->generate_particle(i_particle);
@@ -45,7 +46,7 @@ void simulate(Mesh& mesh,
                     mesh.get_cell_index(particle.geometry.position);
 
                 particle.intensity = sources[i_source]->intensity() /
-                sources[i_source]->num_particles();
+                                     sources[i_source]->num_particles();
 
                 if (particle.geometry.cell_id == -1) {
                     throw std::runtime_error(
@@ -55,8 +56,9 @@ void simulate(Mesh& mesh,
                 for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
                     Particle particle_old = particle;
                     // Simulate the particle up to the next event
-                    EventType event = update_particle(mesh, background, boundary_conditions,
-                                    particle, params.t_final);
+                    EventType event = update_particle(
+                        mesh, bgk_processes, ion_processes, boundary_conditions,
+                        particle, params.t_final);
 
                     estimator_local.add_track_length(particle, particle_old,
                                                      mesh);
@@ -65,7 +67,7 @@ void simulate(Mesh& mesh,
                         break;
                     }
 
-                    if(event == EventType::CELL_CROSSING) {
+                    if (event == EventType::CELL_CROSSING) {
                         num_crossings_local++;
                     }
                     else if (event == EventType::CHARGE_EXCHANGE) {

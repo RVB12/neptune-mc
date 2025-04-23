@@ -7,14 +7,15 @@
 
 #include "neptune/common/utils.hpp"
 #include "neptune/common/vector.hpp"
+#include "neptune/estimation/estimators.hpp"
 #include "neptune/geometry/cellcrossing.hpp"
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/physics/boundarycondition.hpp"
+#include "neptune/physics/collision_processes.hpp"
 #include "neptune/physics/particle.hpp"
 #include "neptune/physics/plasmabackground.hpp"
 #include "neptune/physics/source.hpp"
 #include "neptune/simulator/execution_statistics.hpp"
-#include "neptune/estimation/estimators.hpp"
 
 namespace neptune {
 
@@ -34,21 +35,24 @@ struct SimulationParams {
  *
  */
 void simulate(Mesh& mesh,
-              PlasmaBackground& background,
+              const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+              const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
               vector<std::unique_ptr<Source>>& sources,
               Estimator& estimator,
               vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
               SimulationParams params,
               ExecutionStatistics& stats);
 
-void simulate_kdmc(Mesh& mesh,
-                    PlasmaBackground& background,
-                    vector<std::unique_ptr<Source>>& sources,
-                    Estimator& estimator,
-                    vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
-                    SimulationParams params,
-                    ExecutionStatistics& stats,
-                    real_t dt);
+void simulate_kdmc(
+    Mesh& mesh,
+    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
+    vector<std::unique_ptr<Source>>& sources,
+    Estimator& estimator,
+    vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
+    SimulationParams params,
+    ExecutionStatistics& stats,
+    real_t dt);
 
 }  // namespace neptune
 

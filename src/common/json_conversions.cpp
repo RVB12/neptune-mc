@@ -126,6 +126,49 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<BoundaryCondition
     }
 }
 
+
+void from_json(const nlohmann::json& j, std::unique_ptr<BGKScatteringProcess>& m)
+{
+
+    neptune::index_t n_cells = j.at("rate").size();
+
+    neptune::BGKScatteringProcess bgk(n_cells);
+    j.at("rate").get_to(bgk.rate);
+    j.at("bgk_stddev").get_to(bgk.bgk_stddev);
+    j.at("bgk_mean_x").get_to(bgk.bgk_mean_x);
+    j.at("bgk_mean_y").get_to(bgk.bgk_mean_y);
+    j.at("bgk_mean_z").get_to(bgk.bgk_mean_z);
+
+    m = std::make_unique<BGKScatteringProcess>(bgk);
+}
+
+void from_json(const nlohmann::json& j, vector<std::unique_ptr<BGKScatteringProcess>>& m)
+{
+    m.resize(j.size());
+    for (index_t i = 0; i < m.size(); i++) {
+        j.at(i).get_to(m[i]);
+    }
+}
+
+void from_json(const nlohmann::json& j, std::unique_ptr<IonisationProcess>& m)
+{
+    neptune::index_t n_cells = j.at("rate").size();
+
+    neptune::IonisationProcess ion(n_cells);
+    j.at("rate").get_to(ion.rate);
+
+    m = std::make_unique<IonisationProcess>(ion);
+}
+
+void from_json(const nlohmann::json& j, vector<std::unique_ptr<IonisationProcess>>& m)
+{
+    m.resize(j.size());
+    for (index_t i = 0; i < m.size(); i++) {
+        j.at(i).get_to(m[i]);
+    }
+}
+
+
 void to_json(nlohmann::json& j, const ExecutionStatistics& stats)
 {
     j = nlohmann::json{

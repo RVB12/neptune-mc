@@ -48,7 +48,14 @@ int main(int argc, char** argv)
     stats.grid_building_time =
         std::chrono::duration<double>(end - start).count();
 
-    PlasmaBackground background = j["background"];
+    vector<std::unique_ptr<BGKScatteringProcess>> bgk_processes =
+        j["bgk_processes"];
+
+    vector<std::unique_ptr<IonisationProcess>> ion_processes(0);
+    if (j.contains("ionisation_processes")) {
+        vector<std::unique_ptr<IonisationProcess>> ion_processes =
+            j["ionisation_processes"];
+    }
 
     vector<std::unique_ptr<Source>> sources = j["sources"];
 
@@ -56,10 +63,11 @@ int main(int argc, char** argv)
     params.max_steps = j["max_steps"];
     params.seed = j["seed"];
 
-    vector<std::unique_ptr<BoundaryCondition>> boundary_conditions = j["boundary_conditions"];
+    vector<std::unique_ptr<BoundaryCondition>> boundary_conditions =
+        j["boundary_conditions"];
 
     start = std::chrono::high_resolution_clock::now();
-    if (j.contains("t_final")){
+    if (j.contains("t_final")) {
         params.t_final = j["t_final"];
     }
     else {
@@ -68,13 +76,14 @@ int main(int argc, char** argv)
 
     Estimator estimator(mesh_ptr->n_cells());
 
-    if( j.contains("dt")){
+    if (j.contains("dt")) {
         real_t dt = j["dt"];
-        simulate_kdmc(*mesh_ptr, background, sources, estimator,
-                      boundary_conditions, params, stats, dt);
-    } else {
-        simulate(*mesh_ptr, background, sources, estimator, boundary_conditions,
-                 params, stats);
+        simulate_kdmc(*mesh_ptr, bgk_processes, ion_processes, sources,
+                      estimator, boundary_conditions, params, stats, dt);
+    }
+    else {
+        simulate(*mesh_ptr, bgk_processes, ion_processes, sources, estimator,
+                 boundary_conditions, params, stats);
     }
 
     end = std::chrono::high_resolution_clock::now();

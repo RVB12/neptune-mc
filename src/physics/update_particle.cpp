@@ -6,7 +6,8 @@ namespace neptune {
 
 EventType update_particle(
     const Mesh& mesh,
-    const PlasmaBackground& background,
+    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
     const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
     Particle& p,
     real_t t_final)
@@ -18,12 +19,10 @@ EventType update_particle(
 
     // Calculate total collision rate (charge exchange + neutral-neutral)
 
-    real_t R_cx = constants::calculate_K_cx(background.plasma_temp[cell_id]) *
-                  background.plasma_dens[cell_id];
-    real_t R_nn = constants::calculate_K_cx(background.neutral_temp[cell_id]) *
-                  background.neutral_dens[cell_id];
-
-    real_t collision_rate = R_cx + R_nn;
+    real_t collision_rate = 0;
+    for(int i = 0; i < bgk_processes.size(); i++) {
+        collision_rate += bgk_processes[i]->rate[cell_id];
+    }
 
     // random number to determine time till collision
     real_t eps = r_unif(p.rng);
@@ -42,11 +41,10 @@ EventType update_particle(
             p.geometry.position += time_left * p.geometry.velocity;
             p.geometry.boundary_id = -1;
             p.t = t_final;
-            p.weight =
-                p.weight * std::exp(-time_left *
-                                    constants::calculate_K_i(
-                                        background.plasma_temp[cell_id]) *
-                                    background.plasma_dens[cell_id]);
+            for(int i = 0; i < ion_processes.size(); i++) {
+                p.weight *= std::exp(-time_left *
+                                     ion_processes[i]->rate[cell_id]);
+            }
             return EventType::FINAL_TIME;
         }
     }
@@ -57,37 +55,29 @@ EventType update_particle(
         // Move the particle until the collision
         p.geometry.position += tc * p.geometry.velocity;
 
-        // Determine which collision happened, charge exchange or
-        // neutral-neutral
+        // A collision has occurred, but we don't know which one
+        // draw a new random number to determine that
         real_t eps = r_unif(p.rng);
 
-        if (eps < R_cx / collision_rate) {
-            // Generate new velocity from plasma background (BGK
-            // operator)
-            real_t stddev = constants::calculate_BGK_stddev(
-                background.plasma_temp[cell_id]);
-            std::normal_distribution<real_t> dist_vx(
-                background.plasma_vel_x[cell_id], stddev);
-            std::normal_distribution<real_t> dist_vy(
-                background.plasma_vel_y[cell_id], stddev);
-            std::normal_distribution<real_t> dist_vz(
-                background.plasma_vel_z[cell_id], stddev);
-            p.geometry.velocity =
-                Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
-        }
-        else {
-            // Generate new velocity from neutral background (BGK
-            // operator)
-            real_t stddev = constants::calculate_BGK_stddev(
-                background.neutral_temp[cell_id]);
-            std::normal_distribution<real_t> dist_vx(
-                background.neutral_vel_x[cell_id], stddev);
-            std::normal_distribution<real_t> dist_vy(
-                background.neutral_vel_y[cell_id], stddev);
-            std::normal_distribution<real_t> dist_vz(
-                background.neutral_vel_z[cell_id], stddev);
-            p.geometry.velocity =
-                Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+        real_t cumulative_rate = 0;
+        for(int i = 0; i < bgk_processes.size(); i++) {
+            cumulative_rate += bgk_processes[i]->rate[cell_id];
+            if (eps < cumulative_rate / collision_rate) {
+                // We have a collision with the background
+                // Generate new velocity from plasma background (BGK
+                // operator)
+                real_t stddev = constants::calculate_BGK_stddev(
+                    bgk_processes[i]->bgk_stddev[cell_id]);
+                std::normal_distribution<real_t> dist_vx(
+                    bgk_processes[i]->bgk_mean_x[cell_id], stddev);
+                std::normal_distribution<real_t> dist_vy(
+                    bgk_processes[i]->bgk_mean_y[cell_id], stddev);
+                std::normal_distribution<real_t> dist_vz(
+                    bgk_processes[i]->bgk_mean_z[cell_id], stddev);
+                p.geometry.velocity =
+                    Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+                break;
+            }
         }
 
         // Reset boundary id (we are no longer at a boundary)
@@ -118,12 +108,10 @@ EventType update_particle(
     }
 
     // Ionisation
-    p.weight =
-        p.weight *
-        std::exp(-dt *
-                 constants::calculate_K_i(background.plasma_temp[cell_id]) *
-                 background.plasma_dens[cell_id]);
-
+    for(int i = 0; i < ion_processes.size(); i++) {
+        p.weight *= std::exp(-dt *
+                             ion_processes[i]->rate[cell_id]);
+    }
     p.t += dt;
 
     return event_type;

@@ -9,31 +9,34 @@ namespace neptune {
 
 /**
  * @brief Simulate a particle using a diffusive fluid approximation
+ * 
+ * We assume there is only one bgk process
  */
-void kdmc_fluid_step(const Mesh& mesh,
-                     const PlasmaBackground& background,
-                     const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
-                     Particle& p,
-                     real_t dt)
+void kdmc_fluid_step(
+    const Mesh& mesh,
+    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
+    const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
+    Particle& p,
+    real_t dt)
 {
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
 
     index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
-
-    real_t K_cx = constants::calculate_K_cx(background.plasma_temp[cell_id]);
-    real_t R_cx = K_cx * background.plasma_dens[cell_id];
+    real_t R_cx = bgk_processes[0]->rate[cell_id];
     real_t R_cx_theta = R_cx * dt;
 
-    Vec3 u =
-        Vec3(background.plasma_vel_x[cell_id], background.plasma_vel_y[cell_id],
-             background.plasma_vel_z[cell_id]);
+    Vec3 u = 
+        Vec3(bgk_processes[0]->bgk_mean_x[cell_id], bgk_processes[0]->bgk_mean_y[cell_id],
+             bgk_processes[0]->bgk_mean_z[cell_id]);
 
     Vec3 drift_term = u * dt;
 
-    real_t D = background.plasma_temp[cell_id] * constants::eV_to_Joules /
-               constants::m_p / (R_cx * R_cx_theta);
+    real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
+
+    real_t D = bgk_stddev * bgk_stddev / (R_cx * R_cx_theta);
     D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
     if (D < 0) {
         D = 0;
@@ -104,19 +107,21 @@ void kdmc_fluid_step(const Mesh& mesh,
     p.geometry.cell_id = new_cell_id;
     p.geometry.boundary_id = -1;
     p.t += dt;
-    p.weight *= std::exp(-dt * constants::calculate_K_i(
-                                  background.plasma_temp[p.geometry.cell_id]) *
-                         background.plasma_dens[p.geometry.cell_id]);
+    if(ion_processes.size() > 0) {
+        p.weight *= std::exp(-dt * ion_processes[0]->rate[cell_id]);
+    }
 }
 
-void simulate_kdmc(Mesh& mesh,
-                    PlasmaBackground& background,
-                    vector<std::unique_ptr<Source>>& sources,
-                    Estimator& estimator,
-                    vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
-                    SimulationParams params,
-                    ExecutionStatistics& stats,
-                    real_t dt)
+void simulate_kdmc(
+    Mesh& mesh,
+    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
+    vector<std::unique_ptr<Source>>& sources,
+    Estimator& estimator,
+    vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
+    SimulationParams params,
+    ExecutionStatistics& stats,
+    real_t dt)
 {
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
@@ -160,9 +165,9 @@ void simulate_kdmc(Mesh& mesh,
 
                     while (true) {
                         particle_old = particle;
-                        EventType event = update_particle(mesh, background,
-                                                          boundary_conditions,
-                                                          particle, t_max);
+                        EventType event = update_particle(
+                            mesh, bgk_processes, ion_processes,
+                            boundary_conditions, particle, t_max);
 
                         estimator_local.add_track_length(particle, particle_old,
                                                          mesh);
@@ -185,7 +190,7 @@ void simulate_kdmc(Mesh& mesh,
                     // time step
 
                     if (particle.t < t_max) {
-                        kdmc_fluid_step(mesh, background, boundary_conditions,
+                        kdmc_fluid_step(mesh, bgk_processes, ion_processes, boundary_conditions,
                                         particle, t_max - particle.t);
 
                         // TODO: add fluid estimator here

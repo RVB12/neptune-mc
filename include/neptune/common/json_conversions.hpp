@@ -13,6 +13,7 @@
 #include "neptune/geometry/vec3.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
 #include "neptune/physics/boundarycondition.hpp"
+#include "neptune/physics/collision_processes.hpp"
 #include "neptune/physics/linesource.hpp"
 #include "neptune/physics/pointsource.hpp"
 #include "neptune/physics/source.hpp"
@@ -43,7 +44,15 @@ void from_json(const nlohmann::json& j, VoxelMesh& m);
 void from_json(const nlohmann::json& j, std::unique_ptr<Mesh>& v);
 void from_json(const nlohmann::json& j, vector<std::unique_ptr<Source>>& v);
 void from_json(const nlohmann::json& j, std::unique_ptr<BoundaryCondition>& v);
-void from_json(const nlohmann::json& j, vector<std::unique_ptr<BoundaryCondition>>& v);
+void from_json(const nlohmann::json& j,
+               vector<std::unique_ptr<BoundaryCondition>>& v);
+void from_json(const nlohmann::json& j,
+               std::unique_ptr<BGKScatteringProcess>& v);
+void from_json(const nlohmann::json& j,
+               vector<std::unique_ptr<BGKScatteringProcess>>& m);
+void from_json(const nlohmann::json& j, std::unique_ptr<IonisationProcess>& v);
+void from_json(const nlohmann::json& j,
+               vector<std::unique_ptr<IonisationProcess>>& m);
 
 }  // namespace neptune
 
