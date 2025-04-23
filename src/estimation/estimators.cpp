@@ -27,7 +27,7 @@ void Estimator::add_final(Particle& particle, const Mesh& mesh)
 {
     index_t cell_id = particle.geometry.cell_id;
     real_t volume = mesh.get_volume(cell_id);
-    density_final[cell_id] += 1.0 / volume * particle.intensity;
+    density_final[cell_id] += particle.weight / volume * particle.intensity;
 }
 
 void Estimator::combine(Estimator& other)
