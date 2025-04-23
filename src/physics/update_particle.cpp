@@ -15,12 +15,22 @@ EventType update_particle(const Mesh& mesh,
 
     index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
+    // Calculate total collision rate (charge exchange + neutral-neutral)
+
+    real_t R_cx =
+        constants::calculate_K_cx(background.plasma_temp[cell_id]) *
+        background.plasma_dens[cell_id];
+        real_t R_nn =
+        constants::calculate_K_cx(background.neutral_temp[cell_id]) *
+        background.neutral_dens[cell_id];
+
+    real_t collision_rate = R_cx + R_nn;
+
     // random number to determine time till collision
     real_t eps = r_unif(p.rng);
     // time till collision
     real_t tc = -std::log(eps) /
-                (constants::calculate_K_cx(background.plasma_temp[cell_id]) *
-                 background.plasma_dens[cell_id]);
+                collision_rate;
 
     // Calculate the next cell crossing
     CellCrossing crossing = mesh.get_next_crossing(p.geometry);
@@ -48,19 +58,40 @@ EventType update_particle(const Mesh& mesh,
         event_type = EventType::CHARGE_EXCHANGE;
         // Move the particle until the collision
         p.geometry.position += tc * p.geometry.velocity;
-        // Generate new velocity from plasma background (BGK
-        // operator)
-        real_t stddev =
-            constants::calculate_BGK_stddev(background.plasma_temp[cell_id]);
-        std::normal_distribution<real_t> dist_vx(
-            background.plasma_vel_x[cell_id], stddev);
-        std::normal_distribution<real_t> dist_vy(
-            background.plasma_vel_y[cell_id], stddev);
-        std::normal_distribution<real_t> dist_vz(
-            background.plasma_vel_z[cell_id], stddev);
-        p.geometry.velocity =
-            Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
 
+        // Determine which collision happened, charge exchange or
+        // neutral-neutral
+        real_t eps = r_unif(p.rng);
+
+        if (eps < R_cx / collision_rate) {
+            // Generate new velocity from plasma background (BGK
+            // operator)
+            real_t stddev =
+                constants::calculate_BGK_stddev(background.plasma_temp[cell_id]);
+            std::normal_distribution<real_t> dist_vx(
+                background.plasma_vel_x[cell_id], stddev);
+            std::normal_distribution<real_t> dist_vy(
+                background.plasma_vel_y[cell_id], stddev);
+            std::normal_distribution<real_t> dist_vz(
+                background.plasma_vel_z[cell_id], stddev);
+            p.geometry.velocity =
+                Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+        }
+        else {
+            // Generate new velocity from neutral background (BGK
+            // operator)
+            real_t stddev =
+                constants::calculate_BGK_stddev(background.neutral_temp[cell_id]);
+            std::normal_distribution<real_t> dist_vx(
+                background.neutral_vel_x[cell_id], stddev);
+            std::normal_distribution<real_t> dist_vy(
+                background.neutral_vel_y[cell_id], stddev);
+            std::normal_distribution<real_t> dist_vz(
+                background.neutral_vel_z[cell_id], stddev);
+            p.geometry.velocity =
+                Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+        }
+        
         // Reset boundary id (we are no longer at a boundary)
         p.geometry.boundary_id = -1;
 
@@ -87,6 +118,7 @@ EventType update_particle(const Mesh& mesh,
                 // Reflect the particle
                 Vec3 normal =
                     mesh.get_surface_normal(cell_id, crossing.surface_id);
+                // p.weight = p.weight * 0.9;
                 p.geometry.velocity =
                     p.geometry.velocity -
                     2 * dot(p.geometry.velocity, normal) * normal;

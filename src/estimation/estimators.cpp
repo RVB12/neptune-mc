@@ -1,5 +1,5 @@
 #include "neptune/estimation/estimators.hpp"
-
+#include "neptune/physics/physicalconstants.hpp"
 namespace neptune {
 
 void Estimator::add_track_length(Particle& particle,
@@ -20,7 +20,7 @@ void Estimator::add_track_length(Particle& particle,
     momentum_z[cell_id_old] += particle.geometry.velocity.z * s;
 
     energy[cell_id_old] +=
-        s * (0.5 * particle.mass * particle.geometry.velocity.norm2());
+        s * (0.5 * particle.mass * particle.geometry.velocity.norm2()) * constants::m_p / constants::eV_to_Joules;
 }
 
 void Estimator::add_final(Particle& particle, const Mesh& mesh)
