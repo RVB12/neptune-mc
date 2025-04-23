@@ -12,7 +12,7 @@ void simulate(Mesh& mesh,
               PlasmaBackground& background,
               vector<std::unique_ptr<Source>>& sources,
               Estimator& estimator,
-              vector<BoundaryCondition>& boundary_conditions,
+              vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
               SimulationParams params,
               ExecutionStatistics& stats)
 {

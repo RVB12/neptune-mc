@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     params.max_steps = j["max_steps"];
     params.seed = j["seed"];
 
-    vector<BoundaryCondition> boundary_conditions = j["boundary_conditions"];
+    vector<std::unique_ptr<BoundaryCondition>> boundary_conditions = j["boundary_conditions"];
 
     start = std::chrono::high_resolution_clock::now();
     if (j.contains("t_final")){
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 
     if( j.contains("dt")){
         real_t dt = j["dt"];
-        simulate_kdmc2(*mesh_ptr, background, sources, estimator,
+        simulate_kdmc(*mesh_ptr, background, sources, estimator,
                       boundary_conditions, params, stats, dt);
     } else {
         simulate(*mesh_ptr, background, sources, estimator, boundary_conditions,

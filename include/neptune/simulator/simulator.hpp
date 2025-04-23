@@ -37,24 +37,15 @@ void simulate(Mesh& mesh,
               PlasmaBackground& background,
               vector<std::unique_ptr<Source>>& sources,
               Estimator& estimator,
-              vector<BoundaryCondition>& boundary_conditions,
+              vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
               SimulationParams params,
               ExecutionStatistics& stats);
 
 void simulate_kdmc(Mesh& mesh,
-                   PlasmaBackground& background,
-                   vector<std::unique_ptr<Source>>& sources,
-                   Estimator& estimator,
-                   vector<BoundaryCondition>& boundary_conditions,
-                   SimulationParams params,
-                   ExecutionStatistics& stats,
-                   real_t dt);
-
-void simulate_kdmc2(Mesh& mesh,
                     PlasmaBackground& background,
                     vector<std::unique_ptr<Source>>& sources,
                     Estimator& estimator,
-                    vector<BoundaryCondition>& boundary_conditions,
+                    vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
                     SimulationParams params,
                     ExecutionStatistics& stats,
                     real_t dt);

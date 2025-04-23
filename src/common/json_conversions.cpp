@@ -100,44 +100,25 @@ void from_json(const nlohmann::json& j, vector<TriangleIndices>& v)
     }
 }
 
-void to_json(nlohmann::json& j, const BoundaryCondition& m)
+
+void from_json(const nlohmann::json& j, std::unique_ptr<BoundaryCondition>& m)
 {
-    switch (m) {
-        case BoundaryCondition::REFLECTIVE:
-            j = "reflective";
-            break;
-        case BoundaryCondition::ABSORBING:
-            j = "absorbing";
-            break;
-        default:
-            throw std::runtime_error("Unknown boundary condition");
+    std::string type;
+    j.at("type").get_to(type);
+    if(type == "specular"){
+        m = std::make_unique<SpecularBC>();
+    } else if(type == "absorbing"){
+        m = std::make_unique<AbsorbingBC>();
+    } else if(type == "partially_specular"){
+        real_t coeff;
+        j.at("absorption_coefficient").get_to(coeff);
+        m = std::make_unique<PartiallySpecularBC>(coeff);
+    } else {
+        throw std::runtime_error("Unknown boundary condition type");
     }
 }
 
-void from_json(const nlohmann::json& j, BoundaryCondition& m)
-{
-    std::string s;
-    j.get_to(s);
-    if (s == "reflective") {
-        m = BoundaryCondition::REFLECTIVE;
-    }
-    else if (s == "absorbing") {
-        m = BoundaryCondition::ABSORBING;
-    }
-    else {
-        throw std::runtime_error("Unknown boundary condition");
-    }
-}
-
-void to_json(nlohmann::json& j, const vector<BoundaryCondition>& v)
-{
-    j = nlohmann::json::array();
-    for (int i = 0; i < v.size(); i++) {
-        j.push_back(v[i]);
-    }
-}
-
-void from_json(const nlohmann::json& j, vector<BoundaryCondition>& v)
+void from_json(const nlohmann::json& j, vector<std::unique_ptr<BoundaryCondition>>& v)
 {
     v.resize(j.size());
     for (index_t i = 0; i < v.size(); i++) {

@@ -29,7 +29,6 @@ list(APPEND neptune_SOURCES
     src/common/json_conversions.cpp
     src/geometry/triangle.cpp
     src/simulator/simulate_kdmc.cpp
-    src/simulator/simulate_kdmc2.cpp
     src/estimation/estimators.cpp
 )
 

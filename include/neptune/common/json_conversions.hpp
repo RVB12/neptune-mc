@@ -29,8 +29,6 @@ void to_json(nlohmann::json& j, const vector<index_t>& v);
 void to_json(nlohmann::json& j, const vector<Vec2>& v);
 void to_json(nlohmann::json& j, const vector<TriangleIndices>& v);
 void to_json(nlohmann::json& j, const VoxelMesh& m);
-void to_json(nlohmann::json& j, const BoundaryCondition& m);
-void to_json(nlohmann::json& j, const vector<BoundaryCondition>& v);
 void to_json(nlohmann::json& j, const ExecutionStatistics& stats);
 
 void from_json(const nlohmann::json& j, Vec2& v);
@@ -44,8 +42,8 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Source>& v);
 void from_json(const nlohmann::json& j, VoxelMesh& m);
 void from_json(const nlohmann::json& j, std::unique_ptr<Mesh>& v);
 void from_json(const nlohmann::json& j, vector<std::unique_ptr<Source>>& v);
-void from_json(const nlohmann::json& j, BoundaryCondition& v);
-void from_json(const nlohmann::json& j, vector<BoundaryCondition>& v);
+void from_json(const nlohmann::json& j, std::unique_ptr<BoundaryCondition>& v);
+void from_json(const nlohmann::json& j, vector<std::unique_ptr<BoundaryCondition>>& v);
 
 }  // namespace neptune
 

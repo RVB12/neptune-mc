@@ -21,7 +21,7 @@ namespace neptune {
  */
 EventType update_particle(const Mesh& mesh,
                      const PlasmaBackground& background,
-                     const vector<BoundaryCondition>& boundary_conditions,
+                     const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
                      Particle& p,
                      real_t t_final = -1);
 
