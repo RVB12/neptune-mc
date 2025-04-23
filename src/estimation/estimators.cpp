@@ -28,6 +28,12 @@ void Estimator::add_final(Particle& particle, const Mesh& mesh)
     index_t cell_id = particle.geometry.cell_id;
     real_t volume = mesh.get_volume(cell_id);
     density_final[cell_id] += particle.weight / volume * particle.intensity;
+
+    momentum_x_final[cell_id] += particle.geometry.velocity.x * particle.weight / volume * particle.intensity;
+    momentum_y_final[cell_id] += particle.geometry.velocity.y * particle.weight / volume * particle.intensity;
+    momentum_z_final[cell_id] += particle.geometry.velocity.z * particle.weight / volume * particle.intensity;
+    energy_final[cell_id] +=
+        (0.5 * particle.mass * particle.geometry.velocity.norm2()) * particle.weight / volume * particle.intensity;
 }
 
 void Estimator::combine(Estimator& other)

@@ -66,6 +66,12 @@ class Estimator {
     vector<real_t> energy;
     // Density at the final time of the simulation
     vector<real_t> density_final;
+    // Momentum at the final time of the simulation
+    vector<real_t> momentum_x_final;
+    vector<real_t> momentum_y_final;
+    vector<real_t> momentum_z_final;
+    // Energy at the final time of the simulation
+    vector<real_t> energy_final;
 };
 }  // namespace neptune
 
