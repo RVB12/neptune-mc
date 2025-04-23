@@ -24,6 +24,12 @@ To build, run:
 
 This should have made a file `./build/neptune-mc`. This will read a json file with input parameters and write a json file with the output. Detailed documentation for the json file is pending, but you can have a look at the examples folder in the meantime.
 
+To run those examples, the `neptune-mc` executable will need to be on the path, you can do this using:
+
+`export PATH=$PATH:/<path-to-build-folder>`
+
+Note, normally, there would be an install target in CMake that takes care of this for you but I couldn't get it working.
+
 ### General design
 
 #### Geometry
