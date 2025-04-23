@@ -45,6 +45,10 @@ void Estimator::combine(Estimator& other)
         momentum_z[i] += other.momentum_z[i];
         energy[i] += other.energy[i];
         density_final[i] += other.density_final[i];
+        momentum_x_final[i] += other.momentum_x_final[i];
+        momentum_y_final[i] += other.momentum_y_final[i];
+        momentum_z_final[i] += other.momentum_z_final[i];
+        energy_final[i] += other.energy_final[i];
     }
 }
 
