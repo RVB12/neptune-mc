@@ -66,8 +66,7 @@ EventType update_particle(
                 // We have a collision with the background
                 // Generate new velocity from plasma background (BGK
                 // operator)
-                real_t stddev = constants::calculate_BGK_stddev(
-                    bgk_processes[i]->bgk_stddev[cell_id]);
+                real_t stddev = bgk_processes[i]->bgk_stddev[cell_id];
                 std::normal_distribution<real_t> dist_vx(
                     bgk_processes[i]->bgk_mean_x[cell_id], stddev);
                 std::normal_distribution<real_t> dist_vy(
