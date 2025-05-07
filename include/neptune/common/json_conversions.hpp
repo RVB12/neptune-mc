@@ -120,15 +120,11 @@ struct adl_serializer<neptune::LineSource> {
         neptune::real_t intensity = j.at("intensity");
         neptune::Vec3 pos_a = j.at("pos_a");
         neptune::Vec3 pos_b = j.at("pos_b");
+        neptune::Vec3 vel_mean = j.at("vel_mean");
+        neptune::real_t vel_stddev = j.at("vel_stddev");
 
-        neptune::LineSource s(num_particles, intensity, pos_a, pos_b);
-
-        if (j.find("angle_min") != j.end()) {
-            s.angle_min = j.at("angle_min");
-        }
-        if (j.find("angle_max") != j.end()) {
-            s.angle_max = j.at("angle_max");
-        }
+        neptune::LineSource s(num_particles, intensity, pos_a, pos_b, vel_mean,
+                              vel_stddev);
 
         return s;
     }
@@ -138,8 +134,8 @@ struct adl_serializer<neptune::LineSource> {
         j = json{{"type", "line"},
                  {"pos_a", t.pos_a},
                  {"pos_b", t.pos_b},
-                 {"angle_min", t.angle_min},
-                 {"angle_max", t.angle_max},
+                 {"vel_mean", t.vel_mean},
+                 {"vel_stddev", t.vel_stddev},
                  {"n_particles", t.num_particles()},
                  {"intensity", t.intensity()}};
     }

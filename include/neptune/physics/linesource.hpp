@@ -26,21 +26,10 @@ class LineSource : public Source {
     LineSource(index_t num_particles_,
                real_t intensity_,
                Vec3 pos_a_,
-               Vec3 pos_b_)
-        : Source(num_particles_, intensity_), pos_a(pos_a_), pos_b(pos_b_)
-    {}
-
-    LineSource(index_t num_particles_,
-               real_t intensity_,
-               Vec3 pos_a_,
                Vec3 pos_b_,
-               real_t angle_min_,
-               real_t angle_max_)
-        : Source(num_particles_, intensity_),
-          pos_a(pos_a_),
-          pos_b(pos_b_),
-          angle_min(angle_min_),
-          angle_max(angle_max_)
+               Vec3 vel_mean_,
+               real_t vel_stddev_)
+        : Source(num_particles_, intensity_), pos_a(pos_a_), pos_b(pos_b_), vel_mean(vel_mean_), vel_stddev(vel_stddev_)
     {}
 
     /**
@@ -52,8 +41,8 @@ class LineSource : public Source {
 
     Vec3 pos_a;                    // start of the line that defines this source
     Vec3 pos_b;                    // end of the line that defines this source
-    real_t angle_min = -M_PI / 2;  // minimum angle of the velocity vector
-    real_t angle_max = M_PI / 2;   // maximum angle of the velocity vector
+    Vec3 vel_mean; // Mean velocity of the particles
+    real_t vel_stddev; // Standard deviation of the velocity of the particles
 };
 
 }  // namespace neptune

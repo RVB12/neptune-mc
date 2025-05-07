@@ -23,20 +23,11 @@ Particle LineSource::generate_particle(index_t i_particle)
     real_t u = unif_dist(p.rng);
     p.geometry.position = pos_a + u * (pos_b - pos_a);
 
-    // The velocity is determined in two steps:
-    // first, we generate a random angle between angle_min and angle_max
-    // next, we draw the norm of the velocity from the maxwellian
-    // distribution
-    std::uniform_real_distribution<real_t> angle_dist(angle_min, angle_max);
-    // The angle of the normal vector of the line segment
-    real_t normal_angle = std::atan2(pos_b.y - pos_a.y, pos_b.x - pos_a.x) - M_PI/2;
-    real_t angle = angle_dist(p.rng) + normal_angle;
-    std::chi_squared_distribution<real_t> chi2_dist(3.);
-    // hardcode temperature at 1 eV for now
-    real_t v_nrm = std::sqrt(1.0 * constants::eV_to_Joules / constants::m_p * chi2_dist(p.rng));
- 
-    p.geometry.velocity.x = v_nrm * std::cos(angle);
-    p.geometry.velocity.y = v_nrm * std::sin(angle);
+    std::normal_distribution<real_t> dist_vx(vel_mean.x, vel_stddev);
+    std::normal_distribution<real_t> dist_vy(vel_mean.y, vel_stddev);
+    std::normal_distribution<real_t> dist_vz(vel_mean.z, vel_stddev);
+
+    p.geometry.velocity = Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
 
     return p;
 }

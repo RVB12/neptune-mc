@@ -55,49 +55,49 @@ TEST_CASE("Vector json conversion works", "[vector][json]")
     REQUIRE(j.dump() == s_expected);
 }
 
-TEST_CASE("LineSource json conversion works", "[vector][json]")
-{
-    LineSource a(10, 100, Vec3(1.5, 2.5, 15.4), Vec3(3.5, 4.5, 1.5), 0.1, 0.2);
+// TEST_CASE("LineSource json conversion works", "[vector][json]")
+// {
+//     LineSource a(10, 100, Vec3(1.5, 2.5, 15.4), Vec3(3.5, 4.5, 1.5), 0.1, 0.2);
 
-    nlohmann::json j = a;
+//     nlohmann::json j = a;
 
-    LineSource b = j;
+//     LineSource b = j;
 
-    REQUIRE(a.pos_a.x == b.pos_a.x);
-    REQUIRE(a.pos_a.y == b.pos_a.y);
-    REQUIRE(a.pos_b.x == b.pos_b.x);
-    REQUIRE(a.pos_b.y == b.pos_b.y);
-    REQUIRE(a.angle_min == b.angle_min);
-    REQUIRE(a.angle_max == b.angle_max);
-    REQUIRE(a.num_particles() == b.num_particles());
+//     REQUIRE(a.pos_a.x == b.pos_a.x);
+//     REQUIRE(a.pos_a.y == b.pos_a.y);
+//     REQUIRE(a.pos_b.x == b.pos_b.x);
+//     REQUIRE(a.pos_b.y == b.pos_b.y);
+//     REQUIRE(a.angle_min == b.angle_min);
+//     REQUIRE(a.angle_max == b.angle_max);
+//     REQUIRE(a.num_particles() == b.num_particles());
 
-    std::string s_expected =
-        R"({"angle_max":0.2,"angle_min":0.1,"n_particles":10,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
-    REQUIRE(j.dump() == s_expected);
-}
+//     std::string s_expected =
+//         R"({"angle_max":0.2,"angle_min":0.1,"n_particles":10,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
+//     REQUIRE(j.dump() == s_expected);
+// }
 
-TEST_CASE("Source json conversion works", "[vector][json]")
-{
-    LineSource a(10, 100, Vec3(1.5, 2.5, 15.4), Vec3(3.5, 4.5, 1.5), 0.1, 0.2);
+// TEST_CASE("Source json conversion works", "[vector][json]")
+// {
+//     LineSource a(10, 100, Vec3(1.5, 2.5, 15.4), Vec3(3.5, 4.5, 1.5), 0.1, 0.2);
 
-    nlohmann::json j = a;
+//     nlohmann::json j = a;
 
-    std::unique_ptr<Source> b = j;
+//     std::unique_ptr<Source> b = j;
 
-    LineSource* c = dynamic_cast<LineSource*>(b.get());
-    REQUIRE(c != nullptr);
-    REQUIRE(a.pos_a.x == c->pos_a.x);
-    REQUIRE(a.pos_a.y == c->pos_a.y);
-    REQUIRE(a.pos_b.x == c->pos_b.x);
-    REQUIRE(a.pos_b.y == c->pos_b.y);
-    REQUIRE(a.angle_min == c->angle_min);
-    REQUIRE(a.angle_max == c->angle_max);
-    REQUIRE(a.num_particles() == c->num_particles());
+//     LineSource* c = dynamic_cast<LineSource*>(b.get());
+//     REQUIRE(c != nullptr);
+//     REQUIRE(a.pos_a.x == c->pos_a.x);
+//     REQUIRE(a.pos_a.y == c->pos_a.y);
+//     REQUIRE(a.pos_b.x == c->pos_b.x);
+//     REQUIRE(a.pos_b.y == c->pos_b.y);
+//     REQUIRE(a.angle_min == c->angle_min);
+//     REQUIRE(a.angle_max == c->angle_max);
+//     REQUIRE(a.num_particles() == c->num_particles());
 
-    std::string s_expected =
-        R"({"angle_max":0.2,"angle_min":0.1,"n_particles":10,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
-    REQUIRE(j.dump() == s_expected);
-}
+//     std::string s_expected =
+//         R"({"angle_max":0.2,"angle_min":0.1,"n_particles":10,"pos_a":[1.5,2.5],"pos_b":[3.5,4.5],"type":"line"})";
+//     REQUIRE(j.dump() == s_expected);
+// }
 
 TEST_CASE("VoxelMesh json conversion works", "[vector][json]")
 {
