@@ -16,7 +16,11 @@ class Estimator {
           momentum_y(n_cells, 0),
           momentum_z(n_cells, 0),
           energy(n_cells, 0),
-          density_final(n_cells, 0)
+          density_final(n_cells, 0),
+          momentum_x_final(n_cells, 0),
+          momentum_y_final(n_cells, 0),
+          momentum_z_final(n_cells, 0),
+          energy_final(n_cells, 0)
     {}
 
     /**
