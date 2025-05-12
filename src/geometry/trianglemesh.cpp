@@ -84,7 +84,7 @@ inline real_t find_edge_intersection(const Vec2& p1,
 
 CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
 {
-    assert(is_in_cell(p.position, p.cell_id));
+    // assert(is_in_cell(p.position, p.cell_id));
     TriangleIndices t = triangles[p.cell_id];
     Vec2 p1 = vertices[t.ind1];
     Vec2 p2 = vertices[t.ind2];

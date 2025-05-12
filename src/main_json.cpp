@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 
     vector<std::unique_ptr<IonisationProcess>> ion_processes(0);
     if (j.contains("ionisation_processes")) {
-        vector<std::unique_ptr<IonisationProcess>> ion_processes =
+        ion_processes =
             j["ionisation_processes"];
     }
 

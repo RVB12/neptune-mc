@@ -62,7 +62,7 @@ EventType update_particle(
         real_t cumulative_rate = 0;
         for(int i = 0; i < bgk_processes.size(); i++) {
             cumulative_rate += bgk_processes[i]->rate[cell_id];
-            if (eps < cumulative_rate / collision_rate) {
+            if (eps <= cumulative_rate / collision_rate) {
                 // We have a collision with the background
                 // Generate new velocity from plasma background (BGK
                 // operator)
