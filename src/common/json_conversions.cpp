@@ -126,6 +126,23 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<BoundaryCondition
     }
 }
 
+void from_json(const nlohmann::json& j, std::unique_ptr<FluidBoundaryCondition>& m)
+{
+    real_t alpha = j.at("alpha");
+    real_t beta = j.at("beta");
+    real_t gamma = j.at("gamma");
+    m = std::make_unique<FluidBoundaryCondition>(alpha, beta, gamma);
+}
+
+void from_json(const nlohmann::json& j, vector<std::unique_ptr<FluidBoundaryCondition>>& v)
+{
+    v.resize(j.size());
+    for (index_t i = 0; i < v.size(); i++) {
+        j.at(i).get_to(v[i]);
+    }
+}
+
+
 
 void from_json(const nlohmann::json& j, std::unique_ptr<BGKScatteringProcess>& m)
 {

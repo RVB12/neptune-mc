@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 
 #include "neptune/common/vector.hpp"
+#include "neptune/finitevolume/fluidboundarycondition.hpp"
 #include "neptune/geometry/spatialindex.hpp"
 #include "neptune/geometry/trianglemesh.hpp"
 #include "neptune/geometry/vec2.hpp"
@@ -46,6 +47,9 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<Source>>& v);
 void from_json(const nlohmann::json& j, std::unique_ptr<BoundaryCondition>& v);
 void from_json(const nlohmann::json& j,
                vector<std::unique_ptr<BoundaryCondition>>& v);
+void from_json(const nlohmann::json& j, std::unique_ptr<FluidBoundaryCondition>& v);
+void from_json(const nlohmann::json& j,
+               vector<std::unique_ptr<FluidBoundaryCondition>>& v);
 void from_json(const nlohmann::json& j,
                std::unique_ptr<BGKScatteringProcess>& v);
 void from_json(const nlohmann::json& j,

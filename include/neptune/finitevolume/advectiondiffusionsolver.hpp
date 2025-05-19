@@ -8,6 +8,7 @@
 #include "neptune/geometry/voxelmesh.hpp"
 #include "neptune/physics/plasmabackground.hpp"
 #include "neptune/physics/physicalconstants.hpp"
+#include "neptune/finitevolume/fluidboundarycondition.hpp"
 
 namespace neptune{
 
@@ -26,13 +27,16 @@ namespace neptune{
      */
     void advection_diffusion_solver(
         const Mesh& mesh,
+        const vector<std::unique_ptr<FluidBoundaryCondition>>& boundary_conditions,
         const vector<real_t>& advection_x,
         const vector<real_t>& advection_y,
         const vector<real_t>& advection_z,
-        const vector<real_t>& diffusion,
+        const vector<real_t>& diffusion_rate,
+        const vector<real_t>& diffusion_factor,
         real_t t_final,
         real_t dt,
-        vector<real_t>& density);
+        vector<real_t>& density,
+        vector<real_t>& density_integral);
 
 }
 

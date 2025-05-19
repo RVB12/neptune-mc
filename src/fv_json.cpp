@@ -57,16 +57,23 @@ int main(int argc, char** argv)
     vector<real_t> advection_x = j["advection_x"];
     vector<real_t> advection_y = j["advection_y"];
     vector<real_t> advection_z = j["advection_z"];
-    vector<real_t> diffusion = j["diffusion"];
+    vector<real_t> diffusion_rate = j["diffusion_rate"];
+    vector<real_t> diffusion_factor = j["diffusion_factor"];
     vector<real_t> density = j["density"];
 
     real_t t_final = j["t_final"];
     real_t dt = j["dt"];
 
+    vector<real_t> density_integral(density.size(), 0.0);
+
+    vector<std::unique_ptr<FluidBoundaryCondition>> boundary_conditions =
+        j["boundary_conditions"];
+
     start = std::chrono::high_resolution_clock::now();
-    advection_diffusion_solver(
-        *mesh_ptr, advection_x, advection_y, advection_z, diffusion, t_final,
-        dt, density);
+    advection_diffusion_solver(*mesh_ptr, boundary_conditions, advection_x,
+                               advection_y, advection_z, diffusion_rate,
+                               diffusion_factor, t_final, dt, density,
+                               density_integral);
     end = std::chrono::high_resolution_clock::now();
 
     stats.trace_time = std::chrono::duration<double>(end - start).count();
@@ -79,6 +86,7 @@ int main(int argc, char** argv)
     nlohmann::json output;
 
     output["density"] = density;
+    output["density_integral"] = density_integral;
     output["stats"] = stats;
 
     output_file << output.dump(4);
