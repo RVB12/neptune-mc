@@ -78,8 +78,12 @@ int main(int argc, char** argv)
 
     if (j.contains("dt")) {
         real_t dt = j["dt"];
+        bool use_new_kd = true;
+        if (j.contains("use_old_kd")) {
+            use_new_kd = !j["use_old_kd"];
+        }
         simulate_kdmc(*mesh_ptr, bgk_processes, ion_processes, sources,
-                      estimator, boundary_conditions, params, stats, dt);
+                      estimator, boundary_conditions, params, stats, dt, use_new_kd);
     }
     else {
         simulate(*mesh_ptr, bgk_processes, ion_processes, sources, estimator,

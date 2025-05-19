@@ -52,7 +52,8 @@ void simulate_kdmc(
     vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
     SimulationParams params,
     ExecutionStatistics& stats,
-    real_t dt);
+    real_t dt,
+    bool use_new_version = true);
 
 }  // namespace neptune
 
