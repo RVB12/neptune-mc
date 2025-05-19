@@ -8,6 +8,9 @@ using namespace neptune;
 
 int main(int argc, char** argv)
 {
+    //
+    // Parse command line and read input file
+    //
     std::string input_file_name;
     std::string output_file_name;
     if (argc != 3) {
@@ -36,6 +39,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    //
+    // Parse input file
+    //
     nlohmann::json j;
 
     input_file >> j;
@@ -76,6 +82,9 @@ int main(int argc, char** argv)
 
     Estimator estimator(mesh_ptr->n_cells());
 
+    //
+    // Run the simulation
+    //
     if (j.contains("dt")) {
         real_t dt = j["dt"];
         bool use_new_kd = true;
@@ -96,6 +105,9 @@ int main(int argc, char** argv)
 
     stats.total_time = stats.grid_building_time + stats.trace_time;
 
+    //
+    // Write output to file
+    //
     nlohmann::json output;
 
     output["density"] = estimator.density;

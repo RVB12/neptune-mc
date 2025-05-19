@@ -30,6 +30,7 @@ list(APPEND neptune_SOURCES
     src/geometry/triangle.cpp
     src/simulator/simulate_kdmc.cpp
     src/estimation/estimators.cpp
+    src/finitevolume/advectiondiffusionsolver.cpp
 )
 
 add_library(neptune ${neptune_SOURCES})
@@ -55,6 +56,9 @@ endif()
 # Main runner
 add_executable(neptune-mc src/main_json.cpp)
 target_link_libraries(neptune-mc PRIVATE neptune)
+
+add_executable(neptune-fv src/fv_json.cpp)
+target_link_libraries(neptune-fv PRIVATE neptune)
 
 #
 # Tests
