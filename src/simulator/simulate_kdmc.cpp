@@ -27,7 +27,7 @@ bool kdmc_fluid_step_old(
     Particle& p,
     real_t dt)
 {
-    if(dt <= 0){
+    if (dt <= 0) {
         return true;
     }
     std::uniform_real_distribution<real_t> r_unif(0, 1);
@@ -91,7 +91,7 @@ void kdmc_fluid_step(
     Particle& p,
     real_t dt)
 {
-    if(dt <= 0){
+    if (dt <= 0) {
         return;
     }
     std::uniform_real_distribution<real_t> r_unif(0, 1);
@@ -124,64 +124,83 @@ void kdmc_fluid_step(
 
     Vec3 new_pos = p.geometry.position + drift_term + diffusion_term;
 
-    index_t new_cell_id = mesh.get_cell_index(new_pos);
+    // Pretend like the particle is moving in a straight line from the old the
+    // the new pos
+    Vec3 assumed_velocity = (1 / dt) * (new_pos - p.geometry.position);
+    p.geometry.velocity = assumed_velocity;
 
-    // Now handle boundary conditions
-    // This only works for VoxelMesh for now
-    if (new_cell_id == -1) {
-        VoxelMesh vmesh = dynamic_cast<const VoxelMesh&>(mesh);
+    real_t time_left = dt;
+    while (true) {
+        CellCrossing crossing = mesh.get_next_crossing(p.geometry);
 
-        real_t A;
-        // TODO: this is kind of ugly
-        SpecularBC* specular_bc =
-            dynamic_cast<SpecularBC*>(boundary_conditions[0].get());
-        if (specular_bc != nullptr) {
-            A = 1.;
+        if (crossing.t < time_left) {
+            // We will hit a boundary before the time is up
+            // Move the particle to the boundary
+            p.t += crossing.t;
+            time_left -= crossing.t;
+            p.geometry.position = crossing.position;
+
+            if (crossing.next_cell_id != -1) {
+                // Regular grid crossing, move the particle to the next
+                // cell
+                p.geometry.boundary_id = crossing.next_surface_id;
+                p.geometry.cell_id = crossing.next_cell_id;
+            }
+            else {
+                // Boundary crossing
+                p.geometry.boundary_id = crossing.surface_id;
+
+                Vec3 normal =
+                    mesh.get_surface_normal(cell_id, crossing.surface_id);
+
+                SpecularBC* specular_bc = dynamic_cast<SpecularBC*>(
+                    boundary_conditions[crossing.surface_id].get());
+                if (specular_bc != nullptr) {
+                    // This only works in the absence of a drift, to be fixed
+                    // later.
+                    p.geometry.velocity =
+                        p.geometry.velocity -
+                        2 * (p.geometry.velocity * normal) * normal;
+                } else {
+                    AbsorbingBC* absorbing_bc =
+                        dynamic_cast<AbsorbingBC*>(
+                            boundary_conditions[crossing.surface_id].get());
+                    if (absorbing_bc != nullptr) {
+                        // Instead of just absorbing the particle, we negate the weight
+                        // and reflect it. This is because we don't detect all boundary crossings.
+                        p.weight *= -1;
+                        p.geometry.velocity =
+                            p.geometry.velocity -
+                            2 * (p.geometry.velocity * normal) * normal;
+                    } else {
+                        throw std::runtime_error(
+                            "Using a boundary condition that is not supported by KD");
+                    }
+                }
+            }
         }
         else {
-            A = -1.;
-        }
+            // We will not hit a cell boundary before the time is up
+            // Move the particle to the new position and draw a new velocity
+            p.geometry.position = new_pos;
+            p.geometry.boundary_id = -1;
+            p.t += time_left;
+            time_left = 0;
 
-        // Reflect the particle back inside the mesh
-        // This may have to be done multiple times
-        while (true) {
-            if (new_pos.x < 0) {
-                new_pos.x = -new_pos.x;
-                p.weight *= A;
-            }
-            else if (new_pos.x > vmesh.Lx) {
-                new_pos.x = 2 * vmesh.Lx - new_pos.x;
-                p.weight *= A;
-            }
-            if (new_pos.y < 0) {
-                new_pos.y = -new_pos.y;
-                p.weight *= A;
-            }
-            else if (new_pos.y > vmesh.Ly) {
-                new_pos.y = 2 * vmesh.Ly - new_pos.y;
-                p.weight *= A;
-            }
-            if (new_pos.z < 0) {
-                new_pos.z = -new_pos.z;
-                p.weight *= A;
-            }
-            else if (new_pos.z > vmesh.Lz) {
-                new_pos.z = 2 * vmesh.Lz - new_pos.z;
-                p.weight *= A;
-            }
-
-            new_cell_id = mesh.get_cell_index(new_pos);
-            if (new_cell_id != -1) {
-                break;
-            }
+            index_t cell_id = p.geometry.cell_id;
+            // Draw a new velocity
+            std::normal_distribution<real_t> dist_vx(
+                bgk_processes[0]->bgk_mean_x[cell_id], bgk_stddev);
+            std::normal_distribution<real_t> dist_vy(
+                bgk_processes[0]->bgk_mean_y[cell_id], bgk_stddev);
+            std::normal_distribution<real_t> dist_vz(
+                bgk_processes[0]->bgk_mean_z[cell_id], bgk_stddev);
+            p.geometry.velocity =
+                Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+            break;
         }
     }
 
-    // Update the particle
-    p.geometry.position = new_pos;
-    p.geometry.cell_id = new_cell_id;
-    p.geometry.boundary_id = -1;
-    p.t += dt;
     if (ion_processes.size() > 0) {
         p.weight *= std::exp(-dt * ion_processes[0]->rate[cell_id]);
     }
@@ -286,7 +305,8 @@ void simulate_kdmc(
                             std::gamma_distribution<real_t> gamma2(1, 1);
                             real_t X = gamma1(particle.rng);
                             real_t Y = gamma2(particle.rng);
-                            final_free_flight_time = (1 - X / (X + Y)) * (t_max - particle.t);
+                            final_free_flight_time =
+                                (1 - X / (X + Y)) * (t_max - particle.t);
                         }
                         else {
                             real_t R_cx = bgk_processes[0]
@@ -358,7 +378,7 @@ void simulate_kdmc(
                             vector<std::unique_ptr<BGKScatteringProcess>>
                                 empty_bgk_processes;
                             vector<std::unique_ptr<IonisationProcess>>
-                                empty_ion_processes; 
+                                empty_ion_processes;
                             EventType event = update_particle(
                                 mesh, empty_bgk_processes, empty_ion_processes,
                                 boundary_conditions, particle, t_max);
