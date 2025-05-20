@@ -1,0 +1,8 @@
+#ifndef NEPTUNE_VERSION_HPP
+#define NEPTUNE_VERSION_HPP
+
+#ifndef NEPTUNE_VERSION
+    #define NEPTUNE_VERSION "unknown"
+#endif  // NEPTUNE_VERSION
+
+#endif  // NEPTUNE_VERSION_HPP

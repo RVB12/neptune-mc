@@ -1,6 +1,7 @@
 #include <chrono>
 #include <fstream>
 
+#include "neptune/common/version.hpp"
 #include "neptune/common/json_conversions.hpp"
 #include "neptune/finitevolume/advectiondiffusionsolver.hpp"
 
@@ -13,6 +14,14 @@ int main(int argc, char** argv)
     //
     std::string input_file_name;
     std::string output_file_name;
+    if (argc == 2) {
+        std::string argument = argv[1];
+        if (argument == "-v" || argument == "--version") {
+            std::cout << "Neptune version: " << NEPTUNE_VERSION
+                      << std::endl;
+            return 0;
+        }
+    }
     if (argc != 3) {
         std::cout << "No input file specified, using default input.json and "
                      "output.json"

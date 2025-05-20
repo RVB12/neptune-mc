@@ -14,6 +14,18 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 #
+# Get git commit hash for versioning
+#
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+message(STATUS "Git commit hash: ${GIT_COMMIT_HASH}")
+set(NEPTUNE_VERSION "${PROJECT_VERSION}-${GIT_COMMIT_HASH}")
+
+#
 # Main library
 #
 list(APPEND neptune_SOURCES
@@ -38,6 +50,7 @@ target_include_directories(neptune PUBLIC include)
 target_compile_options(neptune PRIVATE -O3)
 target_compile_options(neptune PRIVATE -fPIC)
 target_compile_options(neptune PRIVATE -DNDEBUG)
+target_compile_definitions(neptune PUBLIC NEPTUNE_VERSION="${NEPTUNE_VERSION}")
 
 # JSON
 include(FetchContent)
