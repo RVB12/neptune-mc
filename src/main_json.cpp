@@ -78,6 +78,13 @@ int main(int argc, char** argv)
     params.max_steps = j["max_steps"];
     params.seed = j["seed"];
 
+    // Set the particle offsets
+    index_t offset = params.seed;
+    for (index_t i = 0; i < sources.size(); i++) {
+        sources[i]->particle_id_offset_ = offset;
+        offset += sources[i]->num_particles();
+    }
+
     vector<std::unique_ptr<BoundaryCondition>> boundary_conditions =
         j["boundary_conditions"];
 

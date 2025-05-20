@@ -310,12 +310,6 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<Source>>& v)
     for (index_t i = 0; i < v.size(); i++) {
         j.at(i).get_to(v[i]);
     }
-    // Set the particle offsets
-    index_t offset = 0;
-    for (index_t i = 0; i < v.size(); i++) {
-        v[i]->particle_id_offset_ = offset;
-        offset += v[i]->num_particles();
-    }
 }
 
 }  // namespace neptune
