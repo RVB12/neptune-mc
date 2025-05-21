@@ -122,7 +122,8 @@ void kdmc_fluid_step(
     diffusion_term.y = D * r_normal(p.rng);
     diffusion_term.z = D * r_normal(p.rng);
 
-    Vec3 new_pos = p.geometry.position + drift_term + diffusion_term;
+    Vec3 old_pos = p.geometry.position;
+    Vec3 new_pos = old_pos + drift_term + diffusion_term;
 
     // Pretend like the particle is moving in a straight line from the old the
     // the new pos
@@ -153,29 +154,67 @@ void kdmc_fluid_step(
                 Vec3 normal =
                     mesh.get_surface_normal(cell_id, crossing.surface_id);
 
+                real_t A = 0;
                 SpecularBC* specular_bc = dynamic_cast<SpecularBC*>(
                     boundary_conditions[crossing.surface_id].get());
                 if (specular_bc != nullptr) {
-                    // This only works in the absence of a drift, to be fixed
-                    // later.
+                    A = 1;
+                }
+                else {
+                    AbsorbingBC* absorbing_bc = dynamic_cast<AbsorbingBC*>(
+                        boundary_conditions[crossing.surface_id].get());
+                    if (absorbing_bc != nullptr) {
+                        // Note that for an absorbing boundary, the weight is
+                        // not set to zero, but is multiplied by -1
+                        A = -1;
+                    }
+                    else {
+                        throw std::runtime_error(
+                            "Using a boundary condition that is not supported "
+                            "by KD");
+                    }
+                }
+                p.weight *= A;
+
+                // Reflect the particle
+                if (u.x == 0 && u.y == 0 && u.z == 0) {
+                    // No drift, we can just reflect the velocity
                     p.geometry.velocity =
                         p.geometry.velocity -
                         2 * (p.geometry.velocity * normal) * normal;
-                } else {
-                    AbsorbingBC* absorbing_bc =
-                        dynamic_cast<AbsorbingBC*>(
-                            boundary_conditions[crossing.surface_id].get());
-                    if (absorbing_bc != nullptr) {
-                        // Instead of just absorbing the particle, we negate the weight
-                        // and reflect it. This is because we don't detect all boundary crossings.
-                        p.weight *= -1;
-                        p.geometry.velocity =
-                            p.geometry.velocity -
-                            2 * (p.geometry.velocity * normal) * normal;
-                    } else {
-                        throw std::runtime_error(
-                            "Using a boundary condition that is not supported by KD");
+                }
+                else {
+                    // There is a drift, we can't just reflect the velocity,
+                    // we need to resample the new position from the tail of
+                    // the mirrored transition function
+
+                    // TODO: make this more general, this only works for the furthest boundary
+                    const VoxelMesh* mesh_ptr =
+                        dynamic_cast<const VoxelMesh*>(&mesh);
+
+                    real_t Lx = mesh_ptr->Lx;
+
+                    Vec3 mirror_pos = old_pos;
+                    mirror_pos.x = 2 * Lx - mirror_pos.x;
+
+                    Vec3 new_center = mirror_pos + u * dt;
+
+                    Vec3 new_pos2;
+                    while(true) {
+                        // Sample a new position from the mirror distribution
+                        Vec3 diffusion_term2 = Vec3(
+                            D * r_normal(p.rng), D * r_normal(p.rng),
+                            D * r_normal(p.rng));
+                        new_pos2 = new_center + diffusion_term2;
+
+                        if(new_pos2.x < Lx){
+                            break;
+                        }
                     }
+
+                    // Determine a new assumed velocity
+                    p.geometry.velocity = (1/time_left) * (new_pos2 - p.geometry.position);
+
                 }
             }
         }
