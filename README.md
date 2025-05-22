@@ -59,16 +59,16 @@ The following features are currently supported
 - Rectangular grid (structured)
 - Triangular mesh grid in x-z direction, extended in y direction with straight lines
 - Collision rate and BGK parameters based on background temperature, momentum and density
-- time averaged density estimate
-- density at a certain time
+- time averaged estimates for density, momentum, and energy
+- estimates at a certain time
 - KD (only final density)
 - Line source
 - Point source
 
 The following features are planned
 
-- momentum and energy estimator
 - fluid estimator
+- Surface source
 - Volume source
 - Triangular mesh, rotated around z axis to form cells confined by toroidal shaped
 - Magnetic sheath BC for the sources

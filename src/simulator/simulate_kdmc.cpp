@@ -152,17 +152,17 @@ void kdmc_fluid_step(
                 p.geometry.boundary_id = crossing.surface_id;
 
                 Vec3 normal =
-                    mesh.get_surface_normal(cell_id, crossing.surface_id);
+                    mesh.get_surface_normal(p.geometry.cell_id, crossing.surface_id);
 
                 real_t A = 0;
                 SpecularBC* specular_bc = dynamic_cast<SpecularBC*>(
-                    boundary_conditions[crossing.surface_id].get());
+                    boundary_conditions[crossing.boundary_condition_id].get());
                 if (specular_bc != nullptr) {
                     A = 1;
                 }
                 else {
                     AbsorbingBC* absorbing_bc = dynamic_cast<AbsorbingBC*>(
-                        boundary_conditions[crossing.surface_id].get());
+                        boundary_conditions[crossing.boundary_condition_id].get());
                     if (absorbing_bc != nullptr) {
                         // Note that for an absorbing boundary, the weight is
                         // not set to zero, but is multiplied by -1
@@ -181,33 +181,36 @@ void kdmc_fluid_step(
                     // No drift, we can just reflect the velocity
                     p.geometry.velocity =
                         p.geometry.velocity -
-                        2 * (p.geometry.velocity * normal) * normal;
+                        2 * dot(p.geometry.velocity, normal) * normal;
                 }
                 else {
                     // There is a drift, we can't just reflect the velocity,
                     // we need to resample the new position from the tail of
                     // the mirrored transition function
 
-                    // TODO: make this more general, this only works for the furthest boundary
-                    const VoxelMesh* mesh_ptr =
-                        dynamic_cast<const VoxelMesh*>(&mesh);
+                    // Check if the normal points inwards
+                    if (dot(normal, p.geometry.velocity) > 0) {
+                        // The normal points inwards, we need to flip it
+                        normal = -normal;
+                    }
 
-                    real_t Lx = mesh_ptr->Lx;
-
-                    Vec3 mirror_pos = old_pos;
-                    mirror_pos.x = 2 * Lx - mirror_pos.x;
-
+                    Vec3 mirror_pos = old_pos - 2 * dot(old_pos - crossing.position, normal) * normal;
                     Vec3 new_center = mirror_pos + u * dt;
+
+                    // Set old pos to mirror pos so future reflections are handled properly
+                    old_pos = mirror_pos;
 
                     Vec3 new_pos2;
                     while(true) {
                         // Sample a new position from the mirror distribution
+                        // This accept-reject sampling is not very efficient, but it works
                         Vec3 diffusion_term2 = Vec3(
                             D * r_normal(p.rng), D * r_normal(p.rng),
                             D * r_normal(p.rng));
                         new_pos2 = new_center + diffusion_term2;
 
-                        if(new_pos2.x < Lx){
+                        if(dot(new_pos2 - crossing.position, normal) > 0){
+                            // We are inside the cell, we can break
                             break;
                         }
                     }
@@ -221,7 +224,7 @@ void kdmc_fluid_step(
         else {
             // We will not hit a cell boundary before the time is up
             // Move the particle to the new position and draw a new velocity
-            p.geometry.position = new_pos;
+            p.geometry.position = p.geometry.position + time_left * p.geometry.velocity;
             p.geometry.boundary_id = -1;
             p.t += time_left;
             time_left = 0;

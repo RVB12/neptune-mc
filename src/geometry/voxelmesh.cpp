@@ -164,17 +164,17 @@ Vec3 VoxelMesh::get_surface_normal(index_t cell_index, index_t surface_id) const
 {
     switch (surface_id) {
         case 0:
-            return Vec3(-1, 0, 0);
-        case 1:
-            return Vec3(0, -1, 0);
-        case 2:
-            return Vec3(0, 0, -1);
-        case 3:
             return Vec3(1, 0, 0);
-        case 4:
+        case 1:
             return Vec3(0, 1, 0);
-        case 5:
+        case 2:
             return Vec3(0, 0, 1);
+        case 3:
+            return Vec3(-1, 0, 0);
+        case 4:
+            return Vec3(0, -1, 0);
+        case 5:
+            return Vec3(0, 0, -1);
         default:
             throw std::runtime_error("Invalid surface id");
     }
