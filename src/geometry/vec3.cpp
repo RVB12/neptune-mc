@@ -1,10 +1,11 @@
 
 
-#include <cmath>
+#include "neptune/geometry/vec3.hpp"
+
 #include <cassert>
+#include <cmath>
 
 #include "neptune/common/utils.hpp"
-#include "neptune/geometry/vec3.hpp"
 
 namespace neptune {
 
@@ -104,25 +105,27 @@ Vec3& Vec3::operator/=(real_t s)
     return *this;
 }
 
+Vec3 Vec3::operator-() { return Vec3(-x, -y, -z); }
 
-Vec3 Vec3::operator-()
+real_t Vec3::dot(Vec3 other) const
 {
-    return Vec3(-x,-y,-z);
+    return x * other.x + y * other.y + z * other.z;
 }
 
-real_t Vec3::dot(Vec3 other) const { return x * other.x + y * other.y + z * other.z; }
-
-real_t Vec3::dist(Vec3 other) const {
+real_t Vec3::dist(Vec3 other) const
+{
     real_t d2 = square(x - other.x) + square(y - other.y) + square(z - other.z);
-    return std::sqrt(d2);    
+    return std::sqrt(d2);
 }
 
-real_t Vec3::norm2() const {
-    return square(x) + square(y) + square(z);
-}
+real_t Vec3::norm2() const { return square(x) + square(y) + square(z); }
 
-real_t Vec3::norm() const {
-    return std::sqrt(norm2());    
+real_t Vec3::norm() const { return std::sqrt(norm2()); }
+
+Vec3 Vec3::cross(Vec3 other) const
+{
+    return Vec3(y * other.z - z * other.y, z * other.x - x * other.z,
+                x * other.y - y * other.x);
 }
 
 }  // namespace neptune

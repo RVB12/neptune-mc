@@ -49,6 +49,9 @@ class Vec3 {
 
     // Calculate the squared norm of the vector
     real_t norm2() const;
+
+    // Calculate the cross product of two vectors
+    Vec3 cross(Vec3) const;
 };
 
 // Define some wrappers around the operators

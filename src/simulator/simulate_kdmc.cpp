@@ -67,6 +67,21 @@ bool kdmc_fluid_step_old(
         return false;
     }
 
+    // Only for voxel meshes, also check if the particle is likely to cross
+    // the boundary
+    const VoxelMesh* voxel_mesh = dynamic_cast<const VoxelMesh*>(&mesh);
+    if (voxel_mesh != nullptr) {
+        Vec3 temp_diff(D, D, D);
+        Vec3 temp_min = p.geometry.position + drift_term - 2 * temp_diff;
+        Vec3 temp_max = p.geometry.position + drift_term + 2 * temp_diff;
+
+        if (temp_min.x < 0 or temp_max.x > voxel_mesh->Lx or temp_min.y < 0 or
+            temp_max.y > voxel_mesh->Ly or temp_min.z < 0 or
+            temp_max.z > voxel_mesh->Lz) {
+            return false;
+        }
+    }
+
     // Update the particle
     p.geometry.position = new_pos;
     p.geometry.cell_id = new_cell_id;
@@ -76,6 +91,35 @@ bool kdmc_fluid_step_old(
         p.weight *= std::exp(-dt * ion_processes[0]->rate[cell_id]);
     }
     return true;
+}
+
+// Generate a sample from N(0, 1) truncated to [a, ∞) using Robert's algorithm
+// Note, this will get more and more expensive for larger a, it may
+// need to be replaced with a fancier algorithm at some point
+double truncated_normal_right_tail(double a, std::mt19937& rng)
+{
+    if (a <= 0.0) {
+        // For small a, use rejection from standard normal
+        std::normal_distribution<> normal(0.0, 1.0);
+        double x;
+        do {
+            x = normal(rng);
+        } while (x < a);
+        return x;
+    }
+
+    // For a > 0, use exponential proposal
+    double alpha = (a + std::sqrt(a * a + 4.0)) / 2.0;
+    std::exponential_distribution<> exponential(alpha);
+    std::uniform_real_distribution<> uniform(0.0, 1.0);
+
+    while (true) {
+        double z = exponential(rng) + a;
+        double u = uniform(rng);
+        if (u <= std::exp(-0.5 * std::pow(z - alpha, 2))) {
+            return z;
+        }
+    }
 }
 
 /**
@@ -151,80 +195,112 @@ void kdmc_fluid_step(
                 // Boundary crossing
                 p.geometry.boundary_id = crossing.surface_id;
 
-                Vec3 normal =
-                    mesh.get_surface_normal(p.geometry.cell_id, crossing.surface_id);
+                Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id,
+                                                      crossing.surface_id);
 
-                real_t A = 0;
-                SpecularBC* specular_bc = dynamic_cast<SpecularBC*>(
-                    boundary_conditions[crossing.boundary_condition_id].get());
-                if (specular_bc != nullptr) {
-                    A = 1;
+                // Make sure the normal points outwards
+                if (dot(normal, p.geometry.velocity) > 0) {
+                    // The normal points inwards, we need to flip it
+                    normal = -normal;
                 }
-                else {
-                    AbsorbingBC* absorbing_bc = dynamic_cast<AbsorbingBC*>(
-                        boundary_conditions[crossing.boundary_condition_id].get());
-                    if (absorbing_bc != nullptr) {
-                        // Note that for an absorbing boundary, the weight is
-                        // not set to zero, but is multiplied by -1
-                        A = -1;
-                    }
-                    else {
-                        throw std::runtime_error(
-                            "Using a boundary condition that is not supported "
-                            "by KD");
-                    }
-                }
-                p.weight *= A;
 
-                // Reflect the particle
-                if (u.x == 0 && u.y == 0 && u.z == 0) {
-                    // No drift, we can just reflect the velocity
+                real_t drift_normal = dot(drift_term, normal);
+                if (std::abs(drift_normal) < 1.0e6) {
+                    // There is no (significant) drift in the direction
+                    // of the normal, simplified case
+
+                    // Velocity can just be reflected
                     p.geometry.velocity =
                         p.geometry.velocity -
                         2 * dot(p.geometry.velocity, normal) * normal;
+
+                    AbsorbingBC* absorbing_bc = dynamic_cast<AbsorbingBC*>(
+                        boundary_conditions[crossing.boundary_condition_id]
+                            .get());
+                    if (absorbing_bc != nullptr) {
+                        p.weight = -1;
+                    }
+                    // TODO: handle partial absorption
                 }
                 else {
                     // There is a drift, we can't just reflect the velocity,
                     // we need to resample the new position from the tail of
                     // the mirrored transition function
 
-                    // Check if the normal points inwards
-                    if (dot(normal, p.geometry.velocity) > 0) {
-                        // The normal points inwards, we need to flip it
-                        normal = -normal;
-                    }
-
-                    Vec3 mirror_pos = old_pos - 2 * dot(old_pos - crossing.position, normal) * normal;
+                    Vec3 mirror_pos =
+                        old_pos -
+                        2 * dot(old_pos - crossing.position, normal) * normal;
                     Vec3 new_center = mirror_pos + u * dt;
 
-                    // Set old pos to mirror pos so future reflections are handled properly
+                    // Set old pos to mirror pos so future reflections are
+                    // handled properly
                     old_pos = mirror_pos;
 
-                    Vec3 new_pos2;
-                    while(true) {
-                        // Sample a new position from the mirror distribution
-                        // This accept-reject sampling is not very efficient, but it works
-                        Vec3 diffusion_term2 = Vec3(
-                            D * r_normal(p.rng), D * r_normal(p.rng),
-                            D * r_normal(p.rng));
-                        new_pos2 = new_center + diffusion_term2;
+                    // Get the two vectors that are orthogonal to the normal
+                    // and to each other using Gram-Schmidt
+                    Vec3 v2(r_normal(p.rng), r_normal(p.rng), r_normal(p.rng));
+                    v2 -= dot(v2, normal) * normal;
+                    v2 /= v2.norm();
+                    Vec3 v3 = normal.cross(v2);
 
-                        if(dot(new_pos2 - crossing.position, normal) > 0){
-                            // We are inside the cell, we can break
-                            break;
-                        }
+                    real_t n2 = r_normal(p.rng);
+                    real_t n3 = r_normal(p.rng);
+
+                    // Sample n1 from the normal distribution constrained to n1
+                    real_t dist_to_crossing =
+                        dot(crossing.position - new_center, normal);
+                    real_t n1 = -truncated_normal_right_tail(
+                        dist_to_crossing / D, p.rng);
+
+                    Vec3 new_pos2 = new_center - n1 * D * normal + n2 * D * v2 +
+                                    n3 * D * v3;
+
+                    // This is an extra check that should not really be
+                    // necessary, check if the new position is actually inside
+                    // the domain
+                    if (dot(new_pos2 - crossing.position, normal) <= 0) {
+                        // We are inside the cell, we can break
+                        throw std::runtime_error(
+                            "New position is not outside the domain");
                     }
 
                     // Determine a new assumed velocity
-                    p.geometry.velocity = (1/time_left) * (new_pos2 - p.geometry.position);
+                    // so that the particle will move to the new position
+                    p.geometry.velocity =
+                        (1 / time_left) * (new_pos2 - p.geometry.position);
 
+                    //
+                    // Now we need to update the weight:
+                    //
+
+                    AbsorbingBC* absorbing_bc = dynamic_cast<AbsorbingBC*>(
+                        boundary_conditions[crossing.boundary_condition_id]
+                            .get());
+                    if (absorbing_bc != nullptr) {
+                        real_t distance_left =
+                            dot(crossing.position - old_pos - u * dt, normal);
+                        real_t area_left = 0.5 * (1 + std::erf(
+                            distance_left / (std::sqrt(2) * D)));
+                        real_t distance_right = dot(crossing.position - new_center, normal);
+                        real_t area_right = 0.5 * (1 + std::erf(
+                            distance_right / (std::sqrt(2) * D)));
+
+                        real_t A = std::exp(drift_normal / D * dot(crossing.position - old_pos, normal));
+
+                        p.weight *= A * area_right / area_left;
+                    }
+
+                    // TODO: implement integral sampling for reflecting boundaries with drift
+
+                    // TODO: handle partial absorption
                 }
             }
         }
         else {
             // We will not hit a cell boundary before the time is up
             // Move the particle to the new position and draw a new velocity
-            p.geometry.position = p.geometry.position + time_left * p.geometry.velocity;
+            p.geometry.position =
+                p.geometry.position + time_left * p.geometry.velocity;
             p.geometry.boundary_id = -1;
             p.t += time_left;
             time_left = 0;
