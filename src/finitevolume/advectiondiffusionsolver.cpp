@@ -63,10 +63,22 @@ void advection_diffusion_solver(
                 real_t beta = boundary_conditions[0]->beta;
                 real_t gamma = boundary_conditions[0]->gamma;
 
+                real_t ghost = (gamma + density[i] * beta) / (beta - alpha * 0.5 * dx );
+                total_flux[i] -= diffusion_factor[i] * diffusion_rate[i] *
+                                 (density[i] - ghost) / (0.5 * dx);
+
+                real_t v = advection_x[i];
+                if (v > 0) {
+                    total_flux[i] -= v * ghost;
+                }
+                else {
+                    total_flux[i] -= v * density[i];
+                }
+
                 // TODO: double check this
-                total_flux[i] += (gamma - alpha * density[i]) /
-                                 (beta + alpha * dx / (2 * diffusion_rate[i]*diffusion_factor[i])) * dy *
-                                 dz;
+                // total_flux[i] += (gamma - alpha * density[i]) /
+                //                  (beta + alpha * dx / (2 * diffusion_rate[i]*diffusion_factor[i])) * dy *
+                //                  dz;
             }
             if (ind.i < vmesh.nx - 1) {
                 Index3D ind2(ind.i + 1, ind.j, ind.k);
@@ -90,10 +102,17 @@ void advection_diffusion_solver(
                 real_t beta = boundary_conditions[3]->beta;
                 real_t gamma = boundary_conditions[3]->gamma;
 
+                real_t ghost = (density[i] * beta - gamma) / (beta + alpha * 0.5 * dx );
+                total_flux[i] -= diffusion_factor[i] * diffusion_rate[i] *
+                                 (density[i] - ghost) / (0.5 * dx);
+
+                real_t v = advection_x[i];
+                total_flux[i] -= v * ghost;
+
                 // TODO: double check this
-                total_flux[i] += (gamma - alpha * density[i]) /
-                                 (beta + alpha * dx / (2 * diffusion_rate[i]*diffusion_factor[i])) * dy *
-                                 dz;
+                // total_flux[i] += (gamma - alpha * density[i]) /
+                //                  (beta + alpha * dx / (2 * diffusion_rate[i]*diffusion_factor[i])) * dy *
+                //                  dz;
             }
             if (ind.j > 0) {
                 Index3D ind2(ind.i, ind.j - 1, ind.k);
