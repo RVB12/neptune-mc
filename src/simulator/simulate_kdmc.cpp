@@ -351,29 +351,39 @@ void kdmc_fluid_step(
                             // Sample from the point source
                         }
                         else {
-                            while (true) {
-                                // Sample from the line
-                                std::exponential_distribution<real_t>
-                                    exponential(alpha / beta);
+                            // Sample from the line
+                            std::exponential_distribution<real_t> exponential(
+                                alpha / beta);
 
-                                real_t offset = exponential(p.rng);
+                            real_t offset = exponential(p.rng);
+                            new_center =
+                                new_center +
+                                offset * normal;  // Move along the normal
 
-                                // // TO BE CHECKED: do i need to correct for
-                                // the fact
-                                // // that the area of the truncated normal is
-                                // not 1?
+                            // while (true) {
+                            //     // Sample from the line
+                            //     std::exponential_distribution<real_t>
+                            //         exponential(alpha / beta);
 
-                                real_t area_new_point =
-                                    normal_cdf(d1 + offset, 0, 2 * D0 * dt);
-                                real_t u2 = r_unif(p.rng);
-                                if (u2 < area_new_point / area_point) {
-                                    new_center =
-                                        new_center +
-                                        offset *
-                                            normal;  // Move along the normal
-                                    break;
-                                }
-                            }
+                            //     real_t offset = exponential(p.rng);
+
+                            //     // // TO BE CHECKED: do i need to correct for
+                            //     // the fact
+                            //     // // that the area of the truncated normal
+                            //     is
+                            //     // not 1?
+
+                            //     real_t area_new_point =
+                            //         normal_cdf(d1 + offset, 0, 2 * D0 * dt);
+                            //     real_t u2 = r_unif(p.rng);
+                            //     if (u2 < area_new_point / area_point) {
+                            //         new_center =
+                            //             new_center +
+                            //             offset *
+                            //                 normal;  // Move along the normal
+                            //         break;
+                            //     }
+                            // }
                         }
 
                         // Now we can sample from the shifted normal
