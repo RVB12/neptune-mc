@@ -569,7 +569,7 @@ void simulate_kdmc(
 
                         estimator_local.add_track_length(particle, particle_old,
                                                          mesh);
-                        if (particle.weight < 1.0e-4) {
+                        if (std::abs(particle.weight) < 1.0e-4) {
                             break;
                         }
                         if (event == EventType::FINAL_TIME) {
@@ -584,7 +584,7 @@ void simulate_kdmc(
                         }
                     }
 
-                    if (particle.weight < 1.0e-4) {
+                    if (std::abs(particle.weight) < 1.0e-4) {
                         break;
                     }
 
@@ -656,7 +656,7 @@ void simulate_kdmc(
 
                                         estimator_local.add_track_length(
                                             particle, particle_old, mesh);
-                                        if (particle.weight < 1.0e-4) {
+                                        if (std::abs(particle.weight) < 1.0e-4) {
                                             break;
                                         }
                                         if (event == EventType::FINAL_TIME) {
@@ -677,7 +677,7 @@ void simulate_kdmc(
                                 }
                             }
                         }
-                        if (particle.weight < 1.0e-4) {
+                        if (std::abs(particle.weight) < 1.0e-4) {
                             break;
                         }
 
@@ -696,7 +696,7 @@ void simulate_kdmc(
 
                             estimator_local.add_track_length(
                                 particle, particle_old, mesh);
-                            if (particle.weight < 1.0e-4) {
+                            if (std::abs(particle.weight) < 1.0e-4) {
                                 break;
                             }
                             if (event == EventType::FINAL_TIME) {
