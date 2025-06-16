@@ -1,5 +1,6 @@
 #include <omp.h>
 
+#include "neptune/geometry/trianglemesh.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
 #include "neptune/physics/linesource.hpp"
 #include "neptune/physics/physicalconstants.hpp"
@@ -160,11 +161,55 @@ void kdmc_fluid_step(
     real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
 
     real_t D0 = bgk_stddev * bgk_stddev / (R_cx * R_cx_theta);
+    // D0 *= (2 * std::exp(-R_cx_theta) + R_cx_theta + R_cx_theta *
+    // std::exp(-R_cx_theta) - 2);
     D0 *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
     if (D0 < 0) {
         D0 = 0;
     }
+    if (R_cx == 0) D0 = 0;
     real_t D = std::sqrt(2 * D0 * dt);
+
+    // Calculate derivative of the diffusion term and add it to the drift term
+    Vec3 diffusion_induced_drift(0, 0, 0);
+    // VoxelMesh* voxel_mesh =
+    //     dynamic_cast<VoxelMesh*>(const_cast<Mesh*>(&mesh));
+    // if (voxel_mesh != nullptr) {
+    //     for(index_t i )
+    // }
+
+    TriangleMesh* triangle_mesh =
+        dynamic_cast<TriangleMesh*>(const_cast<Mesh*>(&mesh));
+    if (triangle_mesh != nullptr) {
+        vector<index_t> neighbours =
+            triangle_mesh->get_neighbours(p.geometry.cell_id);
+
+        Vec3 center0 = triangle_mesh->get_center(p.geometry.cell_id);
+
+        for (index_t i = 0; i < 3; i++) {
+            index_t neighbour_id = neighbours[i];
+            if (neighbour_id == -1) {
+                continue;  // No neighbour, skip
+            }
+
+            real_t R_cx_neighbour = bgk_processes[0]->rate[neighbour_id];
+
+            Vec3 normal =
+                triangle_mesh->get_surface_normal(p.geometry.cell_id, i);
+            Vec3 neighbour_center = triangle_mesh->get_center(neighbour_id);
+            real_t distance = (neighbour_center - center0).norm();
+            diffusion_induced_drift +=
+                (R_cx_neighbour - R_cx) / distance * normal;
+        }
+
+        real_t dDdsigma = (-2 * bgk_stddev * bgk_stddev) /
+                          (R_cx * R_cx * R_cx_theta) *
+                          (std::exp(-R_cx_theta) - 1 + R_cx_theta);
+        dDdsigma += (bgk_stddev * bgk_stddev) / (R_cx * R_cx) *
+                    (1 - std::exp(-R_cx_theta));
+        diffusion_induced_drift *= dDdsigma;
+        diffusion_induced_drift *= dt;
+    }
 
     Vec3 diffusion_term;
     diffusion_term.x = D * r_normal(p.rng);
@@ -172,7 +217,8 @@ void kdmc_fluid_step(
     diffusion_term.z = D * r_normal(p.rng);
 
     Vec3 old_pos = p.geometry.position;
-    Vec3 new_pos = old_pos + drift_term + diffusion_term;
+    Vec3 new_pos =
+        old_pos + drift_term + diffusion_term + diffusion_induced_drift;
 
     // Pretend like the particle is moving in a straight line from the old the
     // the new pos
@@ -180,7 +226,9 @@ void kdmc_fluid_step(
     p.geometry.velocity = assumed_velocity;
 
     real_t time_left = dt;
+    index_t i_step = 0;
     while (true) {
+        i_step++;
         CellCrossing crossing = mesh.get_next_crossing(p.geometry);
 
         if (crossing.t < time_left) {
@@ -355,35 +403,35 @@ void kdmc_fluid_step(
                             std::exponential_distribution<real_t> exponential(
                                 alpha / beta);
 
-                            real_t offset = exponential(p.rng);
-                            new_center =
-                                new_center +
-                                offset * normal;  // Move along the normal
+                            // real_t offset = exponential(p.rng);
+                            // new_center =
+                            //     new_center +
+                            //     offset * normal;  // Move along the normal
 
-                            // while (true) {
-                            //     // Sample from the line
-                            //     std::exponential_distribution<real_t>
-                            //         exponential(alpha / beta);
+                            while (true) {
+                                // Sample from the line
+                                std::exponential_distribution<real_t>
+                                    exponential(alpha / beta);
 
-                            //     real_t offset = exponential(p.rng);
+                                real_t offset = exponential(p.rng);
 
-                            //     // // TO BE CHECKED: do i need to correct for
-                            //     // the fact
-                            //     // // that the area of the truncated normal
-                            //     is
-                            //     // not 1?
+                                // // TO BE CHECKED: do i need to correct for
+                                // the fact
+                                // // that the area of the truncated normal
+                                // is
+                                // not 1?
 
-                            //     real_t area_new_point =
-                            //         normal_cdf(d1 + offset, 0, 2 * D0 * dt);
-                            //     real_t u2 = r_unif(p.rng);
-                            //     if (u2 < area_new_point / area_point) {
-                            //         new_center =
-                            //             new_center +
-                            //             offset *
-                            //                 normal;  // Move along the normal
-                            //         break;
-                            //     }
-                            // }
+                                real_t area_new_point =
+                                    normal_cdf(d1 + offset, 0, 2 * D0 * dt);
+                                real_t u2 = r_unif(p.rng);
+                                if (u2 < area_new_point / area_point) {
+                                    new_center =
+                                        new_center +
+                                        offset *
+                                            normal;  // Move along the normal
+                                    break;
+                                }
+                            }
                         }
 
                         // Now we can sample from the shifted normal
@@ -480,6 +528,8 @@ void simulate_kdmc(
         index_t num_collisions_local = 0;
 
         Estimator estimator_local(mesh.n_cells());
+        index_t num_kd_steps_local = 0;
+        index_t num_kd_to_kinetic_switches_local = 0;
         for (int i_source = 0; i_source < sources.size(); i_source++) {
 #pragma omp for
             for (int i_particle = 0;
@@ -500,6 +550,7 @@ void simulate_kdmc(
                 }
 
                 for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
+                    num_kd_steps_local++;
                     Particle particle_old = particle;
 
                     // Simulate particle kinetically until a charge exchange
@@ -531,6 +582,10 @@ void simulate_kdmc(
                         else if (event == EventType::CELL_CROSSING) {
                             num_crossings_local++;
                         }
+                    }
+
+                    if (particle.weight < 1.0e-4) {
+                        break;
                     }
 
                     // Now simulate the particle fluidly for the rest of the
@@ -588,6 +643,7 @@ void simulate_kdmc(
                                         final_free_flight_time);
 
                                 if (!step_succesfull) {
+                                    num_kd_to_kinetic_switches_local++;
                                     // Particle left the mesh, switch to kinetic
                                     // simulation
                                     final_free_flight_time = t_max - particle.t;
@@ -620,6 +676,9 @@ void simulate_kdmc(
                                     // TODO: add fluid estimator here
                                 }
                             }
+                        }
+                        if (particle.weight < 1.0e-4) {
+                            break;
                         }
 
                         // Final free flight time
@@ -673,6 +732,10 @@ void simulate_kdmc(
         stats.num_crossings += num_crossings_local;
 #pragma omp atomic
         stats.num_collisions += num_collisions_local;
+#pragma omp atomic
+        stats.num_kd_steps += num_kd_steps_local;
+#pragma omp atomic
+        stats.num_kd_to_kinetic_switches += num_kd_to_kinetic_switches_local;
     }
 }
 

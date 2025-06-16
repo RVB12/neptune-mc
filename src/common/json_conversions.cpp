@@ -195,6 +195,8 @@ void to_json(nlohmann::json& j, const ExecutionStatistics& stats)
         {"grid_building_time", stats.grid_building_time},
         {"trace_time", stats.trace_time},
         {"total_time", stats.total_time},
+        {"num_kd_steps", stats.num_kd_steps},
+        {"num_kd_to_kinetic_switches", stats.num_kd_to_kinetic_switches},
     };
 }
 

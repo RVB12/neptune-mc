@@ -18,6 +18,11 @@ struct ExecutionStatistics {
     real_t trace_time = 0;
     // The total runtime of the simulation (in seconds)
     real_t total_time = 0;
+    // The total number of kd iterations
+    index_t num_kd_steps = 0;
+    // The number of times the kd simulation switched to kinetic
+    index_t num_kd_to_kinetic_switches = 0;
+
 };
 
 }  // namespace neptune

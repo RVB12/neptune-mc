@@ -326,12 +326,15 @@ real_t TriangleMesh::get_surface_area(index_t cell_index,
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];
 
-    Vec2 v1 = p2 - p1;
-    Vec2 v2 = p3 - p1;
-
-    real_t area = 0.5 * std::abs(v1.x * v2.y - v1.y * v2.x);
-
-    return area;
+    if(surface_id == 0){
+        return (p2 - p1).norm();
+    } else if(surface_id == 1){
+        return (p3 - p2).norm();
+    } else if(surface_id == 2){
+        return (p1 - p3).norm();
+    } else {
+        throw std::runtime_error("Invalid surface id");
+    }
 }
 
 Vec3 TriangleMesh::get_center(index_t cell_index) const
