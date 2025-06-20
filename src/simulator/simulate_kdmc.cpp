@@ -8,91 +8,6 @@
 #include "neptune/simulator/simulator.hpp"
 namespace neptune {
 
-/**
- * @brief Simulate a particle using a diffusive fluid approximation
- *
- * We assume there is only one bgk process
- *
- * This is the old version of the algorithm by Bert
- *
- *
- * @return true if the step was successful
- *         false if the particle left the mesh, in that case, we must
- *         switch to a kinetic simulation
- */
-bool kdmc_fluid_step_old(
-    const Mesh& mesh,
-    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
-    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
-    const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
-    Particle& p,
-    real_t dt)
-{
-    if (dt <= 0) {
-        return true;
-    }
-    std::uniform_real_distribution<real_t> r_unif(0, 1);
-    std::normal_distribution<real_t> r_normal(0, 1);
-
-    index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
-
-    real_t R_cx = bgk_processes[0]->rate[cell_id];
-    real_t R_cx_theta = R_cx * dt;
-
-    Vec3 u = Vec3(bgk_processes[0]->bgk_mean_x[cell_id],
-                  bgk_processes[0]->bgk_mean_y[cell_id],
-                  bgk_processes[0]->bgk_mean_z[cell_id]);
-
-    Vec3 drift_term = u * dt;
-
-    real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
-
-    real_t D = bgk_stddev * bgk_stddev / (R_cx * R_cx_theta);
-    D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
-    if (D < 0) {
-        D = 0;
-    }
-    D = std::sqrt(2 * D * dt);
-    // TODO, add velocity induced diffusion and hetergeneity correction
-
-    Vec3 diffusion_term;
-    diffusion_term.x = D * r_normal(p.rng);
-    diffusion_term.y = D * r_normal(p.rng);
-    diffusion_term.z = D * r_normal(p.rng);
-
-    Vec3 new_pos = p.geometry.position + drift_term + diffusion_term;
-
-    // Check if the new position is inside the mesh
-    index_t new_cell_id = mesh.get_cell_index(new_pos);
-    if (new_cell_id == -1) {
-        return false;
-    }
-
-    // Only for voxel meshes, also check if the particle is likely to cross
-    // the boundary
-    const VoxelMesh* voxel_mesh = dynamic_cast<const VoxelMesh*>(&mesh);
-    if (voxel_mesh != nullptr) {
-        Vec3 temp_diff(D, D, D);
-        Vec3 temp_min = p.geometry.position + drift_term - 2 * temp_diff;
-        Vec3 temp_max = p.geometry.position + drift_term + 2 * temp_diff;
-
-        if (temp_min.x < 0 or temp_max.x > voxel_mesh->Lx or temp_min.y < 0 or
-            temp_max.y > voxel_mesh->Ly or temp_min.z < 0 or
-            temp_max.z > voxel_mesh->Lz) {
-            return false;
-        }
-    }
-
-    // Update the particle
-    p.geometry.position = new_pos;
-    p.geometry.cell_id = new_cell_id;
-    p.geometry.boundary_id = -1;
-    p.t += dt;
-    if (ion_processes.size() > 0) {
-        p.weight *= std::exp(-dt * ion_processes[0]->rate[cell_id]);
-    }
-    return true;
-}
 
 // Generate a sample from N(0, 1) truncated to [a, ∞) using Robert's algorithm
 // Note, this will get more and more expensive for larger a, it may
@@ -128,6 +43,202 @@ real_t normal_cdf(real_t x, real_t mean, real_t variance)
     return 0.5 * (1.0 + std::erf((x - mean) / std::sqrt(2.0 * variance)));
 }
 
+Vec3 calculate_drift(
+    const Mesh& mesh,
+    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    real_t dt,
+    index_t cell_id)
+{
+    Vec3 u = Vec3(bgk_processes[0]->bgk_mean_x[cell_id],
+                  bgk_processes[0]->bgk_mean_y[cell_id],
+                  bgk_processes[0]->bgk_mean_z[cell_id]);
+
+    real_t R_cx = bgk_processes[0]->rate[cell_id];
+    real_t R_cx_theta = R_cx * dt;
+
+    real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
+
+    // Calculate derivative of the diffusion term and add it to the drift term
+    Vec3 diffusion_induced_drift(0, 0, 0);
+    VoxelMesh* voxel_mesh = dynamic_cast<VoxelMesh*>(const_cast<Mesh*>(&mesh));
+    if (voxel_mesh != nullptr) {
+        Index3D ij = voxel_mesh->linear_to_tuple(cell_id);
+
+        if (ij.i > 0 and ij.i < voxel_mesh->nx - 1) {
+            diffusion_induced_drift.x =
+                (bgk_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                     Index3D(ij.i + 1, ij.j, ij.k))] -
+                 bgk_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                     Index3D(ij.i - 1, ij.j, ij.k))]) /
+                (2 * voxel_mesh->dx);
+        }
+
+        if (ij.j > 0 and ij.j < voxel_mesh->ny - 1) {
+            diffusion_induced_drift.y =
+                (bgk_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                     Index3D(ij.i, ij.j + 1, ij.k))] -
+                 bgk_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                     Index3D(ij.i, ij.j - 1, ij.k))]) /
+                (2 * voxel_mesh->dy);
+        }
+
+        if (ij.k > 0 and ij.k < voxel_mesh->nz - 1) {
+            diffusion_induced_drift.z =
+                (bgk_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                     Index3D(ij.i, ij.j, ij.k + 1))] -
+                 bgk_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                     Index3D(ij.i, ij.j, ij.k - 1))]) /
+                (2 * voxel_mesh->dz);
+        }
+
+        real_t dDdsigma = (-2 * bgk_stddev * bgk_stddev) /
+                          (R_cx * R_cx * R_cx_theta) *
+                          (std::exp(-R_cx_theta) - 1 + R_cx_theta);
+        dDdsigma += (bgk_stddev * bgk_stddev) / (R_cx * R_cx) *
+                    (1 - std::exp(-R_cx_theta));
+        diffusion_induced_drift *= dDdsigma;
+    }
+    TriangleMesh* triangle_mesh =
+        dynamic_cast<TriangleMesh*>(const_cast<Mesh*>(&mesh));
+    if (triangle_mesh != nullptr) {
+        vector<index_t> neighbours = triangle_mesh->get_neighbours(cell_id);
+
+        Vec3 center0 = triangle_mesh->get_center(cell_id);
+
+        for (index_t i = 0; i < 3; i++) {
+            index_t neighbour_id = neighbours[i];
+            if (neighbour_id == -1) {
+                continue;  // No neighbour, skip
+            }
+
+            real_t R_cx_neighbour = bgk_processes[0]->rate[neighbour_id];
+
+            Vec3 normal = triangle_mesh->get_surface_normal(cell_id, i);
+            Vec3 neighbour_center = triangle_mesh->get_center(neighbour_id);
+            real_t distance = (neighbour_center - center0).norm();
+            diffusion_induced_drift +=
+                (R_cx_neighbour - R_cx) / distance * normal;
+        }
+
+        real_t dDdsigma = (-2 * bgk_stddev * bgk_stddev) /
+                          (R_cx * R_cx * R_cx_theta) *
+                          (std::exp(-R_cx_theta) - 1 + R_cx_theta);
+        dDdsigma += (bgk_stddev * bgk_stddev) / (R_cx * R_cx) *
+                    (1 - std::exp(-R_cx_theta));
+        diffusion_induced_drift *= dDdsigma;
+    }
+
+    return (u + diffusion_induced_drift);
+}
+
+real_t calculate_diffusion_coef(
+    const Mesh& mesh,
+    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    real_t dt,
+    index_t cell_id)
+{
+    Vec3 u = Vec3(bgk_processes[0]->bgk_mean_x[cell_id],
+                  bgk_processes[0]->bgk_mean_y[cell_id],
+                  bgk_processes[0]->bgk_mean_z[cell_id]);
+
+    real_t R_cx = bgk_processes[0]->rate[cell_id];
+    real_t R_cx_theta = R_cx * dt;
+
+    real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
+
+    real_t D = bgk_stddev * bgk_stddev / (R_cx * R_cx_theta);
+    D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
+    // D *= (2.*(std::exp(-R_cx_theta) - 1) + R_cx_theta * (std::exp(-R_cx_theta) + 1) );
+    if (D < 0) {
+        D = 0;
+    }
+    if (R_cx == 0) D = 0;
+    return D;
+}
+
+/**
+ * @brief Simulate a particle using a diffusive fluid approximation
+ *
+ * We assume there is only one bgk process
+ *
+ * This is the old version of the algorithm by Bert
+ *
+ *
+ * @return true if the step was successful
+ *         false if the particle left the mesh, in that case, we must
+ *         switch to a kinetic simulation
+ */
+bool kdmc_fluid_step_old(
+    const Mesh& mesh,
+    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
+    const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
+    Particle& p,
+    real_t dt)
+{
+    if (dt <= 0) {
+        return true;
+    }
+    std::uniform_real_distribution<real_t> r_unif(0, 1);
+    std::normal_distribution<real_t> r_normal(0, 1);
+
+    index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
+
+    // Intermediate position to determine the drift and diffusion terms
+    Vec3 drift_old = calculate_drift(mesh, bgk_processes, dt, cell_id);
+    Vec3 intermediate_pos = p.geometry.position + drift_old * dt / 2.0;
+
+    index_t intermediate_cell_id = mesh.get_cell_index(intermediate_pos);
+    if (intermediate_cell_id == -1) {
+        // The particle has left the mesh, just use the old position for the
+        // parameters
+        return false;
+    }
+
+    Vec3 drift = calculate_drift(mesh, bgk_processes, dt, intermediate_cell_id);
+
+    real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, dt, cell_id);
+    real_t D = std::sqrt(2 * D0 * dt);
+
+    Vec3 diffusion_term;
+    diffusion_term.x = D * r_normal(p.rng);
+    diffusion_term.y = D * r_normal(p.rng);
+    diffusion_term.z = D * r_normal(p.rng);
+
+    Vec3 new_pos = p.geometry.position + drift * dt + diffusion_term;
+
+    // Check if the new position is inside the mesh
+    index_t new_cell_id = mesh.get_cell_index(new_pos);
+    if (new_cell_id == -1) {
+        return false;
+    }
+
+    // Only for voxel meshes, also check if the particle is likely to cross
+    // the boundary
+    const VoxelMesh* voxel_mesh = dynamic_cast<const VoxelMesh*>(&mesh);
+    if (voxel_mesh != nullptr) {
+        Vec3 temp_diff(D, D, D);
+        Vec3 temp_min = p.geometry.position + drift*dt - 2 * temp_diff;
+        Vec3 temp_max = p.geometry.position + drift*dt + 2 * temp_diff;
+
+        if (temp_min.x < 0 or temp_max.x > voxel_mesh->Lx or temp_min.y < 0 or
+            temp_max.y > voxel_mesh->Ly or temp_min.z < 0 or
+            temp_max.z > voxel_mesh->Lz) {
+            return false;
+        }
+    }
+
+    // Update the particle
+    p.geometry.position = new_pos;
+    p.geometry.cell_id = new_cell_id;
+    p.geometry.boundary_id = -1;
+    p.t += dt;
+    if (ion_processes.size() > 0) {
+        p.weight *= std::exp(-dt * ion_processes[0]->rate[cell_id]);
+    }
+    return true;
+}
+
 /**
  * @brief Simulate a particle using a diffusive fluid approximation
  *
@@ -149,67 +260,21 @@ void kdmc_fluid_step(
 
     index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
-    real_t R_cx = bgk_processes[0]->rate[cell_id];
-    real_t R_cx_theta = R_cx * dt;
+    // Intermediate position to determine the drift and diffusion terms
+    Vec3 drift_old = calculate_drift(mesh, bgk_processes, dt, cell_id);
+    Vec3 intermediate_pos = p.geometry.position + drift_old * dt / 2.0;
 
-    Vec3 u = Vec3(bgk_processes[0]->bgk_mean_x[cell_id],
-                  bgk_processes[0]->bgk_mean_y[cell_id],
-                  bgk_processes[0]->bgk_mean_z[cell_id]);
-
-    Vec3 drift_term = u * dt;
-
-    real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
-
-    real_t D0 = bgk_stddev * bgk_stddev / (R_cx * R_cx_theta);
-    // D0 *= (2 * std::exp(-R_cx_theta) + R_cx_theta + R_cx_theta *
-    // std::exp(-R_cx_theta) - 2);
-    D0 *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
-    if (D0 < 0) {
-        D0 = 0;
+    index_t intermediate_cell_id = mesh.get_cell_index(intermediate_pos);
+    if (intermediate_cell_id == -1) {
+        // The particle has left the mesh, just use the old position for the
+        // parameters
+        intermediate_cell_id = cell_id;
     }
-    if (R_cx == 0) D0 = 0;
+
+    Vec3 drift = calculate_drift(mesh, bgk_processes, dt, intermediate_cell_id);
+
+    real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, dt, cell_id);
     real_t D = std::sqrt(2 * D0 * dt);
-
-    // Calculate derivative of the diffusion term and add it to the drift term
-    Vec3 diffusion_induced_drift(0, 0, 0);
-    // VoxelMesh* voxel_mesh =
-    //     dynamic_cast<VoxelMesh*>(const_cast<Mesh*>(&mesh));
-    // if (voxel_mesh != nullptr) {
-    //     for(index_t i )
-    // }
-
-    TriangleMesh* triangle_mesh =
-        dynamic_cast<TriangleMesh*>(const_cast<Mesh*>(&mesh));
-    if (triangle_mesh != nullptr) {
-        vector<index_t> neighbours =
-            triangle_mesh->get_neighbours(p.geometry.cell_id);
-
-        Vec3 center0 = triangle_mesh->get_center(p.geometry.cell_id);
-
-        for (index_t i = 0; i < 3; i++) {
-            index_t neighbour_id = neighbours[i];
-            if (neighbour_id == -1) {
-                continue;  // No neighbour, skip
-            }
-
-            real_t R_cx_neighbour = bgk_processes[0]->rate[neighbour_id];
-
-            Vec3 normal =
-                triangle_mesh->get_surface_normal(p.geometry.cell_id, i);
-            Vec3 neighbour_center = triangle_mesh->get_center(neighbour_id);
-            real_t distance = (neighbour_center - center0).norm();
-            diffusion_induced_drift +=
-                (R_cx_neighbour - R_cx) / distance * normal;
-        }
-
-        real_t dDdsigma = (-2 * bgk_stddev * bgk_stddev) /
-                          (R_cx * R_cx * R_cx_theta) *
-                          (std::exp(-R_cx_theta) - 1 + R_cx_theta);
-        dDdsigma += (bgk_stddev * bgk_stddev) / (R_cx * R_cx) *
-                    (1 - std::exp(-R_cx_theta));
-        diffusion_induced_drift *= dDdsigma;
-        diffusion_induced_drift *= dt;
-    }
 
     Vec3 diffusion_term;
     diffusion_term.x = D * r_normal(p.rng);
@@ -218,7 +283,7 @@ void kdmc_fluid_step(
 
     Vec3 old_pos = p.geometry.position;
     Vec3 new_pos =
-        old_pos + drift_term + diffusion_term + diffusion_induced_drift;
+        old_pos + drift * dt + diffusion_term;
 
     // Pretend like the particle is moving in a straight line from the old the
     // the new pos
@@ -257,7 +322,7 @@ void kdmc_fluid_step(
                     normal = -normal;
                 }
 
-                real_t drift_normal = dot(u, normal);
+                real_t drift_normal = dot(drift, normal);
                 if (std::abs(drift_normal) < 1.0e-6) {
                     // There is no (significant) drift in the direction
                     // of the normal, simplified case
@@ -293,7 +358,7 @@ void kdmc_fluid_step(
                             old_pos -
                             2 * dot(old_pos - crossing.position, normal) *
                                 normal;
-                        Vec3 new_center = mirror_pos + u * dt;
+                        Vec3 new_center = mirror_pos + drift * dt;
 
                         // Get the two vectors that are orthogonal to the normal
                         // and to each other using Gram-Schmidt
@@ -334,7 +399,7 @@ void kdmc_fluid_step(
                         // Now we need to update the weight:
                         //
 
-                        Vec3 old_center = old_pos + u * dt;
+                        Vec3 old_center = old_pos + drift * dt;
                         // Calculate area from the original distribution
                         // that is outside of the domain
                         real_t distance_left =
@@ -367,8 +432,8 @@ void kdmc_fluid_step(
                             old_pos -
                             2 * dot(old_pos - crossing.position, normal) *
                                 normal;
-                        Vec3 old_center = old_pos + u * dt;
-                        Vec3 new_center = mirror_pos + u * dt;
+                        Vec3 old_center = old_pos + drift * dt;
+                        Vec3 new_center = mirror_pos + drift * dt;
 
                         // First, we determine whether we need to sample
                         // from the point source or from the line
@@ -379,7 +444,7 @@ void kdmc_fluid_step(
                         real_t d1 = dot(crossing.position - new_center, normal);
                         real_t area_point = normal_cdf(d1, 0, 2 * D0 * dt);
 
-                        real_t alpha = dot(u, normal);
+                        real_t alpha = dot(drift, normal);
                         real_t beta = D0;
                         real_t A =
                             std::exp(drift_normal / D0 *
@@ -403,35 +468,35 @@ void kdmc_fluid_step(
                             std::exponential_distribution<real_t> exponential(
                                 alpha / beta);
 
-                            // real_t offset = exponential(p.rng);
-                            // new_center =
-                            //     new_center +
-                            //     offset * normal;  // Move along the normal
+                            real_t offset = exponential(p.rng);
+                            new_center =
+                                new_center +
+                                offset * normal;  // Move along the normal
 
-                            while (true) {
-                                // Sample from the line
-                                std::exponential_distribution<real_t>
-                                    exponential(alpha / beta);
+                            // while (true) {
+                            //     // Sample from the line
+                            //     std::exponential_distribution<real_t>
+                            //         exponential(alpha / beta);
 
-                                real_t offset = exponential(p.rng);
+                            //     real_t offset = exponential(p.rng);
 
-                                // // TO BE CHECKED: do i need to correct for
-                                // the fact
-                                // // that the area of the truncated normal
-                                // is
-                                // not 1?
+                            //     // // TO BE CHECKED: do i need to correct for
+                            //     // the fact
+                            //     // // that the area of the truncated normal
+                            //     // is
+                            //     // not 1?
 
-                                real_t area_new_point =
-                                    normal_cdf(d1 + offset, 0, 2 * D0 * dt);
-                                real_t u2 = r_unif(p.rng);
-                                if (u2 < area_new_point / area_point) {
-                                    new_center =
-                                        new_center +
-                                        offset *
-                                            normal;  // Move along the normal
-                                    break;
-                                }
-                            }
+                            //     real_t area_new_point =
+                            //         normal_cdf(d1 + offset, 0, 2 * D0 * dt);
+                            //     real_t u2 = r_unif(p.rng);
+                            //     if (u2 < area_new_point / area_point) {
+                            //         new_center =
+                            //             new_center +
+                            //             offset *
+                            //                 normal;  // Move along the normal
+                            //         break;
+                            //     }
+                            // }
                         }
 
                         // Now we can sample from the shifted normal
@@ -488,6 +553,7 @@ void kdmc_fluid_step(
             time_left = 0;
 
             index_t cell_id = p.geometry.cell_id;
+            real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
             // Draw a new velocity
             std::normal_distribution<real_t> dist_vx(
                 bgk_processes[0]->bgk_mean_x[cell_id], bgk_stddev);
@@ -656,7 +722,8 @@ void simulate_kdmc(
 
                                         estimator_local.add_track_length(
                                             particle, particle_old, mesh);
-                                        if (std::abs(particle.weight) < 1.0e-4) {
+                                        if (std::abs(particle.weight) <
+                                            1.0e-4) {
                                             break;
                                         }
                                         if (event == EventType::FINAL_TIME) {
