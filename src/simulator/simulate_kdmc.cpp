@@ -8,7 +8,6 @@
 #include "neptune/simulator/simulator.hpp"
 namespace neptune {
 
-
 // Generate a sample from N(0, 1) truncated to [a, ∞) using Robert's algorithm
 // Note, this will get more and more expensive for larger a, it may
 // need to be replaced with a fancier algorithm at some point
@@ -147,8 +146,9 @@ real_t calculate_diffusion_coef(
     real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
 
     real_t D = bgk_stddev * bgk_stddev / (R_cx * R_cx_theta);
-    D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
-    // D *= (2.*(std::exp(-R_cx_theta) - 1) + R_cx_theta * (std::exp(-R_cx_theta) + 1) );
+    // D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
+    D *= (2. * (std::exp(-R_cx_theta) - 1) +
+          R_cx_theta * (std::exp(-R_cx_theta) + 1));
     if (D < 0) {
         D = 0;
     }
@@ -218,8 +218,8 @@ bool kdmc_fluid_step_old(
     const VoxelMesh* voxel_mesh = dynamic_cast<const VoxelMesh*>(&mesh);
     if (voxel_mesh != nullptr) {
         Vec3 temp_diff(D, D, D);
-        Vec3 temp_min = p.geometry.position + drift*dt - 2 * temp_diff;
-        Vec3 temp_max = p.geometry.position + drift*dt + 2 * temp_diff;
+        Vec3 temp_min = p.geometry.position + drift * dt - 2 * temp_diff;
+        Vec3 temp_max = p.geometry.position + drift * dt + 2 * temp_diff;
 
         if (temp_min.x < 0 or temp_max.x > voxel_mesh->Lx or temp_min.y < 0 or
             temp_max.y > voxel_mesh->Ly or temp_min.z < 0 or
@@ -282,8 +282,7 @@ void kdmc_fluid_step(
     diffusion_term.z = D * r_normal(p.rng);
 
     Vec3 old_pos = p.geometry.position;
-    Vec3 new_pos =
-        old_pos + drift * dt + diffusion_term;
+    Vec3 new_pos = old_pos + drift * dt + diffusion_term;
 
     // Pretend like the particle is moving in a straight line from the old the
     // the new pos
@@ -423,10 +422,7 @@ void kdmc_fluid_step(
                     else {
                         // reflecting boundary condition
                         // the "hard" case
-                        // we either need to sample from a normal
-                        // centered around the mirror position
-                        // or we need to sample from a position
-                        // along a line of positions.
+                        // use accept-reject
 
                         Vec3 mirror_pos =
                             old_pos -
@@ -435,71 +431,59 @@ void kdmc_fluid_step(
                         Vec3 old_center = old_pos + drift * dt;
                         Vec3 new_center = mirror_pos + drift * dt;
 
-                        // First, we determine whether we need to sample
-                        // from the point source or from the line
-                        // for that, we need their total area
-
-                        // The area of the point source is easy,
-                        // it is just a normal distribution
-                        real_t d1 = dot(crossing.position - new_center, normal);
-                        real_t area_point = normal_cdf(d1, 0, 2 * D0 * dt);
-
-                        real_t alpha = dot(drift, normal);
-                        real_t beta = D0;
+                        // Coefficient for p2
                         real_t A =
                             std::exp(drift_normal / D0 *
-                                     dot(crossing.position - old_pos, normal));
+                                     dot(crossing.position - old_pos, normal)) /
+                            std::sqrt(4 * M_PI * D0 * dt);
 
-                        area_point *= A;
+                        // Coefficient for p3
+                        real_t alpha = dot(drift, normal);
+                        real_t beta = -D0;
+                        real_t A2 =
+                            A * 2 * (alpha / beta + drift_normal / (2 * D0));
+                        // real_t A2 = 2 * (alpha / beta + drift_normal / (2 *
+                        // D0));
 
-                        // The area of the line is more complicated,
-                        // we use the property that for pure reflection,
-                        // the areas should sum to 1
-                        real_t d2 = dot(crossing.position - old_center, normal);
-                        real_t area_original =
-                            1 - normal_cdf(d2, 0, 2 * D0 * dt) - area_point;
+                        real_t dist_to_crossing =
+                            -dot(crossing.position - new_center, normal);
+                        real_t n1;
+                        while (true) {
+                            // Sample from p2
+                            n1 = -truncated_normal_right_tail(
+                                dist_to_crossing / D, p.rng);
 
-                        real_t u1 = r_unif(p.rng);
-                        if (u1 < area_point / (area_point + area_original)) {
-                            // Sample from the point source
+                            real_t n1d = n1 * D;
+                            // Determine p2(x) and p3(x) for the sampled n1
+                            // Scaling factors are ignored because we are only
+                            // interested in the ratio
+                            real_t p2 =
+                                A * std::exp(-(n1d * n1d) / (4 * D0 * dt));
+
+                            // Use numerical integration to approximate p3
+                            // Note: this could definitely be improved with even
+                            // something like a trapezoidal rule
+                            real_t p3 = 0;
+                            real_t dxi = 0.1 * std::abs(beta / alpha);
+                            for (index_t i = 0; i < 10; i++) {
+                                real_t xi = i * dxi;
+                                real_t nn1 = n1d - xi;
+                                p3 += A2 *
+                                      std::exp(-(nn1 * nn1) / (4 * D0 * dt)) *
+                                      std::exp(alpha / beta * xi) * dxi;
+                            }
+
+                            real_t u = r_unif(p.rng);
+                            if (p2 + p3 < 0) {
+                                // This is never going to get accepted
+                                throw std::runtime_error(
+                                    "p2 + p3 < 0, this should not happen");
+                            }
+                            if (u < (p2 + p3) / p2) {
+                                // Accept the sample
+                                break;
+                            }
                         }
-                        else {
-                            // Sample from the line
-                            std::exponential_distribution<real_t> exponential(
-                                alpha / beta);
-
-                            real_t offset = exponential(p.rng);
-                            new_center =
-                                new_center +
-                                offset * normal;  // Move along the normal
-
-                            // while (true) {
-                            //     // Sample from the line
-                            //     std::exponential_distribution<real_t>
-                            //         exponential(alpha / beta);
-
-                            //     real_t offset = exponential(p.rng);
-
-                            //     // // TO BE CHECKED: do i need to correct for
-                            //     // the fact
-                            //     // // that the area of the truncated normal
-                            //     // is
-                            //     // not 1?
-
-                            //     real_t area_new_point =
-                            //         normal_cdf(d1 + offset, 0, 2 * D0 * dt);
-                            //     real_t u2 = r_unif(p.rng);
-                            //     if (u2 < area_new_point / area_point) {
-                            //         new_center =
-                            //             new_center +
-                            //             offset *
-                            //                 normal;  // Move along the normal
-                            //         break;
-                            //     }
-                            // }
-                        }
-
-                        // Now we can sample from the shifted normal
 
                         // Get the two vectors that are orthogonal to the normal
                         // and to each other using Gram-Schmidt
@@ -512,13 +496,6 @@ void kdmc_fluid_step(
                         real_t n2 = r_normal(p.rng);
                         real_t n3 = r_normal(p.rng);
 
-                        // Sample n1 from the normal distribution constrained to
-                        // n1
-                        real_t dist_to_crossing =
-                            -dot(crossing.position - new_center, normal);
-                        real_t n1 = -truncated_normal_right_tail(
-                            dist_to_crossing / D, p.rng);
-
                         Vec3 new_pos2 = new_center + n1 * D * normal +
                                         n2 * D * v2 + n3 * D * v3;
 
@@ -526,7 +503,6 @@ void kdmc_fluid_step(
                         // necessary, check if the new position is actually
                         // inside the domain
                         if (dot(new_pos2 - crossing.position, normal) >= 0) {
-                            // We are inside the cell, we can break
                             throw std::runtime_error(
                                 "New position is not inside the domain");
                         }
