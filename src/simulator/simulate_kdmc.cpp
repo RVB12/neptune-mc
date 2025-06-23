@@ -146,9 +146,9 @@ real_t calculate_diffusion_coef(
     real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
 
     real_t D = bgk_stddev * bgk_stddev / (R_cx * R_cx_theta);
-    // D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
-    D *= (2. * (std::exp(-R_cx_theta) - 1) +
-          R_cx_theta * (std::exp(-R_cx_theta) + 1));
+    D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
+    // D *= (2. * (std::exp(-R_cx_theta) - 1) +
+    //       R_cx_theta * (std::exp(-R_cx_theta) + 1));
     if (D < 0) {
         D = 0;
     }
