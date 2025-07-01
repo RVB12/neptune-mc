@@ -100,12 +100,11 @@ Vec3 calculate_drift(
     TriangleMesh* triangle_mesh =
         dynamic_cast<TriangleMesh*>(const_cast<Mesh*>(&mesh));
     if (triangle_mesh != nullptr) {
-        vector<index_t> neighbours = triangle_mesh->get_neighbours(cell_id);
 
         Vec3 center0 = triangle_mesh->get_center(cell_id);
 
         for (index_t i = 0; i < 3; i++) {
-            index_t neighbour_id = neighbours[i];
+            index_t neighbour_id = triangle_mesh->get_neighbour(cell_id, i);
             if (neighbour_id == -1) {
                 continue;  // No neighbour, skip
             }

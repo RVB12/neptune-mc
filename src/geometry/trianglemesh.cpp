@@ -309,13 +309,14 @@ Vec3 TriangleMesh::get_surface_normal(index_t cell_index,
     return normal / normal.norm();
 }
 
-vector<index_t> TriangleMesh::get_neighbours(index_t cell_index) const
+index_t TriangleMesh::get_neighbour(index_t cell_index, index_t surface_id) const
 {
-    vector<index_t> n(3);
-    n[0] = neighbors[3 * cell_index];
-    n[1] = neighbors[3 * cell_index + 1];
-    n[2] = neighbors[3 * cell_index + 2];
-    return n;
+    assert(surface_id < 3);
+    assert(cell_index < triangles.size());
+    assert(surface_id >= 0);
+    assert(cell_index >= 0);
+    
+    return neighbors[3 * cell_index + surface_id];
 }
 
 real_t TriangleMesh::get_surface_area(index_t cell_index,

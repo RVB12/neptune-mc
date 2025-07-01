@@ -142,9 +142,9 @@ class TriangleMesh : public Mesh {
     Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const;
 
     /**
-     * @brief Return the indices of the neighbours of a given cell
+     * @brief Return the index of the neighbour cell that shares a given surface
      */
-    vector<index_t> get_neighbours(index_t cell_index) const;
+    index_t get_neighbour(index_t cell_index, index_t surface_id) const;
 
     /**
      * @brief Return the area of a given surface

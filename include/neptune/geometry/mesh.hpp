@@ -55,10 +55,9 @@ class Mesh {
     virtual Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const = 0;
 
     /**
-     * @brief Return the indices of the neighbours of a given cell
-     * The neighbours are ordered in the same way as the surfaces of the cell
+     * @brief Return the index of the neighbour cell that shares a given surface
      */
-    virtual vector<index_t> get_neighbours(index_t cell_index) const = 0;
+    index_t get_neighbour(index_t cell_index, index_t surface_id) const;
 
     /**
      * @brief Return the surface area of a given surface of a cell

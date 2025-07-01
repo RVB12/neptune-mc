@@ -180,18 +180,48 @@ Vec3 VoxelMesh::get_surface_normal(index_t cell_index, index_t surface_id) const
     }
 }
 
-vector<index_t> VoxelMesh::get_neighbours(index_t cell_index) const{
+
+index_t VoxelMesh::get_neighbour(index_t cell_index, index_t surface_id) const{
     Index3D ind = linear_to_tuple(cell_index);
-    vector<index_t> neighbours(6);
 
-    neighbours[0] = (ind.i > 0) ? tuple_to_linear(Index3D(ind.i - 1, ind.j, ind.k)) : -1;
-    neighbours[1] = (ind.j > 0) ? tuple_to_linear(Index3D(ind.i, ind.j - 1, ind.k)) : -1;
-    neighbours[2] = (ind.k > 0) ? tuple_to_linear(Index3D(ind.i, ind.j, ind.k - 1)) : -1;
-    neighbours[3] = (ind.i < nx - 1) ? tuple_to_linear(Index3D(ind.i + 1, ind.j, ind.k)) : -1;
-    neighbours[4] = (ind.j < ny - 1) ? tuple_to_linear(Index3D(ind.i, ind.j + 1, ind.k)) : -1;
-    neighbours[5] = (ind.k < nz - 1) ? tuple_to_linear(Index3D(ind.i, ind.j, ind.k + 1)) : -1;
-
-    return neighbours;
+    switch (surface_id) {
+        case 0:  // x == 0
+            if (ind.i > 0) {
+                return tuple_to_linear(Index3D(ind.i - 1, ind.j, ind.k));
+            } else {
+                return -1;
+            }
+        case 1:  // y == 0
+            if (ind.j > 0) {
+                return tuple_to_linear(Index3D(ind.i, ind.j - 1, ind.k));
+            } else {
+                return -2;
+            }
+        case 2:  // z == 0
+            if (ind.k > 0) {
+                return tuple_to_linear(Index3D(ind.i, ind.j, ind.k - 1));
+            } else {
+                return -3;
+            }
+        case 3:  // x == Lx
+            if (ind.i < nx - 1) {
+                return tuple_to_linear(Index3D(ind.i + 1, ind.j, ind.k));
+            } else {
+                return -4;
+            }
+        case 4:  // y == Ly
+            if (ind.j < ny - 1) {
+                return tuple_to_linear(Index3D(ind.i, ind.j + 1, ind.k));
+            } else {
+                return -5;
+            }
+        case 5:  // z == Lz
+            if (ind.k < nz - 1) {
+                return tuple_to_linear(Index3D(ind.i, ind.j, ind.k + 1));
+            } else {
+                return -6;
+            }
+    }
 }
 
 real_t VoxelMesh::get_surface_area(index_t, index_t surface_id) const {
