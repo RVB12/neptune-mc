@@ -180,6 +180,12 @@ Vec3 VoxelMesh::get_surface_normal(index_t cell_index, index_t surface_id) const
     }
 }
 
+index_t VoxelMesh::get_n_surfaces(index_t) const
+{
+    // For voxels, there are always 6 surfaces
+    return 6;
+}
+
 
 index_t VoxelMesh::get_neighbour(index_t cell_index, index_t surface_id) const{
     Index3D ind = linear_to_tuple(cell_index);
@@ -246,6 +252,27 @@ Vec3 VoxelMesh::get_center(index_t cell_index) const
 {
     Index3D ind = linear_to_tuple(cell_index);
     return Vec3((ind.i + 0.5) * dx, (ind.j + 0.5) * dy, (ind.k + 0.5) * dz);
+}
+
+Vec3 VoxelMesh::get_surface_center(index_t cell_index, index_t surface_id) const
+{
+    Index3D ind = linear_to_tuple(cell_index);
+    switch (surface_id) {
+        case 0:  // x == 0
+            return Vec3(ind.i * dx, (ind.j + 0.5) * dy, (ind.k + 0.5) * dz);
+        case 1:  // y == 0
+            return Vec3((ind.i + 0.5) * dx, ind.j * dy, (ind.k + 0.5) * dz);
+        case 2:  // z == 0
+            return Vec3((ind.i + 0.5) * dx, (ind.j + 0.5) * dy, ind.k * dz);
+        case 3:  // x == Lx
+            return Vec3((ind.i + 1) * dx, (ind.j + 0.5) * dy, (ind.k + 0.5) * dz);
+        case 4:  // y == Ly
+            return Vec3((ind.i + 0.5) * dx, (ind.j + 1) * dy, (ind.k + 0.5) * dz);
+        case 5:  // z == Lz
+            return Vec3((ind.i + 0.5) * dx, (ind.j + 0.5) * dy, (ind.k + 1) * dz);
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
 }
 
 std::pair<index_t, index_t> VoxelMesh::get_boundary_crossing(Vec3 position, Vec3 direction) const{

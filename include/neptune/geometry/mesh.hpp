@@ -55,9 +55,14 @@ class Mesh {
     virtual Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const = 0;
 
     /**
+     * @brief Return the number of surfaces of a given cell
+     */
+    virtual index_t get_n_surfaces(index_t cell_index) const = 0;
+
+    /**
      * @brief Return the index of the neighbour cell that shares a given surface
      */
-    index_t get_neighbour(index_t cell_index, index_t surface_id) const;
+    virtual index_t get_neighbour(index_t cell_index, index_t surface_id) const = 0;
 
     /**
      * @brief Return the surface area of a given surface of a cell
@@ -68,6 +73,11 @@ class Mesh {
      * @brief Return the center of a given cell
      */
     virtual Vec3 get_center(index_t cell_index) const = 0;
+
+    /**
+     * @brief Return the center of a given surface of a cell
+     */
+    virtual Vec3 get_surface_center(index_t cell_index, index_t surface_id) const = 0;
 
     /**
      * @brief Return the first boundary crossing (i.e. an actual boundary, not a cell boundary)

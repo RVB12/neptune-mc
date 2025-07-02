@@ -74,6 +74,11 @@ class VoxelMesh : public Mesh {
     Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const;
 
     /**
+     * @brief Return the number of surfaces of a given cell
+     */
+    index_t get_n_surfaces(index_t cell_index) const;
+
+    /**
      * @brief Return the index of the neighbour cell that shares a given surface
      */
     index_t get_neighbour(index_t cell_index, index_t surface_id) const;
@@ -87,6 +92,11 @@ class VoxelMesh : public Mesh {
      * @brief Return the center of a given cell
      */
     Vec3 get_center(index_t cell_index) const;
+
+    /**
+     * @brief Return the center of a given surface of a cell
+     */
+    Vec3 get_surface_center(index_t cell_index, index_t surface_id) const;
 
     /**
      * @brief Return the first boundary crossing (i.e. an actual boundary, not a cell boundary)

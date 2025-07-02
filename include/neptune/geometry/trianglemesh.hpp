@@ -147,6 +147,11 @@ class TriangleMesh : public Mesh {
     index_t get_neighbour(index_t cell_index, index_t surface_id) const;
 
     /**
+     * @brief Return the number of surfaces of a given cell
+     */
+    index_t get_n_surfaces(index_t cell_index) const;
+
+    /**
      * @brief Return the area of a given surface
      */
     real_t get_surface_area(index_t cell_index, index_t surface_id) const;
@@ -155,6 +160,11 @@ class TriangleMesh : public Mesh {
      * @brief Return the center of a given cell
      */
     Vec3 get_center(index_t cell_index) const;
+
+    /**
+     * @brief Return the center of a given surface of a cell
+     */
+    Vec3 get_surface_center(index_t cell_index, index_t surface_id) const;
 
     /**
      * @brief Return the first boundary crossing (i.e. an actual boundary, not a cell boundary)

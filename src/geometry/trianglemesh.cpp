@@ -309,6 +309,12 @@ Vec3 TriangleMesh::get_surface_normal(index_t cell_index,
     return normal / normal.norm();
 }
 
+index_t TriangleMesh::get_n_surfaces(index_t cell_index) const
+{
+    // For triangles, there are always 3 surfaces
+    return 3;
+}
+
 index_t TriangleMesh::get_neighbour(index_t cell_index, index_t surface_id) const
 {
     assert(surface_id < 3);
@@ -346,6 +352,26 @@ Vec3 TriangleMesh::get_center(index_t cell_index) const
     Vec2 p3 = vertices[t.ind3];
 
     return Vec3((p1.x + p2.x + p3.x) / 3, 0, (p1.y + p2.y + p3.y) / 3);
+}
+
+Vec3 TriangleMesh::get_surface_center(index_t cell_index,
+                                      index_t surface_id) const
+{
+    TriangleIndices t = triangles[cell_index];
+    Vec2 p1 = vertices[t.ind1];
+    Vec2 p2 = vertices[t.ind2];
+    Vec2 p3 = vertices[t.ind3];
+
+    switch (surface_id) {
+        case 0:
+            return Vec3((p1.x + p2.x) / 2, 0, (p1.y + p2.y) / 2);
+        case 1:
+            return Vec3((p2.x + p3.x) / 2, 0, (p2.y + p3.y) / 2);
+        case 2:
+            return Vec3((p3.x + p1.x) / 2, 0, (p3.y + p1.y) / 2);
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
 }
 
 }  // namespace neptune
