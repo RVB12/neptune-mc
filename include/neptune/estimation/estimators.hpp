@@ -3,10 +3,69 @@
 
 #include "neptune/common/utils.hpp"
 #include "neptune/common/vector.hpp"
+#include "neptune/finitevolume/fluidboundarycondition.hpp"
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/physics/particle.hpp"
 
 namespace neptune {
+
+class FluidEstimator {
+   public:
+    // Constructor
+    FluidEstimator(index_t n_cells) : density(n_cells, 0) {}
+
+    FluidEstimator(index_t n_cells, real_t dt_fluid)
+        : density(n_cells, 0), dt_fluid(dt_fluid)
+    {}
+
+    /**
+     * Add the influence of the particle to the estimates
+     * using a track length estimator
+     *
+     * @param particle     Particle
+     *                     The particle
+     * @param particle_old Particle
+     *                     The particle before the last update
+     * @param mesh         Mesh
+     *                     The mesh
+     */
+    void add_fluid_step(Particle& particle,
+                        Particle& particle_old,
+                        const Mesh& mesh);
+
+    /**
+     * Combine the estimates of two estimators
+     *
+     * This is used for parallel simulations
+     * where each thread has its own estimator
+     * and we want to combine them at the end
+     */
+    void combine(FluidEstimator& other);
+
+    /**
+     * Do the fluid simulation at the end of the simulation
+     */
+    void finalize(Mesh& mesh,
+                  const vector<std::unique_ptr<FluidBoundaryCondition>>&
+                      boundary_conditions,
+                  const vector<real_t>& advection_x,
+                  const vector<real_t>& advection_y,
+                  const vector<real_t>& advection_z,
+                  const vector<real_t>& diffusion_rate,
+                  const vector<real_t>& diffusion_factor);
+
+    // initial density for fluid solver (and final density afterwards)
+    vector<real_t> density;
+    // average timestep to be used as final time in the fluid solver
+    real_t dt = 0.0;
+    // number of particles that were used to estimate the density
+    index_t n_particles = 0;
+    // Timestep to be used in the fluid solver
+    const real_t dt_fluid = 1e-5;
+    // Fluid density integral
+    vector<real_t> fluid_density_integral;
+};
+
 class Estimator {
    public:
     // Constructor
@@ -53,12 +112,14 @@ class Estimator {
 
     /**
      * Combine the estimates of two estimators
-     * 
+     *
      * This is used for parallel simulations
      * where each thread has its own estimator
      * and we want to combine them at the end
      */
     void combine(Estimator& other);
+
+    void combine(FluidEstimator& fluid_estimator);
 
     // Time averaged density
     vector<real_t> density;

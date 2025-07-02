@@ -104,7 +104,7 @@ void advection_diffusion_solver(
         }
 
         // Update the time
-        t += dt;
+        t += dt2;
     }
 }
 

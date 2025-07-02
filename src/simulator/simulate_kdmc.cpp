@@ -100,7 +100,6 @@ Vec3 calculate_drift(
     TriangleMesh* triangle_mesh =
         dynamic_cast<TriangleMesh*>(const_cast<Mesh*>(&mesh));
     if (triangle_mesh != nullptr) {
-
         Vec3 center0 = triangle_mesh->get_center(cell_id);
 
         for (index_t i = 0; i < 3; i++) {
@@ -553,6 +552,7 @@ void simulate_kdmc(
     const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
     vector<std::unique_ptr<Source>>& sources,
     Estimator& estimator,
+    FluidEstimator& fluid_estimator,
     vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
     SimulationParams params,
     ExecutionStatistics& stats,
@@ -569,6 +569,7 @@ void simulate_kdmc(
         index_t num_collisions_local = 0;
 
         Estimator estimator_local(mesh.n_cells());
+        FluidEstimator fluid_estimator_local(mesh.n_cells());
         index_t num_kd_steps_local = 0;
         index_t num_kd_to_kinetic_switches_local = 0;
         for (int i_source = 0; i_source < sources.size(); i_source++) {
@@ -668,13 +669,15 @@ void simulate_kdmc(
                         }
                         else {
                             if (use_new_version) {
+                                particle_old = particle;
                                 kdmc_fluid_step(mesh, bgk_processes,
                                                 ion_processes,
                                                 boundary_conditions, particle,
                                                 t_max - particle.t -
                                                     final_free_flight_time);
 
-                                // TODO: add fluid estimator here
+                                fluid_estimator_local.add_fluid_step(
+                                    particle, particle_old, mesh);
                             }
                             else {
                                 bool step_succesfull = kdmc_fluid_step_old(
@@ -715,7 +718,8 @@ void simulate_kdmc(
                                     }
                                 }
                                 else {
-                                    // TODO: add fluid estimator here
+                                    fluid_estimator_local.add_fluid_step(
+                                        particle, particle_old, mesh);
                                 }
                             }
                         }
@@ -769,6 +773,7 @@ void simulate_kdmc(
         {
             // Add the local results to the global results
             estimator.combine(estimator_local);
+            fluid_estimator.combine(fluid_estimator_local);
         }
 #pragma omp atomic
         stats.num_crossings += num_crossings_local;

@@ -227,6 +227,8 @@ index_t VoxelMesh::get_neighbour(index_t cell_index, index_t surface_id) const{
             } else {
                 return -6;
             }
+        default:
+            throw std::runtime_error("Invalid surface id");
     }
 }
 

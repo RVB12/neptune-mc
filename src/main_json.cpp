@@ -1,8 +1,8 @@
 #include <chrono>
 #include <fstream>
 
-#include "neptune/common/version.hpp"
 #include "neptune/common/json_conversions.hpp"
+#include "neptune/common/version.hpp"
 #include "neptune/simulator/simulator.hpp"
 
 using namespace neptune;
@@ -17,8 +17,7 @@ int main(int argc, char** argv)
     if (argc == 2) {
         std::string argument = argv[1];
         if (argument == "-v" || argument == "--version") {
-            std::cout << "Neptune version: " << NEPTUNE_VERSION
-                      << std::endl;
+            std::cout << "Neptune version: " << NEPTUNE_VERSION << std::endl;
             return 0;
         }
     }
@@ -68,8 +67,7 @@ int main(int argc, char** argv)
 
     vector<std::unique_ptr<IonisationProcess>> ion_processes(0);
     if (j.contains("ionisation_processes")) {
-        ion_processes =
-            j["ionisation_processes"];
+        ion_processes = j["ionisation_processes"];
     }
 
     vector<std::unique_ptr<Source>> sources = j["sources"];
@@ -107,8 +105,31 @@ int main(int argc, char** argv)
         if (j.contains("use_old_kd")) {
             use_new_kd = !j["use_old_kd"];
         }
+        FluidEstimator fluid_estimator(mesh_ptr->n_cells());
         simulate_kdmc(*mesh_ptr, bgk_processes, ion_processes, sources,
-                      estimator, boundary_conditions, params, stats, dt, use_new_kd);
+                      estimator, fluid_estimator, boundary_conditions, params,
+                      stats, dt, use_new_kd);
+        // Finalize the fluid estimator
+        if (j.contains("fluid_boundary_conditions")) {
+            vector<std::unique_ptr<FluidBoundaryCondition>>
+                fluid_boundary_conditions = j["fluid_boundary_conditions"];
+
+            vector<real_t> diffusion_rate(mesh_ptr->n_cells(), 0.0);
+            vector<real_t> diffusion_factor(mesh_ptr->n_cells(), 0.0);
+            for (index_t i = 0; i < mesh_ptr->n_cells(); i++) {
+                diffusion_rate[i] = 1. / bgk_processes[0]->rate[i];
+                diffusion_factor[i] = bgk_processes[0]->bgk_stddev[i] *
+                                      bgk_processes[0]->bgk_stddev[i];
+            }
+
+            fluid_estimator.finalize(
+                *mesh_ptr, fluid_boundary_conditions,
+                bgk_processes[0]->bgk_mean_x, bgk_processes[0]->bgk_mean_y,
+                bgk_processes[0]->bgk_mean_z, diffusion_rate, diffusion_factor);
+
+            // Combine the estimators
+            estimator.combine(fluid_estimator);
+        }
     }
     else {
         simulate(*mesh_ptr, bgk_processes, ion_processes, sources, estimator,
