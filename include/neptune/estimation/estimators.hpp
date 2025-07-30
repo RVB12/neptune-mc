@@ -18,6 +18,8 @@ class FluidEstimator {
         : density(n_cells, 0), dt_fluid(dt_fluid)
     {}
 
+    index_t size() const { return density.size(); }
+
     /**
      * Add the influence of the particle to the estimates
      * using a track length estimator
@@ -29,8 +31,8 @@ class FluidEstimator {
      * @param mesh         Mesh
      *                     The mesh
      */
-    void add_fluid_step(Particle& particle,
-                        Particle& particle_old,
+    void add_fluid_step(const Particle& particle,
+                        const Particle& particle_old,
                         const Mesh& mesh);
 
     /**
@@ -40,7 +42,7 @@ class FluidEstimator {
      * where each thread has its own estimator
      * and we want to combine them at the end
      */
-    void combine(FluidEstimator& other);
+    void combine(const FluidEstimator& other);
 
     /**
      * Do the fluid simulation at the end of the simulation
@@ -82,6 +84,8 @@ class Estimator {
           energy_final(n_cells, 0)
     {}
 
+    index_t size() const { return density.size(); }
+
     /**
      * Add the influence of the particle to the estimates
      * using a track length estimator
@@ -93,8 +97,8 @@ class Estimator {
      * @param mesh         Mesh
      *                     The mesh
      */
-    void add_track_length(Particle& particle,
-                          Particle& particle_old,
+    void add_track_length(const Particle& particle,
+                          const Particle& particle_old,
                           const Mesh& mesh);
     /**
      * Add the influence of the particle to the estimates
@@ -108,7 +112,7 @@ class Estimator {
      * @param mesh         Mesh
      *                     The mesh
      */
-    void add_final(Particle& particle, const Mesh& mesh);
+    void add_final(const Particle& particle, const Mesh& mesh);
 
     /**
      * Combine the estimates of two estimators
@@ -117,9 +121,9 @@ class Estimator {
      * where each thread has its own estimator
      * and we want to combine them at the end
      */
-    void combine(Estimator& other);
+    void combine(const Estimator& other);
 
-    void combine(FluidEstimator& fluid_estimator);
+    void combine(const FluidEstimator& fluid_estimator);
 
     // Time averaged density
     vector<real_t> density;
@@ -138,6 +142,11 @@ class Estimator {
     // Energy at the final time of the simulation
     vector<real_t> energy_final;
 };
+
+#pragma omp declare reduction(EstimatorReduction : Estimator : omp_out.combine(omp_in)) initializer(omp_priv = Estimator(omp_orig.size()))
+
+#pragma omp declare reduction(FluidEstimatorReduction : FluidEstimator : omp_out.combine(omp_in)) initializer(omp_priv = FluidEstimator(omp_orig.size(), omp_orig.dt_fluid))
+
 }  // namespace neptune
 
 #endif

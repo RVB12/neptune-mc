@@ -562,54 +562,179 @@ void simulate_kdmc(
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
 
+    index_t num_crossings = 0;
+    index_t num_collisions = 0;
+    index_t num_kd_steps = 0;
+    index_t num_kd_to_kinetic_switches = 0;
+
     // History based simulation (because its easy)
-#pragma omp parallel
-    {
-        index_t num_crossings_local = 0;
-        index_t num_collisions_local = 0;
-
-        Estimator estimator_local(mesh.n_cells());
-        FluidEstimator fluid_estimator_local(mesh.n_cells());
-        index_t num_kd_steps_local = 0;
-        index_t num_kd_to_kinetic_switches_local = 0;
-        for (int i_source = 0; i_source < sources.size(); i_source++) {
+#pragma omp parallel reduction(+ : num_crossings, num_collisions,            \
+                                   num_kd_steps, num_kd_to_kinetic_switches) \
+    reduction(EstimatorReduction : estimator)                                \
+    reduction(FluidEstimatorReduction : fluid_estimator)
+    for (int i_source = 0; i_source < sources.size(); i_source++) {
 #pragma omp for
-            for (int i_particle = 0;
-                 i_particle < sources[i_source]->num_particles();
-                 i_particle++) {
-                // Generate particle
-                Particle particle =
-                    sources[i_source]->generate_particle(i_particle);
-                particle.geometry.cell_id =
-                    mesh.get_cell_index(particle.geometry.position);
+        for (int i_particle = 0;
+             i_particle < sources[i_source]->num_particles(); i_particle++) {
+            // Generate particle
+            Particle particle =
+                sources[i_source]->generate_particle(i_particle);
+            particle.geometry.cell_id =
+                mesh.get_cell_index(particle.geometry.position);
 
-                particle.intensity = sources[i_source]->intensity() /
-                                     sources[i_source]->num_particles();
+            particle.intensity = sources[i_source]->intensity() /
+                                 sources[i_source]->num_particles();
 
-                if (particle.geometry.cell_id == -1) {
-                    throw std::runtime_error(
-                        "Particle generated outside of mesh");
+            if (particle.geometry.cell_id == -1) {
+                throw std::runtime_error("Particle generated outside of mesh");
+            }
+
+            for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
+                num_kd_steps++;
+                Particle particle_old = particle;
+
+                // Simulate particle kinetically until a charge exchange
+                // collision occurs
+
+                real_t t_max = particle.t + dt;
+                if (params.t_final > 0) {
+                    t_max = std::min(t_max, params.t_final);
                 }
 
-                for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
-                    num_kd_steps_local++;
-                    Particle particle_old = particle;
+                while (true) {
+                    particle_old = particle;
+                    EventType event =
+                        update_particle(mesh, bgk_processes, ion_processes,
+                                        boundary_conditions, particle, t_max);
 
-                    // Simulate particle kinetically until a charge exchange
-                    // collision occurs
+                    estimator.add_track_length(particle, particle_old,
+                                                     mesh);
+                    if (std::abs(particle.weight) < 1.0e-4) {
+                        break;
+                    }
+                    if (event == EventType::FINAL_TIME) {
+                        break;
+                    }
+                    else if (event == EventType::CHARGE_EXCHANGE) {
+                        num_collisions++;
+                        break;
+                    }
+                    else if (event == EventType::CELL_CROSSING) {
+                        num_crossings++;
+                    }
+                }
 
-                    real_t t_max = particle.t + dt;
-                    if (params.t_final > 0) {
-                        t_max = std::min(t_max, params.t_final);
+                if (std::abs(particle.weight) < 1.0e-4) {
+                    break;
+                }
+
+                // Now simulate the particle fluidly for the rest of the
+                // time step
+
+                if (particle.t < t_max) {
+                    // Now determine the final free flight time
+
+                    real_t final_free_flight_time;
+
+                    if (use_new_version) {
+                        // number of collisions is a poisson
+                        // distribution
+                        std::poisson_distribution<index_t> poisson(
+                            bgk_processes[0]->rate[particle.geometry.cell_id] *
+                            (t_max - particle.t));
+                        index_t n_collisions = poisson(particle.rng);
+                        // now that we have the number of collisions,
+                        // the time of the last event is a beta
+                        // distribution C++ does not have a beta
+                        // distribution, so we use the two gamma
+                        // distribution trick
+                        std::gamma_distribution<real_t> gamma1(n_collisions, 1);
+                        std::gamma_distribution<real_t> gamma2(1, 1);
+                        real_t X = gamma1(particle.rng);
+                        real_t Y = gamma2(particle.rng);
+                        final_free_flight_time =
+                            (1 - X / (X + Y)) * (t_max - particle.t);
+                    }
+                    else {
+                        real_t R_cx =
+                            bgk_processes[0]->rate[particle.geometry.cell_id];
+                        real_t eps = r_unif(particle.rng);
+                        final_free_flight_time = -std::log(eps) / R_cx;
                     }
 
-                    while (true) {
+                    if (final_free_flight_time > t_max - particle.t) {
+                        final_free_flight_time = t_max - particle.t;
+                    }
+                    else {
+                        if (use_new_version) {
+                            particle_old = particle;
+                            kdmc_fluid_step(
+                                mesh, bgk_processes, ion_processes,
+                                boundary_conditions, particle,
+                                t_max - particle.t - final_free_flight_time);
+
+                            fluid_estimator.add_fluid_step(
+                                particle, particle_old, mesh);
+                        }
+                        else {
+                            bool step_succesfull = kdmc_fluid_step_old(
+                                mesh, bgk_processes, ion_processes,
+                                boundary_conditions, particle,
+                                t_max - particle.t - final_free_flight_time);
+
+                            if (!step_succesfull) {
+                                num_kd_to_kinetic_switches++;
+                                // Particle left the mesh, switch to
+                                // kinetic simulation
+                                final_free_flight_time = t_max - particle.t;
+                                while (true) {
+                                    particle_old = particle;
+                                    EventType event = update_particle(
+                                        mesh, bgk_processes, ion_processes,
+                                        boundary_conditions, particle, t_max);
+
+                                    estimator.add_track_length(
+                                        particle, particle_old, mesh);
+                                    if (std::abs(particle.weight) < 1.0e-4) {
+                                        break;
+                                    }
+                                    if (event == EventType::FINAL_TIME) {
+                                        break;
+                                    }
+                                    else if (event ==
+                                             EventType::CHARGE_EXCHANGE) {
+                                        num_collisions++;
+                                    }
+                                    else if (event ==
+                                             EventType::CELL_CROSSING) {
+                                        num_crossings++;
+                                    }
+                                }
+                            }
+                            else {
+                                fluid_estimator.add_fluid_step(
+                                    particle, particle_old, mesh);
+                            }
+                        }
+                    }
+                    if (std::abs(particle.weight) < 1.0e-4) {
+                        break;
+                    }
+
+                    // Final free flight time
+                    while (particle.t < t_max) {
                         particle_old = particle;
+                        // Create empty collision lists to simulate no
+                        // collisions
+                        vector<std::unique_ptr<BGKScatteringProcess>>
+                            empty_bgk_processes;
+                        vector<std::unique_ptr<IonisationProcess>>
+                            empty_ion_processes;
                         EventType event = update_particle(
-                            mesh, bgk_processes, ion_processes,
+                            mesh, empty_bgk_processes, empty_ion_processes,
                             boundary_conditions, particle, t_max);
 
-                        estimator_local.add_track_length(particle, particle_old,
+                        estimator.add_track_length(particle, particle_old,
                                                          mesh);
                         if (std::abs(particle.weight) < 1.0e-4) {
                             break;
@@ -618,171 +743,25 @@ void simulate_kdmc(
                             break;
                         }
                         else if (event == EventType::CHARGE_EXCHANGE) {
-                            num_collisions_local++;
-                            break;
+                            num_collisions++;
                         }
                         else if (event == EventType::CELL_CROSSING) {
-                            num_crossings_local++;
+                            num_crossings++;
                         }
                     }
+                }
 
-                    if (std::abs(particle.weight) < 1.0e-4) {
-                        break;
-                    }
+                if (std::abs(particle.weight) < 1.0e-4) {
+                    break;
+                }
 
-                    // Now simulate the particle fluidly for the rest of the
-                    // time step
-
-                    if (particle.t < t_max) {
-                        // Now determine the final free flight time
-
-                        real_t final_free_flight_time;
-
-                        if (use_new_version) {
-                            // number of collisions is a poisson distribution
-                            std::poisson_distribution<index_t> poisson(
-                                bgk_processes[0]
-                                    ->rate[particle.geometry.cell_id] *
-                                (t_max - particle.t));
-                            index_t n_collisions = poisson(particle.rng);
-                            // now that we have the number of collisions, the
-                            // time of the last event is a beta distribution C++
-                            // does not have a beta distribution, so we use the
-                            // two gamma distribution trick
-                            std::gamma_distribution<real_t> gamma1(n_collisions,
-                                                                   1);
-                            std::gamma_distribution<real_t> gamma2(1, 1);
-                            real_t X = gamma1(particle.rng);
-                            real_t Y = gamma2(particle.rng);
-                            final_free_flight_time =
-                                (1 - X / (X + Y)) * (t_max - particle.t);
-                        }
-                        else {
-                            real_t R_cx = bgk_processes[0]
-                                              ->rate[particle.geometry.cell_id];
-                            real_t eps = r_unif(particle.rng);
-                            final_free_flight_time = -std::log(eps) / R_cx;
-                        }
-
-                        if (final_free_flight_time > t_max - particle.t) {
-                            final_free_flight_time = t_max - particle.t;
-                        }
-                        else {
-                            if (use_new_version) {
-                                particle_old = particle;
-                                kdmc_fluid_step(mesh, bgk_processes,
-                                                ion_processes,
-                                                boundary_conditions, particle,
-                                                t_max - particle.t -
-                                                    final_free_flight_time);
-
-                                fluid_estimator_local.add_fluid_step(
-                                    particle, particle_old, mesh);
-                            }
-                            else {
-                                bool step_succesfull = kdmc_fluid_step_old(
-                                    mesh, bgk_processes, ion_processes,
-                                    boundary_conditions, particle,
-                                    t_max - particle.t -
-                                        final_free_flight_time);
-
-                                if (!step_succesfull) {
-                                    num_kd_to_kinetic_switches_local++;
-                                    // Particle left the mesh, switch to kinetic
-                                    // simulation
-                                    final_free_flight_time = t_max - particle.t;
-                                    while (true) {
-                                        particle_old = particle;
-                                        EventType event = update_particle(
-                                            mesh, bgk_processes, ion_processes,
-                                            boundary_conditions, particle,
-                                            t_max);
-
-                                        estimator_local.add_track_length(
-                                            particle, particle_old, mesh);
-                                        if (std::abs(particle.weight) <
-                                            1.0e-4) {
-                                            break;
-                                        }
-                                        if (event == EventType::FINAL_TIME) {
-                                            break;
-                                        }
-                                        else if (event ==
-                                                 EventType::CHARGE_EXCHANGE) {
-                                            num_collisions_local++;
-                                        }
-                                        else if (event ==
-                                                 EventType::CELL_CROSSING) {
-                                            num_crossings_local++;
-                                        }
-                                    }
-                                }
-                                else {
-                                    fluid_estimator_local.add_fluid_step(
-                                        particle, particle_old, mesh);
-                                }
-                            }
-                        }
-                        if (std::abs(particle.weight) < 1.0e-4) {
-                            break;
-                        }
-
-                        // Final free flight time
-                        while (particle.t < t_max) {
-                            particle_old = particle;
-                            // Create empty collision lists to simulate no
-                            // collisions
-                            vector<std::unique_ptr<BGKScatteringProcess>>
-                                empty_bgk_processes;
-                            vector<std::unique_ptr<IonisationProcess>>
-                                empty_ion_processes;
-                            EventType event = update_particle(
-                                mesh, empty_bgk_processes, empty_ion_processes,
-                                boundary_conditions, particle, t_max);
-
-                            estimator_local.add_track_length(
-                                particle, particle_old, mesh);
-                            if (std::abs(particle.weight) < 1.0e-4) {
-                                break;
-                            }
-                            if (event == EventType::FINAL_TIME) {
-                                break;
-                            }
-                            else if (event == EventType::CHARGE_EXCHANGE) {
-                                num_collisions_local++;
-                            }
-                            else if (event == EventType::CELL_CROSSING) {
-                                num_crossings_local++;
-                            }
-                        }
-                    }
-
-                    if (std::abs(particle.weight) < 1.0e-4) {
-                        break;
-                    }
-
-                    // Tally
-                    if (particle.t >= params.t_final) {
-                        estimator_local.add_final(particle, mesh);
-                        break;
-                    }
+                // Tally
+                if (particle.t >= params.t_final) {
+                    estimator.add_final(particle, mesh);
+                    break;
                 }
             }
         }
-#pragma omp critical
-        {
-            // Add the local results to the global results
-            estimator.combine(estimator_local);
-            fluid_estimator.combine(fluid_estimator_local);
-        }
-#pragma omp atomic
-        stats.num_crossings += num_crossings_local;
-#pragma omp atomic
-        stats.num_collisions += num_collisions_local;
-#pragma omp atomic
-        stats.num_kd_steps += num_kd_steps_local;
-#pragma omp atomic
-        stats.num_kd_to_kinetic_switches += num_kd_to_kinetic_switches_local;
     }
 }
 

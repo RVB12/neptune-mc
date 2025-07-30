@@ -4,8 +4,8 @@
 #include "neptune/physics/physicalconstants.hpp"
 namespace neptune {
 
-void Estimator::add_track_length(Particle& particle,
-                                 Particle& particle_old,
+void Estimator::add_track_length(const Particle& particle,
+                                 const Particle& particle_old,
                                  const Mesh& mesh)
 {
     real_t weight_old = particle_old.weight;
@@ -26,7 +26,7 @@ void Estimator::add_track_length(Particle& particle,
         constants::m_p / constants::eV_to_Joules;
 }
 
-void Estimator::add_final(Particle& particle, const Mesh& mesh)
+void Estimator::add_final(const Particle& particle, const Mesh& mesh)
 {
     index_t cell_id = particle.geometry.cell_id;
     real_t volume = mesh.get_volume(cell_id);
@@ -43,7 +43,7 @@ void Estimator::add_final(Particle& particle, const Mesh& mesh)
         particle.weight / volume * particle.intensity;
 }
 
-void Estimator::combine(Estimator& other)
+void Estimator::combine(const Estimator& other)
 {
     for (index_t i = 0; i < density.size(); i++) {
         density[i] += other.density[i];
@@ -59,7 +59,7 @@ void Estimator::combine(Estimator& other)
     }
 }
 
-void Estimator::combine(FluidEstimator& fluid_estimator)
+void Estimator::combine(const FluidEstimator& fluid_estimator)
 {
     for (index_t i = 0; i < density.size(); i++) {
         density[i] += fluid_estimator.fluid_density_integral[i];
@@ -67,8 +67,8 @@ void Estimator::combine(FluidEstimator& fluid_estimator)
     }
 }
 
-void FluidEstimator::add_fluid_step(Particle& particle,
-                                    Particle& particle_old,
+void FluidEstimator::add_fluid_step(const Particle& particle,
+                                    const Particle& particle_old,
                                     const Mesh& mesh)
 {
     real_t weight_old = particle_old.weight;
@@ -83,7 +83,7 @@ void FluidEstimator::add_fluid_step(Particle& particle,
     n_particles++;
 }
 
-void FluidEstimator::combine(FluidEstimator& other)
+void FluidEstimator::combine(const FluidEstimator& other)
 {
     for (index_t i = 0; i < density.size(); i++) {
         density[i] += other.density[i];
