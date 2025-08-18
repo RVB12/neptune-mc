@@ -10,6 +10,7 @@
 #include "neptune/finitevolume/fluidboundarycondition.hpp"
 #include "neptune/geometry/spatialindex.hpp"
 #include "neptune/geometry/trianglemesh.hpp"
+#include "neptune/geometry/nonuniformmesh.hpp"
 #include "neptune/geometry/vec2.hpp"
 #include "neptune/geometry/vec3.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
@@ -180,6 +181,25 @@ struct adl_serializer<neptune::TriangleMesh> {
         neptune::vector<neptune::TriangleIndices> triangles = j.at("triangles");
 
         return neptune::TriangleMesh(vertices, triangles);
+    }
+};
+
+template <>
+struct adl_serializer<neptune::NonUniformMesh> {
+    static neptune::NonUniformMesh from_json(const json& j)
+    {
+        neptune::vector<neptune::real_t> cb_x = j.at("cb_x");
+        neptune::vector<neptune::real_t> cb_y = j.at("cb_y");
+        neptune::vector<neptune::real_t> cb_z = j.at("cb_z");
+
+        return neptune::NonUniformMesh(cb_x, cb_y, cb_z);
+    }
+
+    static void to_json(json& j, const neptune::NonUniformMesh& m)
+    {
+        j = json{{"cb_x", m.cb_x},
+                 {"cb_y", m.cb_y},
+                 {"cb_z", m.cb_z}};
     }
 };
 
