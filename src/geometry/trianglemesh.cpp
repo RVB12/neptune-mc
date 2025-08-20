@@ -165,7 +165,9 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
     return crossing;
 }
 
-std::pair<index_t, index_t> TriangleMesh::get_boundary_crossing(Vec3 position, Vec3 direction) const{
+std::pair<index_t, index_t> TriangleMesh::get_boundary_crossing(
+    Vec3 position, Vec3 direction) const
+{
     // This function is not implemented yet
     throw std::runtime_error("get_boundary_crossing is not implemented");
 }
@@ -315,13 +317,14 @@ index_t TriangleMesh::get_n_surfaces(index_t cell_index) const
     return 3;
 }
 
-index_t TriangleMesh::get_neighbour(index_t cell_index, index_t surface_id) const
+index_t TriangleMesh::get_neighbour(index_t cell_index,
+                                    index_t surface_id) const
 {
     assert(surface_id < 3);
     assert(cell_index < triangles.size());
     assert(surface_id >= 0);
     assert(cell_index >= 0);
-    
+
     return neighbors[3 * cell_index + surface_id];
 }
 
@@ -333,13 +336,16 @@ real_t TriangleMesh::get_surface_area(index_t cell_index,
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];
 
-    if(surface_id == 0){
+    if (surface_id == 0) {
         return (p2 - p1).norm();
-    } else if(surface_id == 1){
+    }
+    else if (surface_id == 1) {
         return (p3 - p2).norm();
-    } else if(surface_id == 2){
+    }
+    else if (surface_id == 2) {
         return (p1 - p3).norm();
-    } else {
+    }
+    else {
         throw std::runtime_error("Invalid surface id");
     }
 }
@@ -371,6 +377,60 @@ Vec3 TriangleMesh::get_surface_center(index_t cell_index,
             return Vec3((p3.x + p1.x) / 2, 0, (p3.y + p1.y) / 2);
         default:
             throw std::runtime_error("Invalid surface id");
+    }
+}
+
+Vec3 TriangleMesh::generate_random_position(index_t cell_index,
+                                            rng_t& rng) const
+{
+    std::uniform_real_distribution<real_t> dist(0, 1);
+
+    TriangleIndices t = triangles[cell_index];
+    Vec2 p1 = vertices[t.ind1];
+    Vec2 p2 = vertices[t.ind2];
+    Vec2 p3 = vertices[t.ind3];
+
+    // Generate random barycentric coordinates
+    // This should result in nice uniform sampling within the triangle
+    // (need this check this though)
+    real_t u = dist(rng);
+    real_t v = dist(rng);
+
+    real_t s = std::sqrt(u);
+    real_t lambda1 = 1.0 - s;
+    real_t lambda2 = v * s;
+    real_t lambda3 = 1.0 - lambda1 - lambda2;
+
+    real_t x = lambda1 * p1.x + lambda2 * p2.x + lambda3 * p3.x;
+    real_t z = lambda1 * p1.y + lambda2 * p2.y + lambda3 * p3.y;
+    real_t y = 0;  // Since this is a 2D triangle mesh, we set y to 0
+
+    return Vec3(x, y, z);
+}
+
+Vec3 TriangleMesh::generate_random_surface_position(index_t cell_index,
+                                                    index_t surface_id,
+                                                    rng_t& rng) const
+{
+    TriangleIndices t = triangles[cell_index];
+    Vec2 p1 = vertices[t.ind1];
+    Vec2 p2 = vertices[t.ind2];
+    Vec2 p3 = vertices[t.ind3];
+
+    std::uniform_real_distribution<real_t> dist(0, 1);
+    real_t u = dist(rng);
+
+    if (surface_id == 0) {
+        return Vec3(p1.x + u * (p2.x - p1.x), 0, p1.y + u * (p2.y - p1.y));
+    }
+    else if (surface_id == 1) {
+        return Vec3(p2.x + u * (p3.x - p2.x), 0, p2.y + u * (p3.y - p2.y));
+    }
+    else if (surface_id == 2) {
+        return Vec3(p3.x + u * (p1.x - p3.x), 0, p3.y + u * (p1.y - p3.y));
+    }
+    else {
+        throw std::runtime_error("Invalid surface id");
     }
 }
 

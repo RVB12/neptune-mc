@@ -84,6 +84,16 @@ class Mesh {
      * That a particle will cross.
      */
     virtual std::pair<index_t, index_t> get_boundary_crossing(Vec3 position, Vec3 direction) const = 0;
+
+    /**
+     * @brief Generate a random position within a given cell
+     */
+    virtual Vec3 generate_random_position(index_t cell_index, rng_t& rng) const = 0;
+
+    /**
+     * @brief Generate a random position on a given surface of a cell
+     */
+    virtual Vec3 generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const = 0;
 };
 
 }  // namespace neptune

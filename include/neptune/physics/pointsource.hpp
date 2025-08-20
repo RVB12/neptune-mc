@@ -12,13 +12,10 @@
 namespace neptune {
 
 /**
- * @brief A line source of particles
+ * @brief A point source of particles
  *
- * The particles will be generated somewhere on a line segment defined by two
- * points. The velocity is drawn from a maxwellian distribution. It is possible
- * to restrict the possible angles of the velocity vector.
- *
- * By default, the velocity will only be to the right of the line segment:
+ * The particles will be generated on a specified point.
+ * The velocity is drawn from a normal distribution
  *
  */
 class PointSource : public Source {
@@ -33,14 +30,15 @@ class PointSource : public Source {
 
     /**
      * @brief Generate a particle
-     *
-     * Note: This will not set the cell_idx!! You need to do this afterwards!
      */
-    Particle generate_particle(index_t i_particle);
+    Particle generate_particle(index_t i_particle, const Mesh& mesh);
 
     Vec3 pos; // Initial position of the particles
     Vec3 vel_mean; // Mean velocity of the particles
     real_t vel_stddev; // Standard deviation of the velocity of the particles
+    index_t cell_idx = -1; // The cell index where the particles are generated
+                           // initially set to -1 and updated to the true cell index
+                           // during the particle generation process
 };
 
 }  // namespace neptune

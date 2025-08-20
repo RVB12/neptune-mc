@@ -116,6 +116,45 @@ A point source is defined as follows:
 
 `pos` defines the initial position of the particles. The particles will be initialized with a velocity drawn from the normal distribution with mean `vel_mean` and standard deviation `vel_stddev`. This source uses `n_particles` simulated particles to represent `intensity` physical particles, i.e. each particle from this source represents `intensity/n_particles` particles.
 
+A volume source is defined as follows:
+
+```JSON
+{
+    "sources": [
+        {
+            "type": "volume",
+            "cell_idx": int,
+            "vel_mean": [float, float, float],
+            "vel_stddev": float,
+            "n_particles": int,
+            "intensity": float
+        }
+    ]
+}
+```
+
+this is similar to a point source, but instead of on a single point, the particles are generated uniformly within the volume of a specified cell. This is particularly useful for volume recombination.
+
+A surface source is defined as follows:
+
+```JSON
+{
+    "sources": [
+        {
+            "type": "volume",
+            "cell_idx": int,
+            "surface_id": int,
+            "vel_mean": [float, float, float],
+            "vel_stddev": float,
+            "n_particles": int,
+            "intensity": float
+        }
+    ]
+}
+```
+
+This generates particles on a specified surface of a specified cell. This is particularly useful for recombination at the wall. Although we note that the velocity distribution is not correct there.
+
 #### Boundary conditions
 
 Boundary conditions are passed as a list, with the different types shown here:

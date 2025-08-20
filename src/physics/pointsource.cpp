@@ -5,7 +5,7 @@
 
 namespace neptune {
 
-Particle PointSource::generate_particle(index_t i_particle)
+Particle PointSource::generate_particle(index_t i_particle, const Mesh& mesh)
 {
     if (i_particle >= num_particles()) {
         throw std::runtime_error(
@@ -14,7 +14,17 @@ Particle PointSource::generate_particle(index_t i_particle)
             "allowed by num_particles");
     }
     Particle p(i_particle + particle_id_offset_);
-    
+
+    if(cell_idx == -1){
+        cell_idx = mesh.get_cell_index(pos); // Find cell_idx if it was not yet set
+        if(cell_idx == -1) {
+            throw std::runtime_error(
+                "PointSource::generate_particle: "
+                "Could not find cell index for position");
+        }
+    }
+
+    p.geometry.cell_id = cell_idx;
     p.geometry.position = pos;
 
     std::normal_distribution<real_t> dist_vx(vel_mean.x, vel_stddev);

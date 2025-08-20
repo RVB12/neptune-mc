@@ -4,6 +4,7 @@
 #include "neptune/common/utils.hpp"
 #include "neptune/geometry/vec2.hpp"
 #include "neptune/physics/particle.hpp"
+#include "neptune/geometry/mesh.hpp"
 
 namespace neptune {
 
@@ -39,7 +40,7 @@ class Source {
      *
      * @param i The index of the particle to generate
      */
-    virtual Particle generate_particle(index_t i) = 0;
+    virtual Particle generate_particle(index_t i, const Mesh& mesh) = 0;
 
     index_t
         num_particles_;  // the number of particles to generate from this source

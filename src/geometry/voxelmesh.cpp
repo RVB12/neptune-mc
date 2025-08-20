@@ -328,6 +328,41 @@ std::pair<index_t, index_t> VoxelMesh::get_boundary_crossing(Vec3 position, Vec3
     return std::make_pair(cell_id, surface);
 }
 
+Vec3 VoxelMesh::generate_random_position(index_t cell_index, rng_t& rng) const
+{
+    Index3D ind = linear_to_tuple(cell_index);
 
+    std::uniform_real_distribution<real_t> dist(0, 1);
+
+    real_t x = (ind.i + dist(rng)) * dx;
+    real_t y = (ind.j + dist(rng)) * dy;
+    real_t z = (ind.k + dist(rng)) * dz;
+
+    return Vec3(x, y, z);
+}
+
+Vec3 VoxelMesh::generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const
+{
+    Index3D ind = linear_to_tuple(cell_index);
+
+    std::uniform_real_distribution<real_t> dist(0, 1);
+
+    switch (surface_id) {
+        case 0:  // x == 0
+            return Vec3(ind.i * dx, (ind.j + dist(rng)) * dy, (ind.k + dist(rng)) * dz);
+        case 1:  // y == 0
+            return Vec3((ind.i + dist(rng)) * dx, ind.j * dy, (ind.k + dist(rng)) * dz);
+        case 2:  // z == 0
+            return Vec3((ind.i + dist(rng)) * dx, (ind.j + dist(rng)) * dy, ind.k * dz);
+        case 3:  // x == Lx
+            return Vec3((ind.i + 1) * dx, (ind.j + dist(rng)) * dy, (ind.k + dist(rng)) * dz);
+        case 4:  // y == Ly
+            return Vec3((ind.i + dist(rng)) * dx, (ind.j + 1) * dy, (ind.k + dist(rng)) * dz);
+        case 5:  // z == Lz
+            return Vec3((ind.i + dist(rng)) * dx, (ind.j + dist(rng)) * dy, (ind.k + 1) * dz);
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
+}
 
 }  // namespace neptune

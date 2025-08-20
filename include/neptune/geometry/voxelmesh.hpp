@@ -104,6 +104,16 @@ class VoxelMesh : public Mesh {
      */
     std::pair<index_t, index_t> get_boundary_crossing(Vec3 position, Vec3 direction) const;
 
+    /**
+     * @brief Generate a random position within a given cell
+     */
+    Vec3 generate_random_position(index_t cell_index, rng_t& rng) const;
+
+    /**
+     * @brief Generate a random position on a given surface of a cell
+     */
+    Vec3 generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const;
+
     // Member variables
     real_t Lx = 0.;  // Length of the mesh in x direction
     real_t Ly = 0.;  // Length of the mesh in y direction

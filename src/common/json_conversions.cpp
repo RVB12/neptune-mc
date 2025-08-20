@@ -204,14 +204,16 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Source>& s)
 {
     std::string type;
     j.at("type").get_to(type);
-    if (type == "line") {
-        LineSource ls = j;
-        s = std::make_unique<LineSource>(ls);
+    if (type == "volume") {
+        VolumeSource vs = j;
+        s = std::make_unique<VolumeSource>(vs);
     } else if (type == "point") {
         PointSource ps = j;
         s = std::make_unique<PointSource>(ps);
-    }
-    else {
+    } else if (type == "surface") {
+        SurfaceSource ss = j;
+        s = std::make_unique<SurfaceSource>(ss);
+    } else {
         throw std::runtime_error("Unknown source type");
     }
 }

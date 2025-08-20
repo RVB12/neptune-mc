@@ -2,7 +2,10 @@
 
 namespace neptune {
 
-index_t NonUniformMesh::n_cells() const { return (cb_x.size() - 1) * (cb_y.size() - 1) * (cb_z.size() - 1); }
+index_t NonUniformMesh::n_cells() const
+{
+    return (cb_x.size() - 1) * (cb_y.size() - 1) * (cb_z.size() - 1);
+}
 
 Index3D NonUniformMesh::linear_to_tuple(index_t index) const
 {
@@ -17,7 +20,8 @@ Index3D NonUniformMesh::linear_to_tuple(index_t index) const
 index_t NonUniformMesh::tuple_to_linear(Index3D index) const
 {
     // return index.i + index.j * nx;
-    return index.i + index.j * (cb_y.size() - 1) + index.k * (cb_y.size() - 1) * (cb_z.size() - 1);
+    return index.i + index.j * (cb_y.size() - 1) +
+           index.k * (cb_y.size() - 1) * (cb_z.size() - 1);
 }
 
 bool NonUniformMesh::is_in_cell(Vec3 p, index_t cell_index) const
@@ -31,12 +35,16 @@ bool NonUniformMesh::is_in_cell(Vec3 p, index_t cell_index) const
     return true;
 }
 
-Vec3 NonUniformMesh::cell_size() const { return Vec3(cb_x[1] - cb_x[0], cb_y[1] - cb_y[0], cb_z[1] - cb_z[0]); }
+Vec3 NonUniformMesh::cell_size() const
+{
+    return Vec3(cb_x[1] - cb_x[0], cb_y[1] - cb_y[0], cb_z[1] - cb_z[0]);
+}
 
 real_t NonUniformMesh::get_volume(index_t cell_index) const
 {
     Index3D ind = linear_to_tuple(cell_index);
-    return (cb_x[ind.i + 1] - cb_x[ind.i]) * (cb_y[ind.j + 1] - cb_y[ind.j]) * (cb_z[ind.k + 1] - cb_z[ind.k]);
+    return (cb_x[ind.i + 1] - cb_x[ind.i]) * (cb_y[ind.j + 1] - cb_y[ind.j]) *
+           (cb_z[ind.k + 1] - cb_z[ind.k]);
 }
 
 index_t binary_search(const vector<real_t>& vec, real_t value)
@@ -46,8 +54,10 @@ index_t binary_search(const vector<real_t>& vec, real_t value)
     while (low <= high) {
         index_t mid = (low + high) / 2;
         if (vec[mid] == value) return mid;
-        if (vec[mid] < value) low = mid + 1;
-        else high = mid - 1;
+        if (vec[mid] < value)
+            low = mid + 1;
+        else
+            high = mid - 1;
     }
     return low - 1;
 }
@@ -55,7 +65,8 @@ index_t binary_search(const vector<real_t>& vec, real_t value)
 index_t NonUniformMesh::get_cell_index(Vec3 p) const
 {
     Index3D ind;
-    if (p.x >= cb_x[cb_x.size() - 1] || p.y >= cb_y[cb_y.size() - 1] || p.z >= cb_z[cb_z.size() - 1] || p.x < 0 || p.y < 0 || p.z < 0) {
+    if (p.x >= cb_x[cb_x.size() - 1] || p.y >= cb_y[cb_y.size() - 1] ||
+        p.z >= cb_z[cb_z.size() - 1] || p.x < 0 || p.y < 0 || p.z < 0) {
         return -1;
     }
 
@@ -178,7 +189,8 @@ CellCrossing NonUniformMesh::get_next_crossing(ParticleGeometry& p) const
     return crossing;
 }
 
-Vec3 NonUniformMesh::get_surface_normal(index_t cell_index, index_t surface_id) const
+Vec3 NonUniformMesh::get_surface_normal(index_t cell_index,
+                                        index_t surface_id) const
 {
     switch (surface_id) {
         case 0:
@@ -204,45 +216,52 @@ index_t NonUniformMesh::get_n_surfaces(index_t) const
     return 6;
 }
 
-
-index_t NonUniformMesh::get_neighbour(index_t cell_index, index_t surface_id) const{
+index_t NonUniformMesh::get_neighbour(index_t cell_index,
+                                      index_t surface_id) const
+{
     Index3D ind = linear_to_tuple(cell_index);
 
     switch (surface_id) {
         case 0:  // x == 0
             if (ind.i > 0) {
                 return tuple_to_linear(Index3D(ind.i - 1, ind.j, ind.k));
-            } else {
+            }
+            else {
                 return -1;
             }
         case 1:  // y == 0
             if (ind.j > 0) {
                 return tuple_to_linear(Index3D(ind.i, ind.j - 1, ind.k));
-            } else {
+            }
+            else {
                 return -2;
             }
         case 2:  // z == 0
             if (ind.k > 0) {
                 return tuple_to_linear(Index3D(ind.i, ind.j, ind.k - 1));
-            } else {
+            }
+            else {
                 return -3;
             }
         case 3:  // x == Lx
             if (ind.i < cb_x.size() - 2) {
                 return tuple_to_linear(Index3D(ind.i + 1, ind.j, ind.k));
-            } else {
+            }
+            else {
                 return -4;
             }
         case 4:  // y == Ly
             if (ind.j < cb_y.size() - 2) {
                 return tuple_to_linear(Index3D(ind.i, ind.j + 1, ind.k));
-            } else {
+            }
+            else {
                 return -5;
             }
         case 5:  // z == Lz
             if (ind.k < cb_z.size() - 2) {
                 return tuple_to_linear(Index3D(ind.i, ind.j, ind.k + 1));
-            } else {
+            }
+            else {
                 return -6;
             }
         default:
@@ -250,57 +269,127 @@ index_t NonUniformMesh::get_neighbour(index_t cell_index, index_t surface_id) co
     }
 }
 
-real_t NonUniformMesh::get_surface_area(index_t cell_index, index_t surface_id) const {
-
+real_t NonUniformMesh::get_surface_area(index_t cell_index,
+                                        index_t surface_id) const
+{
     Index3D ind = linear_to_tuple(cell_index);
     switch (surface_id) {
         case 0:
         case 3:
-            return (cb_y[ind.j + 1] - cb_y[ind.j]) * (cb_z[ind.k + 1] - cb_z[ind.k]);
+            return (cb_y[ind.j + 1] - cb_y[ind.j]) *
+                   (cb_z[ind.k + 1] - cb_z[ind.k]);
         case 1:
         case 4:
-            return (cb_x[ind.i + 1] - cb_x[ind.i]) * (cb_z[ind.k + 1] - cb_z[ind.k]);
+            return (cb_x[ind.i + 1] - cb_x[ind.i]) *
+                   (cb_z[ind.k + 1] - cb_z[ind.k]);
         case 2:
         case 5:
-            return (cb_x[ind.i + 1] - cb_x[ind.i]) * (cb_y[ind.j + 1] - cb_y[ind.j]);
+            return (cb_x[ind.i + 1] - cb_x[ind.i]) *
+                   (cb_y[ind.j + 1] - cb_y[ind.j]);
         default:
             throw std::runtime_error("Invalid surface id");
     }
-
 }
 
 Vec3 NonUniformMesh::get_center(index_t cell_index) const
 {
     Index3D ind = linear_to_tuple(cell_index);
-    return Vec3(0.5* (cb_x[ind.i] + cb_x[ind.i+1]), 0.5* (cb_y[ind.j] + cb_y[ind.j+1]), 0.5* (cb_z[ind.k] + cb_z[ind.k+1]));
+    return Vec3(0.5 * (cb_x[ind.i] + cb_x[ind.i + 1]),
+                0.5 * (cb_y[ind.j] + cb_y[ind.j + 1]),
+                0.5 * (cb_z[ind.k] + cb_z[ind.k + 1]));
 }
 
-Vec3 NonUniformMesh::get_surface_center(index_t cell_index, index_t surface_id) const
+Vec3 NonUniformMesh::get_surface_center(index_t cell_index,
+                                        index_t surface_id) const
 {
     Index3D ind = linear_to_tuple(cell_index);
     switch (surface_id) {
         case 0:  // x == 0
-            return Vec3(cb_x[ind.i], 0.5* (cb_y[ind.j] + cb_y[ind.j+1]), 0.5* (cb_z[ind.k] + cb_z[ind.k+1]));
+            return Vec3(cb_x[ind.i], 0.5 * (cb_y[ind.j] + cb_y[ind.j + 1]),
+                        0.5 * (cb_z[ind.k] + cb_z[ind.k + 1]));
         case 1:  // y == 0
-            return Vec3(0.5* (cb_x[ind.i] + cb_x[ind.i+1]), cb_y[ind.j], 0.5* (cb_z[ind.k] + cb_z[ind.k+1]));
+            return Vec3(0.5 * (cb_x[ind.i] + cb_x[ind.i + 1]), cb_y[ind.j],
+                        0.5 * (cb_z[ind.k] + cb_z[ind.k + 1]));
         case 2:  // z == 0
-            return Vec3(0.5* (cb_x[ind.i] + cb_x[ind.i+1]), 0.5* (cb_y[ind.j] + cb_y[ind.j+1]), cb_z[ind.k]);
+            return Vec3(0.5 * (cb_x[ind.i] + cb_x[ind.i + 1]),
+                        0.5 * (cb_y[ind.j] + cb_y[ind.j + 1]), cb_z[ind.k]);
         case 3:  // x == Lx
-            return Vec3(cb_x[ind.i+1], 0.5* (cb_y[ind.j] + cb_y[ind.j+1]), 0.5* (cb_z[ind.k] + cb_z[ind.k+1]));
+            return Vec3(cb_x[ind.i + 1], 0.5 * (cb_y[ind.j] + cb_y[ind.j + 1]),
+                        0.5 * (cb_z[ind.k] + cb_z[ind.k + 1]));
         case 4:  // y == Ly
-            return Vec3(0.5* (cb_x[ind.i] + cb_x[ind.i+1]), cb_y[ind.j+1], 0.5* (cb_z[ind.k] + cb_z[ind.k+1]));
+            return Vec3(0.5 * (cb_x[ind.i] + cb_x[ind.i + 1]), cb_y[ind.j + 1],
+                        0.5 * (cb_z[ind.k] + cb_z[ind.k + 1]));
         case 5:  // z == Lz
-            return Vec3(0.5* (cb_x[ind.i] + cb_x[ind.i+1]), 0.5* (cb_y[ind.j] + cb_y[ind.j+1]), cb_z[ind.k+1]);
+            return Vec3(0.5 * (cb_x[ind.i] + cb_x[ind.i + 1]),
+                        0.5 * (cb_y[ind.j] + cb_y[ind.j + 1]), cb_z[ind.k + 1]);
         default:
             throw std::runtime_error("Invalid surface id");
     }
 }
 
-std::pair<index_t, index_t> NonUniformMesh::get_boundary_crossing(Vec3 position, Vec3 direction) const{
+std::pair<index_t, index_t> NonUniformMesh::get_boundary_crossing(
+    Vec3 position, Vec3 direction) const
+{
     // This function is not implemented yet
     throw std::runtime_error("get_boundary_crossing is not implemented");
 }
 
+Vec3 NonUniformMesh::generate_random_position(index_t cell_index,
+                                              rng_t& rng) const
+{
+    Index3D ind = linear_to_tuple(cell_index);
 
+    std::uniform_real_distribution<real_t> dist(0, 1);
+
+    real_t x = cb_x[ind.i] + (dist(rng)) * (cb_x[ind.i + 1] - cb_x[ind.i]);
+    real_t y = cb_y[ind.j] + (dist(rng)) * (cb_y[ind.j + 1] - cb_y[ind.j]);
+    real_t z = cb_z[ind.k] + (dist(rng)) * (cb_z[ind.k + 1] - cb_z[ind.k]);
+
+    return Vec3(x, y, z);
+}
+
+Vec3 NonUniformMesh::generate_random_surface_position(index_t cell_index,
+                                                      index_t surface_id,
+                                                      rng_t& rng) const
+{
+    Index3D ind = linear_to_tuple(cell_index);
+
+    std::uniform_real_distribution<real_t> dist(0, 1);
+
+    switch (surface_id) {
+        case 0:  // x == 0
+            return Vec3(
+                cb_x[ind.i],
+                cb_y[ind.j] + (dist(rng)) * (cb_y[ind.j + 1] - cb_y[ind.j]),
+                cb_z[ind.k] + (dist(rng)) * (cb_z[ind.k + 1] - cb_z[ind.k]));
+        case 1:  // y == 0
+            return Vec3(
+                cb_x[ind.i] + (dist(rng)) * (cb_x[ind.i + 1] - cb_x[ind.i]),
+                cb_y[ind.j],
+                cb_z[ind.k] + (dist(rng)) * (cb_z[ind.k + 1] - cb_z[ind.k]));
+        case 2:  // z == 0
+            return Vec3(
+                cb_x[ind.i] + (dist(rng)) * (cb_x[ind.i + 1] - cb_x[ind.i]),
+                cb_y[ind.j] + (dist(rng)) * (cb_y[ind.j + 1] - cb_y[ind.j]),
+                cb_z[ind.k]);
+        case 3:  // x == Lx
+            return Vec3(
+                cb_x[ind.i + 1],
+                cb_y[ind.j] + (dist(rng)) * (cb_y[ind.j + 1] - cb_y[ind.j]),
+                cb_z[ind.k] + (dist(rng)) * (cb_z[ind.k + 1] - cb_z[ind.k]));
+        case 4:  // y == Ly
+            return Vec3(
+                cb_x[ind.i] + (dist(rng)) * (cb_x[ind.i + 1] - cb_x[ind.i]),
+                cb_y[ind.j + 1],
+                cb_z[ind.k] + (dist(rng)) * (cb_z[ind.k + 1] - cb_z[ind.k]));
+        case 5:  // z == Lz
+            return Vec3(
+                cb_x[ind.i] + (dist(rng)) * (cb_x[ind.i + 1] - cb_x[ind.i]),
+                cb_y[ind.j] + (dist(rng)) * (cb_y[ind.j + 1] - cb_y[ind.j]),
+                cb_z[ind.k + 1]);
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
+}
 
 }  // namespace neptune
