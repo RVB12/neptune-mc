@@ -69,6 +69,9 @@ if(OpenMP_CXX_FOUND)
 endif()
 
 # Main runner
+add_executable(neptune-generate-neighborlist src/generate_neighborlist.cpp)
+target_link_libraries(neptune-generate-neighborlist PRIVATE neptune)
+
 add_executable(neptune-mc src/main_json.cpp)
 target_link_libraries(neptune-mc PRIVATE neptune)
 

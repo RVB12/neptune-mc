@@ -23,7 +23,7 @@ namespace neptune {
  * After this function, you should still fill change the boundary edges to the
  * correct boundary id.
  *
- * This version is pretty slow and dus not use any spatial index.
+ * This version is pretty slow and does not use any spatial index.
  *
  * @param triangles
  * @param neighbors
@@ -181,6 +181,11 @@ class TriangleMesh : public Mesh {
      * @brief Generate a random position on a given surface of a cell
      */
     Vec3 generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const;
+
+    vector<index_t> get_neighbor_list() const
+    {
+        return neighbors;
+    }
 
    private:
     // Member variables
