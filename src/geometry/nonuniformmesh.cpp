@@ -11,8 +11,8 @@ Index3D NonUniformMesh::linear_to_tuple(index_t index) const
 {
     index_t k = index / (cb_x.size() - 1) / (cb_y.size() - 1);
     index_t rem = index % ((cb_x.size() - 1) * (cb_y.size() - 1));
-    index_t j = rem / (cb_y.size() - 1);
-    index_t i = rem % (cb_y.size() - 1);
+    index_t j = rem / (cb_x.size() - 1);
+    index_t i = rem % (cb_x.size() - 1);
 
     return Index3D(i, j, k);
 }
