@@ -24,6 +24,10 @@ void Estimator::add_track_length(const Particle& particle,
     energy[cell_id_old] +=
         s * (0.5 * particle_old.mass * particle_old.geometry.velocity.norm2()) *
         constants::m_p / constants::eV_to_Joules;
+
+    energy_x[cell_id_old] +=
+        s * (0.5 * particle_old.mass * particle_old.geometry.velocity.x * particle_old.geometry.velocity.x) *
+        constants::m_p / constants::eV_to_Joules;
 }
 
 void Estimator::add_final(const Particle& particle, const Mesh& mesh)
@@ -41,6 +45,10 @@ void Estimator::add_final(const Particle& particle, const Mesh& mesh)
     energy_final[cell_id] +=
         (0.5 * particle.mass * particle.geometry.velocity.norm2()) *
         particle.weight / volume * particle.intensity;
+
+    energy_x_final[cell_id] +=
+        (0.5 * particle.mass * particle.geometry.velocity.x * particle.geometry.velocity.x) *
+        particle.weight / volume * particle.intensity;
 }
 
 void Estimator::combine(const Estimator& other)
@@ -51,11 +59,13 @@ void Estimator::combine(const Estimator& other)
         momentum_y[i] += other.momentum_y[i];
         momentum_z[i] += other.momentum_z[i];
         energy[i] += other.energy[i];
+        energy_x[i] += other.energy_x[i];
         density_final[i] += other.density_final[i];
         momentum_x_final[i] += other.momentum_x_final[i];
         momentum_y_final[i] += other.momentum_y_final[i];
         momentum_z_final[i] += other.momentum_z_final[i];
         energy_final[i] += other.energy_final[i];
+        energy_x_final[i] += other.energy_x_final[i];
     }
 }
 

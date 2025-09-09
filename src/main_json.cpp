@@ -152,12 +152,14 @@ int main(int argc, char** argv)
     output["momentum_y"] = estimator.momentum_y;
     output["momentum_z"] = estimator.momentum_z;
     output["energy"] = estimator.energy;
+    output["energy_x"] = estimator.energy_x;
 
     output["density_final"] = estimator.density_final;
     output["momentum_x_final"] = estimator.momentum_x_final;
     output["momentum_y_final"] = estimator.momentum_y_final;
     output["momentum_z_final"] = estimator.momentum_z_final;
     output["energy_final"] = estimator.energy_final;
+    output["energy_x_final"] = estimator.energy_x_final;
 
     output["stats"] = stats;
 

@@ -77,11 +77,13 @@ class Estimator {
           momentum_y(n_cells, 0),
           momentum_z(n_cells, 0),
           energy(n_cells, 0),
+          energy_x(n_cells, 0),
           density_final(n_cells, 0),
           momentum_x_final(n_cells, 0),
           momentum_y_final(n_cells, 0),
           momentum_z_final(n_cells, 0),
-          energy_final(n_cells, 0)
+          energy_final(n_cells, 0),
+          energy_x_final(n_cells, 0)
     {}
 
     index_t size() const { return density.size(); }
@@ -133,6 +135,8 @@ class Estimator {
     vector<real_t> momentum_z;
     // Time averaged energy
     vector<real_t> energy;
+    // Time averaged energy (x only)
+    vector<real_t> energy_x;
     // Density at the final time of the simulation
     vector<real_t> density_final;
     // Momentum at the final time of the simulation
@@ -141,6 +145,7 @@ class Estimator {
     vector<real_t> momentum_z_final;
     // Energy at the final time of the simulation
     vector<real_t> energy_final;
+    vector<real_t> energy_x_final;
 };
 
 #pragma omp declare reduction(EstimatorReduction : Estimator : omp_out.combine(omp_in)) initializer(omp_priv = Estimator(omp_orig.size()))
