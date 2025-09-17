@@ -34,6 +34,7 @@ list(APPEND neptune_SOURCES
     src/geometry/voxelmesh.cpp
     src/simulator/simulator.cpp
     src/geometry/trianglemesh.cpp
+    src/geometry/rotatedtrianglemesh.cpp
     src/geometry/nonuniformmesh.cpp
     src/physics/pointsource.cpp
     src/physics/surfacesource.cpp
