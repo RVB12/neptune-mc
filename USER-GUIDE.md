@@ -36,14 +36,16 @@ You provide input to NEPTUNE in the form of a JSON file. This contains several g
 
 #### mesh
 
-For the mesh, there are two options: a structured voxel mesh or an unstructured triangular mesh. For the structured mesh, the input is like so:
+For the mesh, there are three options: a structured voxel mesh with uniform cell sizes, a structured voxel mesh with nonuniform cell sizes, or an unstructured triangular mesh.
+
+For the structured mesh with uniform cell sizes, the input is like so:
 ```JSON
 {
     "mesh": {
         "type": "voxel",
-        "Lx": float,
-        "Ly": float,
-        "Lz": float,
+        "Lx": float, // unit m
+        "Ly": float, // unit m
+        "Lz": float, // unit m
         "nx": int,
         "ny": int,
         "nz": int
@@ -52,12 +54,25 @@ For the mesh, there are two options: a structured voxel mesh or an unstructured 
 ```
 where `Lx, Ly, Lz` are the lengths of the domain in each dimension and `nx, ny, nz` are the number of cells in each dimension.
 
+For the structured mesh with nonuniform cell sizes, the input is like so:
+```JSON
+{
+    "mesh": {
+        "type": "nonuniform",
+        "cb_x": [float], // unit m
+        "cb_y": [float], // unit m
+        "cb_z": [float], // unit m
+    }
+}
+```
+where `cb_x`, `cb_y`, and `cb_z` are arrays of the cell boundaries (in m) in each dimension. If the grid is divided into `nx x n_y x nz` cells, then the dimensions of the arrays are `nx + 1`, `ny + 1`, and `nz + 1` respectively.
+
 For the triangular mesh, the input is like so:
 ```JSON
 {
     "mesh": {
         "type": "triangle",
-        "vertices": [[float, float]],
+        "vertices": [[float, float]], // unit m
         "triangles": [[int, int, int]]
     }
 }
@@ -66,16 +81,18 @@ where `vertices` is a list of all the vertices of the mesh (the corners of the t
 
 #### Collision processes
 
+For all collision processes, we assume that the collision rates are expressed w.r.t. time, not distance travelled. The rates are only dependent on the background parameters and do not take the energy of the neutral particle into account.
+
 For the scattering collision processes, the input is like so:
 ```JSON
 {
     "bgk_processes": [
         {
-            "rate": [float],
-            "bgk_stddev": [float],
-            "bgk_mean_x": [float],
-            "bgk_mean_y": [float],
-            "bgk_mean_z": [float],
+            "rate": [float], // unit 1/s
+            "bgk_stddev": [float], // unit m/s
+            "bgk_mean_x": [float], // unit m/s
+            "bgk_mean_y": [float], // unit m/s
+            "bgk_mean_z": [float], // unit m/s
         }
     ]
 }
@@ -87,7 +104,7 @@ For the ionisation processes, the input is like so:
 {
     "ionisation_processes": [
         {
-            "rate": [float]
+            "rate": [float] // unit 1/s
         }
     ]
 }
@@ -104,9 +121,9 @@ A point source is defined as follows:
     "sources": [
         {
             "type": "point",
-            "pos": [float, float, float],
-            "vel_mean": [float, float, float],
-            "vel_stddev": float,
+            "pos": [float, float, float], // unit m
+            "vel_mean": [float, float, float], // unit m/s
+            "vel_stddev": float, // unit m/s
             "n_particles": int,
             "intensity": float
         }
@@ -124,8 +141,8 @@ A volume source is defined as follows:
         {
             "type": "volume",
             "cell_idx": int,
-            "vel_mean": [float, float, float],
-            "vel_stddev": float,
+            "vel_mean": [float, float, float], // unit m/s
+            "vel_stddev": float, // unit m/s
             "n_particles": int,
             "intensity": float
         }
@@ -144,8 +161,8 @@ A surface source is defined as follows:
             "type": "volume",
             "cell_idx": int,
             "surface_id": int,
-            "vel_mean": [float, float, float],
-            "vel_stddev": float,
+            "vel_mean": [float, float, float], // unit m/s
+            "vel_stddev": float, // unit m/s
             "n_particles": int,
             "intensity": float
         }
@@ -191,10 +208,10 @@ Some extra parameters are:
 ### JSON Output
 
 The JSON output will contain the following arrays:
-- `density`: track-length estimate of the density
-- `momentum_x`: track-length estimate of the momentum in x-direction
-- `momentum_y`: track-length estimate of the momentum in y-direction
-- `momentum_z`: track-length estimate of the momentum in z-direction
+- `density`: track-length estimate of the particle density (1/m^3)
+- `momentum_x`: track-length estimate of the momentum in x-direction (1/(m^2s))
+- `momentum_y`: track-length estimate of the momentum in y-direction (1/(m^2s))
+- `momentum_z`: track-length estimate of the momentum in z-direction (1/(m^2s))
 - `energy`: track-length estimate of the energy
 - `density_final`: estimate of the density at t = t_final
 - `momentum_x_final`: estimate of the momentum in x-direction at t = t_final
@@ -206,14 +223,14 @@ Additionally, a few statistics will be included:
 ```JSON
 {
     "stats": {
-        "num_crossings": int, (number of times a particle crossed a cell boundary)
-        "num_collisions": int, (number of times a particle collided with the plasma background
-        "total_particles": int, (total number of particles simulated),
-        "grid_building_time": float, (time in seconds spent building the grid, mostly relevant for triangular grid where a spatial index is built up)
-        "trace_time": float, (time in seconds spent tracing the particles)
-        "total_time": float, (sum of grid_building_time and trace_time)
-        "num_kd_steps": int, (number of times a particle did a full kd step)
-        "num_kd_to_kinetic_switches": int, (number of times a particle needed to switch to kinetic simulation in kd because it hit a boundary)
+        "num_crossings": int, //number of times a particle crossed a cell boundary
+        "num_collisions": int, //number of times a particle collided with the plasma background
+        "total_particles": int, //total number of particles simulated,
+        "grid_building_time": float, //time in seconds spent building the grid, mostly relevant for triangular grid where a spatial index is built up
+        "trace_time": float, //time in seconds spent tracing the particles
+        "total_time": float, //sum of grid_building_time and trace_time
+        "num_kd_steps": int, //number of times a particle did a full kd step
+        "num_kd_to_kinetic_switches": int, //number of times a particle needed to switch to kinetic simulation in kd because it hit a boundary
 
     }
 }
