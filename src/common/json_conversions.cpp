@@ -252,6 +252,9 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Mesh>& m)
     } else if (type == "triangle") {
         TriangleMesh tm = j;
         m = std::make_unique<TriangleMesh>(tm);
+    } else if (type == "rotated_triangle") {
+        RotatedTriangleMesh rtm = j;
+        m = std::make_unique<RotatedTriangleMesh>(rtm);
     } else if (type == "nonuniform") {
         NonUniformMesh num = j;
         m = std::make_unique<NonUniformMesh>(num);

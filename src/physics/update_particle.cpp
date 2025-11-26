@@ -20,7 +20,7 @@ EventType update_particle(
     // Calculate total collision rate (charge exchange + neutral-neutral)
 
     real_t collision_rate = 0;
-    for(int i = 0; i < bgk_processes.size(); i++) {
+    for (int i = 0; i < bgk_processes.size(); i++) {
         collision_rate += bgk_processes[i]->rate[cell_id];
     }
 
@@ -41,9 +41,9 @@ EventType update_particle(
             p.geometry.position += time_left * p.geometry.velocity;
             p.geometry.boundary_id = -1;
             p.t = t_final;
-            for(int i = 0; i < ion_processes.size(); i++) {
-                p.weight *= std::exp(-time_left *
-                                     ion_processes[i]->rate[cell_id]);
+            for (int i = 0; i < ion_processes.size(); i++) {
+                p.weight *=
+                    std::exp(-time_left * ion_processes[i]->rate[cell_id]);
             }
             return EventType::FINAL_TIME;
         }
@@ -60,7 +60,7 @@ EventType update_particle(
         real_t eps = r_unif(p.rng);
 
         real_t cumulative_rate = 0;
-        for(int i = 0; i < bgk_processes.size(); i++) {
+        for (int i = 0; i < bgk_processes.size(); i++) {
             cumulative_rate += bgk_processes[i]->rate[cell_id];
             if (eps <= cumulative_rate / collision_rate) {
                 // We have a collision with the background
@@ -73,8 +73,10 @@ EventType update_particle(
                     bgk_processes[i]->bgk_mean_y[cell_id], stddev);
                 std::normal_distribution<real_t> dist_vz(
                     bgk_processes[i]->bgk_mean_z[cell_id], stddev);
-                p.geometry.velocity =
+                Vec3 new_velocity_notransform =
                     Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+                p.geometry.velocity = mesh.transform_direction(
+                    p.geometry.position, new_velocity_notransform);
                 break;
             }
         }
@@ -107,9 +109,8 @@ EventType update_particle(
     }
 
     // Ionisation
-    for(int i = 0; i < ion_processes.size(); i++) {
-        p.weight *= std::exp(-dt *
-                             ion_processes[i]->rate[cell_id]);
+    for (int i = 0; i < ion_processes.size(); i++) {
+        p.weight *= std::exp(-dt * ion_processes[i]->rate[cell_id]);
     }
     p.t += dt;
 

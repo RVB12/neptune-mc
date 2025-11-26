@@ -10,6 +10,7 @@
 #include "neptune/finitevolume/fluidboundarycondition.hpp"
 #include "neptune/geometry/spatialindex.hpp"
 #include "neptune/geometry/trianglemesh.hpp"
+#include "neptune/geometry/rotatedtrianglemesh.hpp"
 #include "neptune/geometry/nonuniformmesh.hpp"
 #include "neptune/geometry/vec2.hpp"
 #include "neptune/geometry/vec3.hpp"
@@ -188,6 +189,17 @@ struct adl_serializer<neptune::TriangleMesh> {
         neptune::vector<neptune::TriangleIndices> triangles = j.at("triangles");
 
         return neptune::TriangleMesh(vertices, triangles);
+    }
+};
+
+template <>
+struct adl_serializer<neptune::RotatedTriangleMesh> {
+    static neptune::RotatedTriangleMesh from_json(const json& j)
+    {
+        neptune::vector<neptune::Vec2> vertices = j.at("vertices");
+        neptune::vector<neptune::TriangleIndices> triangles = j.at("triangles");
+
+        return neptune::RotatedTriangleMesh(vertices, triangles);
     }
 };
 

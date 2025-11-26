@@ -94,6 +94,18 @@ class Mesh {
      * @brief Generate a random position on a given surface of a cell
      */
     virtual Vec3 generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const = 0;
+
+    /**
+     * @brief Transform a direction vector to take the mesh and the local position of a particle into account
+     * 
+     * (This is useful for meshes that represent curved geometries, such as rotated triangle meshes)
+     * 
+     * @param position The current position of the particle
+     * @param direction The direction to be transformed
+     * 
+     * @return Vec3 The transformed direction
+     */
+    virtual Vec3 transform_direction(Vec3 position, Vec3 direction) const = 0;
 };
 
 }  // namespace neptune

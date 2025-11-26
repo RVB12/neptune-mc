@@ -63,11 +63,11 @@ real_t RotatedTriangleMesh::get_volume(index_t cell_index) const
 // z-axis. Note, this function does not verify whether the returned time is
 // positive or whether the intersection lies between the two points. This should
 // be done later.
-inline real_t find_cone_intersection(const Vec2& p1,
-                                     const Vec2& p2,
-                                     const Vec3& pos,
-                                     const Vec3& vel,
-                                     bool is_on_surface)
+real_t find_cone_intersection(const Vec2& p1,
+                              const Vec2& p2,
+                              const Vec3& pos,
+                              const Vec3& vel,
+                              bool is_on_surface)
 {
     // Precompute slope terms
     real_t r_a = p1.x;
@@ -76,6 +76,16 @@ inline real_t find_cone_intersection(const Vec2& p1,
     real_t z_b = p2.y;
     real_t k_r = r_b - r_a;
     real_t k_z = z_b - z_a;
+
+    if(std::abs(k_z) < 1.0e-10) {
+        // The cone is actually a plane perpendicular to the z axis
+        // Solve for t in the equation pos.z + t * vel.z = z_a
+        if(is_on_surface or std::abs(vel.z) < 1.0e-12) {
+            return -1;
+        }
+        real_t t = (z_a - pos.z) / vel.z;
+        return t > 0 ? t : -1;
+    }
 
     // Compute the coefficients of the quadratic equation
     real_t a =
@@ -89,6 +99,9 @@ inline real_t find_cone_intersection(const Vec2& p1,
     real_t discriminant = b * b - 4 * a * c;
     real_t t1;
     real_t t2;
+    if(std::abs(discriminant) < 1.0e-16) {
+        discriminant = 0.;
+    }
     if (discriminant < 0.) {
         // No intersection, return negative number because it will be ignored.
         return -1;
@@ -99,7 +112,7 @@ inline real_t find_cone_intersection(const Vec2& p1,
         t1 = -c / b;
         t2 = -c / b;
     }
-    else if (std::abs(c) < 1.0e-10 or is_on_surface) {
+    else if (is_on_surface) {
         // The initial position is on the cone (within tolerance)
         // One solution is at the initial position
         // Use a different formula to avoid rounding errors
@@ -135,17 +148,20 @@ inline real_t find_cone_intersection(const Vec2& p1,
 
 CellCrossing RotatedTriangleMesh::get_next_crossing(ParticleGeometry& p) const
 {
-    // assert(is_in_cell(p.position, p.cell_id));
+    assert(is_in_cell(p.position, p.cell_id));
     TriangleIndices t = triangles[p.cell_id];
     Vec2 p1 = vertices[t.ind1];
     Vec2 p2 = vertices[t.ind2];
     Vec2 p3 = vertices[t.ind3];
-    
-    real_t t0= find_cone_intersection(p1, p2, p.position, p.velocity, p.boundary_id == 0);
 
-    real_t t1 = find_cone_intersection(p2, p3, p.position, p.velocity, p.boundary_id == 1);
+    real_t t0 = find_cone_intersection(p1, p2, p.position, p.velocity,
+                                       p.boundary_id == 0);
 
-    real_t t2 = find_cone_intersection(p3, p1, p.position, p.velocity, p.boundary_id == 2);
+    real_t t1 = find_cone_intersection(p2, p3, p.position, p.velocity,
+                                       p.boundary_id == 1);
+
+    real_t t2 = find_cone_intersection(p3, p1, p.position, p.velocity,
+                                       p.boundary_id == 2);
 
     // t0, t1, and t2 are now the times until the intersection with the cones
     // the true collision time is the smallest positive value of the three
@@ -175,12 +191,15 @@ CellCrossing RotatedTriangleMesh::get_next_crossing(ParticleGeometry& p) const
 
     CellCrossing crossing = CellCrossing(pos_new, t_new, surface_id);
 
+
     if (id_new < 0) {
         // If the id is negative, it is a boundary,
         // so negate it and subtract 1 (zero based) to get the boundary id
+        assert(is_in_cell(pos_new, p.cell_id));
         crossing.boundary_condition_id = -id_new - 1;
         return crossing;
     }
+    assert(is_in_cell(pos_new, id_new));
 
     crossing.next_cell_id = id_new;
     // Find the surface id of the next cell
@@ -294,12 +313,26 @@ Vec3 RotatedTriangleMesh::generate_random_position(index_t cell_index,
     return Vec3(x, y, z);
 }
 
-Vec3 TriangleMesh::generate_random_surface_position(index_t cell_index,
+Vec3 RotatedTriangleMesh::generate_random_surface_position(index_t cell_index,
                                                     index_t surface_id,
                                                     rng_t& rng) const
 {
     throw std::runtime_error(
         "generate_random_surface_position is not implemented");
+}
+
+Vec3 RotatedTriangleMesh::transform_direction(Vec3 position, Vec3 direction) const{
+    // Get cos and sine of the angle of the position
+    real_t r = std::sqrt(position.x * position.x + position.y * position.y);
+    real_t c = position.x / r;
+    real_t s = position.y / r;
+
+    // Rotate the direction vector
+    real_t x_new = direction.x * c + direction.y * s;
+    real_t y_new = -direction.x * s + direction.y * c;
+    real_t z_new = direction.z;
+
+    return Vec3(x_new, y_new, z_new);
 }
 
 }  // namespace neptune

@@ -2,7 +2,6 @@
 #define NEPTUNE_RotatedTriangleMesh_HPP
 
 #include "neptune/common/utils.hpp"
-#include "neptune/geometry/vec2.hpp"
 #include "neptune/common/vector.hpp"
 #include "neptune/geometry/cellcrossing.hpp"
 #include "neptune/geometry/mesh.hpp"
@@ -10,22 +9,22 @@
 #include "neptune/geometry/spatialindex.hpp"
 #include "neptune/geometry/triangle.hpp"
 #include "neptune/geometry/trianglemesh.hpp"
+#include "neptune/geometry/vec2.hpp"
 
 namespace neptune {
 
 /**
- * @brief An unstructured mesh consisting of triangles
+ * @brief An unstructured mesh consisting of triangles that are rotated around
+ * the z-axis to form 3D cells.
  *
- * The mesh is stored as a list of vertices and a list of triangles,
- * where each each triangle is defined by 3 indices, indexing into the vertex
- * list.
- *
- * To allow fast traversal, a neighbor list is also maintained.
+ * The is an implicit assumption that the x-coordinate of the vertices (the
+ * radial coordinate) is non-negative.
  *
  */
 class RotatedTriangleMesh : public Mesh {
    public:
-    RotatedTriangleMesh(vector<Vec2>& vertices_, vector<TriangleIndices>& triangles_)
+    RotatedTriangleMesh(vector<Vec2>& vertices_,
+                        vector<TriangleIndices>& triangles_)
         : Mesh(),
           vertices(vertices_),
           triangles(triangles_),
@@ -35,9 +34,9 @@ class RotatedTriangleMesh : public Mesh {
     }
 
     RotatedTriangleMesh(vector<Vec2>& vertices_,
-                 vector<TriangleIndices>& triangles_,
-                 SpatialIndex& spatialindex,
-                 vector<index_t>& neighbors_)
+                        vector<TriangleIndices>& triangles_,
+                        SpatialIndex& spatialindex,
+                        vector<index_t>& neighbors_)
         : Mesh(),
           vertices(vertices_),
           triangles(triangles_),
@@ -46,9 +45,9 @@ class RotatedTriangleMesh : public Mesh {
     {}
 
     RotatedTriangleMesh(vector<Vec2>&& vertices_,
-                 vector<TriangleIndices>&& triangles_,
-                 SpatialIndex&& spatialindex,
-                 vector<index_t>&& neighbors_)
+                        vector<TriangleIndices>&& triangles_,
+                        SpatialIndex&& spatialindex,
+                        vector<index_t>&& neighbors_)
         : Mesh(),
           vertices(std::move(vertices_)),
           triangles(std::move(triangles_)),
@@ -132,10 +131,11 @@ class RotatedTriangleMesh : public Mesh {
     Vec3 get_surface_center(index_t cell_index, index_t surface_id) const;
 
     /**
-     * @brief Return the first boundary crossing (i.e. an actual boundary, not a cell boundary)
-     * That a particle will cross.
+     * @brief Return the first boundary crossing (i.e. an actual boundary, not a
+     * cell boundary) That a particle will cross.
      */
-    std::pair<index_t, index_t> get_boundary_crossing(Vec3 position, Vec3 direction) const;
+    std::pair<index_t, index_t> get_boundary_crossing(Vec3 position,
+                                                      Vec3 direction) const;
 
     /**
      * @brief Generate a random position within a given cell
@@ -145,12 +145,25 @@ class RotatedTriangleMesh : public Mesh {
     /**
      * @brief Generate a random position on a given surface of a cell
      */
-    Vec3 generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const;
+    Vec3 generate_random_surface_position(index_t cell_index,
+                                          index_t surface_id,
+                                          rng_t& rng) const;
 
-    vector<index_t> get_neighbor_list() const
-    {
-        return neighbors;
-    }
+    vector<index_t> get_neighbor_list() const { return neighbors; }
+
+    /**
+     * @brief Transform a direction vector to take the mesh and the local
+     * position of a particle into account
+     *
+     * (This is useful for meshes that represent curved geometries, such as
+     * rotated triangle meshes)
+     *
+     * @param position The current position of the particle
+     * @param direction The direction to be transformed
+     *
+     * @return Vec3 The transformed direction
+     */
+    Vec3 transform_direction(Vec3 position, Vec3 direction) const;
 
    private:
     // Member variables
@@ -168,6 +181,17 @@ class RotatedTriangleMesh : public Mesh {
     // used for fast traversal
     vector<index_t> neighbors;
 };
+
+// Return the time until the intersection of particle with position pos and
+// velocity vel with a cone defined by rotating points p1 and p2 around the
+// z-axis. Note, this function does not verify whether the returned time is
+// positive or whether the intersection lies between the two points. This should
+// be done later.
+real_t find_cone_intersection(const Vec2& p1,
+                              const Vec2& p2,
+                              const Vec3& pos,
+                              const Vec3& vel,
+                              bool is_on_surface);
 
 }  // namespace neptune
 
