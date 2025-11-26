@@ -51,8 +51,13 @@ class Mesh {
 
     /**
      * @brief Return the normal of a given surface
+     * 
+     * @param cell_index The index of the cell
+     * @param surface_id The id of the surface within the cell
+     * @param position The position on the surface where the normal is requested
+     *                 (this is needed for curved surfaces)
      */
-    virtual Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const = 0;
+    virtual Vec3 get_surface_normal(index_t cell_index, index_t surface_id, Vec3 position) const = 0;
 
     /**
      * @brief Return the number of surfaces of a given cell

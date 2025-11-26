@@ -101,7 +101,7 @@ EventType update_particle(
             p.geometry.position = crossing.position;
             p.geometry.boundary_id = crossing.surface_id;
 
-            Vec3 normal = mesh.get_surface_normal(cell_id, crossing.surface_id);
+            Vec3 normal = mesh.get_surface_normal(cell_id, crossing.surface_id, crossing.position);
 
             boundary_conditions[crossing.boundary_condition_id]->apply(p,
                                                                        normal);

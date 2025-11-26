@@ -109,7 +109,8 @@ Vec3 calculate_drift(
 
             real_t R_cx_neighbour = bgk_processes[0]->rate[neighbour_id];
 
-            Vec3 normal = triangle_mesh->get_surface_normal(cell_id, i);
+            Vec3 normal =
+                triangle_mesh->get_surface_normal(cell_id, i, center0);
             Vec3 neighbour_center = triangle_mesh->get_center(neighbour_id);
             real_t distance = (neighbour_center - center0).norm();
             diffusion_induced_drift +=
@@ -309,8 +310,8 @@ void kdmc_fluid_step(
                 // Boundary crossing
                 p.geometry.boundary_id = crossing.surface_id;
 
-                Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id,
-                                                      crossing.surface_id);
+                Vec3 normal = mesh.get_surface_normal(
+                    p.geometry.cell_id, crossing.surface_id, crossing.position);
 
                 // Make sure the normal points outwards
                 if (dot(normal, p.geometry.velocity) < 0) {
@@ -600,8 +601,7 @@ void simulate_kdmc(
                         update_particle(mesh, bgk_processes, ion_processes,
                                         boundary_conditions, particle, t_max);
 
-                    estimator.add_track_length(particle, particle_old,
-                                                     mesh);
+                    estimator.add_track_length(particle, particle_old, mesh);
                     if (std::abs(particle.weight) < 1.0e-4) {
                         break;
                     }
@@ -666,8 +666,8 @@ void simulate_kdmc(
                                 boundary_conditions, particle,
                                 t_max - particle.t - final_free_flight_time);
 
-                            fluid_estimator.add_fluid_step(
-                                particle, particle_old, mesh);
+                            fluid_estimator.add_fluid_step(particle,
+                                                           particle_old, mesh);
                         }
                         else {
                             bool step_succesfull = kdmc_fluid_step_old(
@@ -728,7 +728,7 @@ void simulate_kdmc(
                             boundary_conditions, particle, t_max);
 
                         estimator.add_track_length(particle, particle_old,
-                                                         mesh);
+                                                   mesh);
                         if (std::abs(particle.weight) < 1.0e-4) {
                             break;
                         }

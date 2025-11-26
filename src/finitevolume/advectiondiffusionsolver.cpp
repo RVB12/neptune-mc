@@ -38,7 +38,7 @@ void advection_diffusion_solver(
                 index_t neighbour_id = mesh.get_neighbour(i, j);
 
                 // note, we assume this normal points inwards
-                Vec3 normal = mesh.get_surface_normal(i, j);
+                Vec3 normal = mesh.get_surface_normal(i, j, center);
                 // negate the normal to point outwards
                 normal = -normal;
                 real_t area = mesh.get_surface_area(i, j);

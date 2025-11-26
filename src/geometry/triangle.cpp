@@ -36,7 +36,7 @@ bool Triangle::contains(const Vec2& pos) const
     Vec2 center = (p1 + p2 + p3) / 3.0;
 
     // Make the triangle slightly larger to account for floating point errors
-    real_t eps = 1.0e-12;
+    real_t eps = 1.0e-10;
     Vec2 p1_tol = p1 + eps * (p1 - center);
     Vec2 p2_tol = p2 + eps * (p2 - center);
     Vec2 p3_tol = p3 + eps * (p3 - center);

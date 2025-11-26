@@ -160,7 +160,9 @@ CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
     return crossing;
 }
 
-Vec3 VoxelMesh::get_surface_normal(index_t cell_index, index_t surface_id) const
+Vec3 VoxelMesh::get_surface_normal(index_t cell_index,
+                                   index_t surface_id,
+                                   Vec3 position) const
 {
     switch (surface_id) {
         case 0:
@@ -186,45 +188,51 @@ index_t VoxelMesh::get_n_surfaces(index_t) const
     return 6;
 }
 
-
-index_t VoxelMesh::get_neighbour(index_t cell_index, index_t surface_id) const{
+index_t VoxelMesh::get_neighbour(index_t cell_index, index_t surface_id) const
+{
     Index3D ind = linear_to_tuple(cell_index);
 
     switch (surface_id) {
         case 0:  // x == 0
             if (ind.i > 0) {
                 return tuple_to_linear(Index3D(ind.i - 1, ind.j, ind.k));
-            } else {
+            }
+            else {
                 return -1;
             }
         case 1:  // y == 0
             if (ind.j > 0) {
                 return tuple_to_linear(Index3D(ind.i, ind.j - 1, ind.k));
-            } else {
+            }
+            else {
                 return -2;
             }
         case 2:  // z == 0
             if (ind.k > 0) {
                 return tuple_to_linear(Index3D(ind.i, ind.j, ind.k - 1));
-            } else {
+            }
+            else {
                 return -3;
             }
         case 3:  // x == Lx
             if (ind.i < nx - 1) {
                 return tuple_to_linear(Index3D(ind.i + 1, ind.j, ind.k));
-            } else {
+            }
+            else {
                 return -4;
             }
         case 4:  // y == Ly
             if (ind.j < ny - 1) {
                 return tuple_to_linear(Index3D(ind.i, ind.j + 1, ind.k));
-            } else {
+            }
+            else {
                 return -5;
             }
         case 5:  // z == Lz
             if (ind.k < nz - 1) {
                 return tuple_to_linear(Index3D(ind.i, ind.j, ind.k + 1));
-            } else {
+            }
+            else {
                 return -6;
             }
         default:
@@ -232,8 +240,8 @@ index_t VoxelMesh::get_neighbour(index_t cell_index, index_t surface_id) const{
     }
 }
 
-real_t VoxelMesh::get_surface_area(index_t, index_t surface_id) const {
-
+real_t VoxelMesh::get_surface_area(index_t, index_t surface_id) const
+{
     switch (surface_id) {
         case 0:
         case 3:
@@ -247,7 +255,6 @@ real_t VoxelMesh::get_surface_area(index_t, index_t surface_id) const {
         default:
             throw std::runtime_error("Invalid surface id");
     }
-
 }
 
 Vec3 VoxelMesh::get_center(index_t cell_index) const
@@ -267,17 +274,22 @@ Vec3 VoxelMesh::get_surface_center(index_t cell_index, index_t surface_id) const
         case 2:  // z == 0
             return Vec3((ind.i + 0.5) * dx, (ind.j + 0.5) * dy, ind.k * dz);
         case 3:  // x == Lx
-            return Vec3((ind.i + 1) * dx, (ind.j + 0.5) * dy, (ind.k + 0.5) * dz);
+            return Vec3((ind.i + 1) * dx, (ind.j + 0.5) * dy,
+                        (ind.k + 0.5) * dz);
         case 4:  // y == Ly
-            return Vec3((ind.i + 0.5) * dx, (ind.j + 1) * dy, (ind.k + 0.5) * dz);
+            return Vec3((ind.i + 0.5) * dx, (ind.j + 1) * dy,
+                        (ind.k + 0.5) * dz);
         case 5:  // z == Lz
-            return Vec3((ind.i + 0.5) * dx, (ind.j + 0.5) * dy, (ind.k + 1) * dz);
+            return Vec3((ind.i + 0.5) * dx, (ind.j + 0.5) * dy,
+                        (ind.k + 1) * dz);
         default:
             throw std::runtime_error("Invalid surface id");
     }
 }
 
-std::pair<index_t, index_t> VoxelMesh::get_boundary_crossing(Vec3 position, Vec3 direction) const{
+std::pair<index_t, index_t> VoxelMesh::get_boundary_crossing(
+    Vec3 position, Vec3 direction) const
+{
     //
     // Calculate the "time" until collision for each surface
     //
@@ -341,7 +353,9 @@ Vec3 VoxelMesh::generate_random_position(index_t cell_index, rng_t& rng) const
     return Vec3(x, y, z);
 }
 
-Vec3 VoxelMesh::generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const
+Vec3 VoxelMesh::generate_random_surface_position(index_t cell_index,
+                                                 index_t surface_id,
+                                                 rng_t& rng) const
 {
     Index3D ind = linear_to_tuple(cell_index);
 
@@ -349,23 +363,30 @@ Vec3 VoxelMesh::generate_random_surface_position(index_t cell_index, index_t sur
 
     switch (surface_id) {
         case 0:  // x == 0
-            return Vec3(ind.i * dx, (ind.j + dist(rng)) * dy, (ind.k + dist(rng)) * dz);
+            return Vec3(ind.i * dx, (ind.j + dist(rng)) * dy,
+                        (ind.k + dist(rng)) * dz);
         case 1:  // y == 0
-            return Vec3((ind.i + dist(rng)) * dx, ind.j * dy, (ind.k + dist(rng)) * dz);
+            return Vec3((ind.i + dist(rng)) * dx, ind.j * dy,
+                        (ind.k + dist(rng)) * dz);
         case 2:  // z == 0
-            return Vec3((ind.i + dist(rng)) * dx, (ind.j + dist(rng)) * dy, ind.k * dz);
+            return Vec3((ind.i + dist(rng)) * dx, (ind.j + dist(rng)) * dy,
+                        ind.k * dz);
         case 3:  // x == Lx
-            return Vec3((ind.i + 1) * dx, (ind.j + dist(rng)) * dy, (ind.k + dist(rng)) * dz);
+            return Vec3((ind.i + 1) * dx, (ind.j + dist(rng)) * dy,
+                        (ind.k + dist(rng)) * dz);
         case 4:  // y == Ly
-            return Vec3((ind.i + dist(rng)) * dx, (ind.j + 1) * dy, (ind.k + dist(rng)) * dz);
+            return Vec3((ind.i + dist(rng)) * dx, (ind.j + 1) * dy,
+                        (ind.k + dist(rng)) * dz);
         case 5:  // z == Lz
-            return Vec3((ind.i + dist(rng)) * dx, (ind.j + dist(rng)) * dy, (ind.k + 1) * dz);
+            return Vec3((ind.i + dist(rng)) * dx, (ind.j + dist(rng)) * dy,
+                        (ind.k + 1) * dz);
         default:
             throw std::runtime_error("Invalid surface id");
     }
 }
 
-Vec3 VoxelMesh::transform_direction(Vec3 position, Vec3 direction) const{
+Vec3 VoxelMesh::transform_direction(Vec3 position, Vec3 direction) const
+{
     // For a voxel mesh, no transformation is needed
     return direction;
 }

@@ -71,7 +71,7 @@ class VoxelMesh : public Mesh {
     /**
      * @brief Return the normal of a given surface
      */
-    Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const;
+    Vec3 get_surface_normal(index_t cell_index, index_t surface_id, Vec3 position) const;
 
     /**
      * @brief Return the number of surfaces of a given cell

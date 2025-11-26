@@ -103,7 +103,7 @@ class RotatedTriangleMesh : public Mesh {
     /**
      * @brief Return the normal of a given surface
      */
-    Vec3 get_surface_normal(index_t cell_index, index_t surface_id) const;
+    Vec3 get_surface_normal(index_t cell_index, index_t surface_id, Vec3 position) const;
 
     /**
      * @brief Return the index of the neighbour cell that shares a given surface

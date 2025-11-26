@@ -48,7 +48,9 @@ real_t RotatedTriangleMesh::get_volume(index_t cell_index) const
     Vec2 p3 = vertices[t.ind3];
 
     // Area of the triangle in 2D
-    real_t area_triangle = 0.5 * (p2 - p1).dot(p3 - p1);
+    // This calculation assumes the triangle is stored counter-clockwise
+    real_t area_triangle = 0.5 * (-p2.y * p3.x + p1.y * (-p2.x + p3.x) +
+                                  p1.x * (p2.y - p3.y) + p2.x * p3.y);
 
     // radial coordinate of the centroid of the triangle
     real_t centroid_r = (p1.x + p2.x + p3.x) / 3;
@@ -77,10 +79,10 @@ real_t find_cone_intersection(const Vec2& p1,
     real_t k_r = r_b - r_a;
     real_t k_z = z_b - z_a;
 
-    if(std::abs(k_z) < 1.0e-10) {
+    if (std::abs(k_z) < 1.0e-10) {
         // The cone is actually a plane perpendicular to the z axis
         // Solve for t in the equation pos.z + t * vel.z = z_a
-        if(is_on_surface or std::abs(vel.z) < 1.0e-12) {
+        if (is_on_surface or std::abs(vel.z) < 1.0e-12) {
             return -1;
         }
         real_t t = (z_a - pos.z) / vel.z;
@@ -99,7 +101,7 @@ real_t find_cone_intersection(const Vec2& p1,
     real_t discriminant = b * b - 4 * a * c;
     real_t t1;
     real_t t2;
-    if(std::abs(discriminant) < 1.0e-16) {
+    if (std::abs(discriminant) < 1.0e-16) {
         discriminant = 0.;
     }
     if (discriminant < 0.) {
@@ -129,6 +131,18 @@ real_t find_cone_intersection(const Vec2& p1,
             t1 = 2 * c / (-b + std::sqrt(discriminant));
             t2 = c / (a * t1);
         }
+    }
+
+    // Make sure t1 and t2 are not outside of the line segment
+    real_t z1 = pos.z + t1 * vel.z;
+    real_t zmin = std::min(z_a, z_b) - 1.0e-10;
+    real_t zmax = std::max(z_a, z_b) + 1.0e-10;
+    if (z1 < zmin or z1 > zmax) {
+        t1 = -1;
+    }
+    real_t z2 = pos.z + t2 * vel.z;
+    if (z2 < zmin or z2 > zmax) {
+        t2 = -1;
     }
 
     // Return the smallest positive solution
@@ -191,7 +205,6 @@ CellCrossing RotatedTriangleMesh::get_next_crossing(ParticleGeometry& p) const
 
     CellCrossing crossing = CellCrossing(pos_new, t_new, surface_id);
 
-
     if (id_new < 0) {
         // If the id is negative, it is a boundary,
         // so negate it and subtract 1 (zero based) to get the boundary id
@@ -221,11 +234,38 @@ std::pair<index_t, index_t> RotatedTriangleMesh::get_boundary_crossing(
 }
 
 Vec3 RotatedTriangleMesh::get_surface_normal(index_t cell_index,
-                                             index_t surface_id) const
+                                             index_t surface_id,
+                                             Vec3 position) const
 {
-    // Note, implementing this properly will require an interface change
-    // because the normal will not be constant over the surface
-    throw std::runtime_error("get_surface_normal is not implemented");
+    TriangleIndices t = triangles[cell_index];
+    Vec2 p1 = vertices[t.ind1];
+    Vec2 p2 = vertices[t.ind2];
+    Vec2 p3 = vertices[t.ind3];
+
+    real_t r = std::sqrt(position.x * position.x + position.y * position.y);
+    real_t c = position.x / r;
+    real_t s = position.y / r;
+
+    Vec3 normal;
+    real_t rr;
+    switch (surface_id) {
+        case 0:
+            rr = p2.y - p1.y;
+            normal = Vec3(rr * c, rr * s, p1.x - p2.x);
+            break;
+        case 1:
+            rr = p3.y - p2.y;
+            normal = Vec3(rr * c, rr * s, p2.x - p3.x);
+            break;
+        case 2:
+            rr = p1.y - p3.y;
+            normal = Vec3(rr * c, rr * s, p3.x - p1.x);
+            break;
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
+
+    return normal / normal.norm();
 }
 
 index_t RotatedTriangleMesh::get_n_surfaces(index_t cell_index) const
@@ -314,14 +354,16 @@ Vec3 RotatedTriangleMesh::generate_random_position(index_t cell_index,
 }
 
 Vec3 RotatedTriangleMesh::generate_random_surface_position(index_t cell_index,
-                                                    index_t surface_id,
-                                                    rng_t& rng) const
+                                                           index_t surface_id,
+                                                           rng_t& rng) const
 {
     throw std::runtime_error(
         "generate_random_surface_position is not implemented");
 }
 
-Vec3 RotatedTriangleMesh::transform_direction(Vec3 position, Vec3 direction) const{
+Vec3 RotatedTriangleMesh::transform_direction(Vec3 position,
+                                              Vec3 direction) const
+{
     // Get cos and sine of the angle of the position
     real_t r = std::sqrt(position.x * position.x + position.y * position.y);
     real_t c = position.x / r;

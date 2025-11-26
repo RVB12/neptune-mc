@@ -190,7 +190,8 @@ CellCrossing NonUniformMesh::get_next_crossing(ParticleGeometry& p) const
 }
 
 Vec3 NonUniformMesh::get_surface_normal(index_t cell_index,
-                                        index_t surface_id) const
+                                        index_t surface_id,
+                                        Vec3 position) const
 {
     switch (surface_id) {
         case 0:
@@ -392,7 +393,8 @@ Vec3 NonUniformMesh::generate_random_surface_position(index_t cell_index,
     }
 }
 
-Vec3 NonUniformMesh::transform_direction(Vec3 position, Vec3 direction) const{
+Vec3 NonUniformMesh::transform_direction(Vec3 position, Vec3 direction) const
+{
     // For a non-uniform mesh, no transformation is needed
     return direction;
 }

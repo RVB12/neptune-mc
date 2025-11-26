@@ -286,7 +286,8 @@ void make_neighborlist(const vector<Vec2>& vertices,
 }
 
 Vec3 TriangleMesh::get_surface_normal(index_t cell_index,
-                                      index_t surface_id) const
+                                      index_t surface_id,
+                                      Vec3 position) const
 {
     TriangleIndices t = triangles[cell_index];
     Vec2 p1 = vertices[t.ind1];
@@ -434,7 +435,8 @@ Vec3 TriangleMesh::generate_random_surface_position(index_t cell_index,
     }
 }
 
-Vec3 TriangleMesh::transform_direction(Vec3 position, Vec3 direction) const{
+Vec3 TriangleMesh::transform_direction(Vec3 position, Vec3 direction) const
+{
     // For a triangle mesh, no transformation is needed
     return direction;
 }
