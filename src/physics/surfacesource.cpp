@@ -26,6 +26,13 @@ Particle SurfaceSource::generate_particle(index_t i_particle, const Mesh& mesh)
 
     p.geometry.velocity = Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
 
+    // Make sure that the velocity is pointing away from the surface
+    Vec3 normal = mesh.get_surface_normal(cell_idx, surface_id, p.geometry.position);
+    if (p.geometry.velocity.dot(normal) > 0) {
+        // Reflect the velocity vector
+        p.geometry.velocity = p.geometry.velocity - normal * (2 * p.geometry.velocity.dot(normal));
+    }
+
     return p;
 }
 

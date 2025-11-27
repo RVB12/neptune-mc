@@ -158,7 +158,7 @@ A surface source is defined as follows:
 {
     "sources": [
         {
-            "type": "volume",
+            "type": "surface",
             "cell_idx": int,
             "surface_id": int,
             "vel_mean": [float, float, float], // unit m/s
