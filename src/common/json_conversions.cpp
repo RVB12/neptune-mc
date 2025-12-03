@@ -113,6 +113,12 @@ void from_json(const nlohmann::json& j, std::unique_ptr<BoundaryCondition>& m)
         real_t coeff;
         j.at("absorption_coefficient").get_to(coeff);
         m = std::make_unique<PartiallySpecularBC>(coeff);
+    } else if(type == "mixed"){
+        real_t alpha;
+        real_t coeff;
+        j.at("alpha").get_to(alpha);
+        j.at("absorption_coefficient").get_to(coeff);
+        m = std::make_unique<MixedDiffuseReflectiveBC>(alpha, coeff);
     } else {
         throw std::runtime_error("Unknown boundary condition type");
     }
