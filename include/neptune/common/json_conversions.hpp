@@ -152,14 +152,11 @@ struct adl_serializer<neptune::SurfaceSource> {
     {
         neptune::index_t num_particles = j.at("n_particles");
         neptune::real_t intensity = j.at("intensity");
-        neptune::Vec3 vel_mean = j.at("vel_mean");
-        neptune::real_t vel_stddev = j.at("vel_stddev");
+        neptune::real_t vel_magnitude = j.at("vel_magnitude");
         neptune::index_t cell_idx = j.at("cell_idx");
         neptune::index_t surface_id = j.at("surface_id");
 
-        neptune::SurfaceSource s(num_particles, intensity, cell_idx, surface_id, vel_mean,
-                                  vel_stddev);
-
+        neptune::SurfaceSource s(num_particles, intensity, cell_idx, surface_id, vel_magnitude);
         return s;
     }
 };

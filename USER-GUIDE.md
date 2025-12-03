@@ -161,8 +161,7 @@ A surface source is defined as follows:
             "type": "surface",
             "cell_idx": int,
             "surface_id": int,
-            "vel_mean": [float, float, float], // unit m/s
-            "vel_stddev": float, // unit m/s
+            "vel_magnitude": float, // unit m/s
             "n_particles": int,
             "intensity": float
         }
@@ -170,7 +169,7 @@ A surface source is defined as follows:
 }
 ```
 
-This generates particles on a specified surface of a specified cell. This is particularly useful for recombination at the wall. Although we note that the velocity distribution is not correct there.
+This generates particles on a specified surface of a specified cell. This is particularly useful for recombination at the wall. The velocity is given a specific magnitude (this would typically be the thermal velocity $\sqrt{\frac{8 T}{\pi m}}$) and the direction is sampled from the cosine distribution around the normal.
 
 #### Boundary conditions
 

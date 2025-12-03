@@ -16,6 +16,9 @@ namespace neptune {
  *
  * The particles will be generated somewhere on a specified surface of a
  * specified cell.
+ * 
+ * The particle gets launched with a set velocity magnitude (v_norm) and a
+ * direction sampled from a cosine distribution around the surface normal.
  *
  */
 class SurfaceSource : public Source {
@@ -24,13 +27,11 @@ class SurfaceSource : public Source {
                   real_t intensity_,
                   index_t cell_idx_,
                   index_t surface_id_,
-                  Vec3 vel_mean_,
-                  real_t vel_stddev_)
+                  real_t v_norm_)
         : Source(num_particles_, intensity_),
           cell_idx(cell_idx_),
           surface_id(surface_id_),
-          vel_mean(vel_mean_),
-          vel_stddev(vel_stddev_)
+          v_norm(v_norm_)
     {}
 
     /**
@@ -38,8 +39,7 @@ class SurfaceSource : public Source {
      */
     Particle generate_particle(index_t i_particle, const Mesh& mesh);
 
-    Vec3 vel_mean;      // Mean velocity of the particles
-    real_t vel_stddev;  // Standard deviation of the velocity of the particles
+    real_t v_norm;  // Velocity magnitude of the particles
     index_t cell_idx = 0;  // The cell index where the particles are generated
     index_t surface_id = 0;  // The surface id where the particles are generated
 };

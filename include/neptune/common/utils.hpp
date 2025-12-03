@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <random>
+#include <stdexcept>
 
 namespace neptune {
 
@@ -66,6 +67,48 @@ inline real_t sample_first_exit_time(real_t v,
 
             // TODO: correct this, we should sample sometimes
             return std::numeric_limits<real_t>::infinity();
+        }
+    }
+}
+
+
+/**
+ * Generate a sample from N(0, 1) truncated to [a, ∞) using Robert's algorithm
+ * Note, this will get more and more expensive for larger a, it may
+ * need to be replaced with a fancier algorithm at some point
+ * 
+ * @param a The truncation point
+ * @param rng The random number generator
+ * @return A sample from the truncated normal distribution
+ */
+inline real_t truncated_normal_right_tail(real_t a, std::mt19937& rng)
+{
+    if (a <= 0.0) {
+        // For small a, use rejection from standard normal
+        std::normal_distribution<> normal(0.0, 1.0);
+        real_t x;
+        do {
+            x = normal(rng);
+        } while (x < a);
+        return x;
+    }
+
+    // For a > 0, use exponential proposal
+    real_t alpha = (a + std::sqrt(a * a + 4.0)) / 2.0;
+    std::exponential_distribution<> exponential(alpha);
+    std::uniform_real_distribution<> uniform(0.0, 1.0);
+
+    int i = 0;
+    while (true) {
+        real_t z = exponential(rng) + a;
+        real_t u = uniform(rng);
+        if (u <= std::exp(-0.5 * std::pow(z - alpha, 2))) {
+            return z;
+        }
+        i++;
+        if(i > 1000000){
+            throw std::runtime_error("truncated_normal_right_tail: "
+                                     "Too many iterations in sampling");
         }
     }
 }
