@@ -69,6 +69,10 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(neptune PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
+# Eigen
+find_package(Eigen3 REQUIRED NO_MODULE)
+target_link_libraries(neptune PUBLIC Eigen3::Eigen)
+
 # Main runner
 add_executable(neptune-generate-neighborlist src/generate_neighborlist.cpp)
 target_link_libraries(neptune-generate-neighborlist PRIVATE neptune)
