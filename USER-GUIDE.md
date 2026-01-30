@@ -10,6 +10,7 @@ You should build using CMake. You'll need:
 - C++ compilers
 - Catch2 (This is only needed if you want to run the test suite)
 - OpenMP (Optional, but highly recommended to run in parallel)
+- Eigen (This is only needed for the sparse matrices in the fluid solver, it is not currently optional, but can be made optional upon request)
 
 To build, run:
 - `mkdir build`
