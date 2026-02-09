@@ -16,7 +16,8 @@ EventType update_particle_arcmc(
     Particle& p,
     real_t t_final,
     index_t M,
-    real_t& W)
+    real_t& V2_eff,
+    real_t& V2_eff_x)
 {
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
@@ -67,7 +68,7 @@ EventType update_particle_arcmc(
 
         // Draw a new "velocity" according to the ARCMC method
 
-        double S;
+        double S, W;
         if (M <= 4) {
             std::exponential_distribution<double> exp_dist(1.);
             S = 0.0;
@@ -105,6 +106,9 @@ EventType update_particle_arcmc(
         real_t bgk_std = bgk_processes[0]->bgk_stddev[cell_id];
 
         p.geometry.velocity = drift + std::sqrt(W) * bgk_std * xi;
+        V2_eff = drift.norm2() + 3 * bgk_std * bgk_std;
+        V2_eff_x = drift.x * drift.x + bgk_std * bgk_std;
+
         p.u = S;
 
         // Reset boundary id (we are no longer at a boundary)
@@ -178,7 +182,8 @@ void simulate_armc(
             // Generate particle
             Particle particle =
                 sources[i_source]->generate_particle(i_particle, mesh);
-            double W = 1.0;
+            real_t V2_eff = particle.geometry.velocity.norm();
+            real_t V2_eff_x = particle.geometry.velocity.x * particle.geometry.velocity.x;
 
             particle.intensity = sources[i_source]->intensity() /
                                  sources[i_source]->num_particles();
@@ -188,9 +193,9 @@ void simulate_armc(
                 // Simulate the particle up to the next event
                 EventType event = update_particle_arcmc(
                     mesh, bgk_processes, ion_processes, boundary_conditions,
-                    particle, params.t_final, M, W);
+                    particle, params.t_final, M, V2_eff, V2_eff_x);
 
-                estimator.add_track_length(particle, particle_old, mesh, W);
+                estimator.add_track_length(particle, particle_old, mesh, V2_eff, V2_eff_x);
 
                 if (particle.weight < 1.0e-4) {
                     break;
@@ -205,7 +210,7 @@ void simulate_armc(
                     num_collisions += M;
                 }
                 else if (event == EventType::FINAL_TIME) {
-                    estimator.add_final(particle, mesh, W);
+                    estimator.add_final(particle, mesh, V2_eff, V2_eff_x);
                     particle.weight = 0;
                     break;
                 }

@@ -102,7 +102,8 @@ class ArcmcEstimator {
     void add_track_length(const Particle& particle,
                           const Particle& particle_old,
                           const Mesh& mesh,
-                          real_t W);
+                          real_t V2_corr,
+                          real_t V2_corr_x);
     /**
      * Add the influence of the particle to the estimates
      *
@@ -115,7 +116,10 @@ class ArcmcEstimator {
      * @param mesh         Mesh
      *                     The mesh
      */
-    void add_final(const Particle& particle, const Mesh& mesh, real_t W);
+    void add_final(const Particle& particle,
+                   const Mesh& mesh,
+                   real_t V2_corr,
+                   real_t V2_corr_x);
 
     /**
      * Combine the estimates of two estimators
@@ -229,11 +233,17 @@ class Estimator {
     vector<real_t> energy_x_final;
 };
 
-#pragma omp declare reduction(EstimatorReduction : Estimator : omp_out.combine(omp_in)) initializer(omp_priv = Estimator(omp_orig.size()))
+#pragma omp declare reduction(EstimatorReduction \
+:Estimator : omp_out.combine(omp_in))            \
+    initializer(omp_priv = Estimator(omp_orig.size()))
 
-#pragma omp declare reduction(FluidEstimatorReduction : FluidEstimator : omp_out.combine(omp_in)) initializer(omp_priv = FluidEstimator(omp_orig.size(), omp_orig.dt_fluid))
+#pragma omp declare reduction(FluidEstimatorReduction \
+:FluidEstimator : omp_out.combine(omp_in))            \
+    initializer(omp_priv = FluidEstimator(omp_orig.size(), omp_orig.dt_fluid))
 
-#pragma omp declare reduction(ArcmcEstimatorReduction : ArcmcEstimator : omp_out.combine(omp_in)) initializer(omp_priv = ArcmcEstimator(omp_orig.size()))
+#pragma omp declare reduction(ArcmcEstimatorReduction \
+:ArcmcEstimator : omp_out.combine(omp_in))            \
+    initializer(omp_priv = ArcmcEstimator(omp_orig.size()))
 
 }  // namespace neptune
 

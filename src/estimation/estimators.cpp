@@ -149,7 +149,8 @@ void FluidEstimator::finalize(
 void ArcmcEstimator::add_track_length(const Particle& particle,
                                  const Particle& particle_old,
                                  const Mesh& mesh,
-                                 real_t W)
+                                 real_t V2_eff,
+                                 real_t V2_eff_x)
 {
     real_t weight_old = particle_old.weight;
     real_t t_old = particle_old.t;
@@ -165,15 +166,15 @@ void ArcmcEstimator::add_track_length(const Particle& particle,
     momentum_z[cell_id_old] += particle_old.geometry.velocity.z * s;
 
     energy[cell_id_old] +=
-        s * (0.5 * particle_old.mass * particle_old.geometry.velocity.norm2()) *
-        constants::m_p / constants::eV_to_Joules * (1/W);
+        s * (0.5 * particle_old.mass * V2_eff) *
+        constants::m_p / constants::eV_to_Joules;
 
     energy_x[cell_id_old] +=
-        s * (0.5 * particle_old.mass * particle_old.geometry.velocity.x * particle_old.geometry.velocity.x) *
-        constants::m_p / constants::eV_to_Joules * (1/W);
+        s * (0.5 * particle_old.mass * V2_eff_x) *
+        constants::m_p / constants::eV_to_Joules;
 }
 
-void ArcmcEstimator::add_final(const Particle& particle, const Mesh& mesh, real_t W)
+void ArcmcEstimator::add_final(const Particle& particle, const Mesh& mesh, real_t V2_eff, real_t V2_eff_x)
 {
     index_t cell_id = particle.geometry.cell_id;
     real_t volume = mesh.get_volume(cell_id);
@@ -186,12 +187,12 @@ void ArcmcEstimator::add_final(const Particle& particle, const Mesh& mesh, real_
     momentum_z_final[cell_id] += particle.geometry.velocity.z *
                                  particle.weight / volume * particle.intensity;
     energy_final[cell_id] +=
-        (0.5 * particle.mass * particle.geometry.velocity.norm2()) *
-        particle.weight / volume * particle.intensity * (1/W);
+        (0.5 * particle.mass * V2_eff) *
+        particle.weight / volume * particle.intensity;
 
     energy_x_final[cell_id] +=
-        (0.5 * particle.mass * particle.geometry.velocity.x * particle.geometry.velocity.x) *
-        particle.weight / volume * particle.intensity * (1/W);
+        (0.5 * particle.mass * V2_eff_x) *
+        particle.weight / volume * particle.intensity;
 }
 
 void ArcmcEstimator::combine(const ArcmcEstimator& other)
