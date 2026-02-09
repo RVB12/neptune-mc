@@ -56,6 +56,17 @@ void simulate_kdmc(
     real_t dt,
     bool use_new_version = true);
 
+void simulate_armc(
+    Mesh& mesh,
+    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
+    vector<std::unique_ptr<Source>>& sources,
+    ArcmcEstimator& estimator,
+    vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
+    SimulationParams params,
+    ExecutionStatistics& stats,
+    index_t M);
+
 }  // namespace neptune
 
 #endif

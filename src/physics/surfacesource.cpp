@@ -52,6 +52,9 @@ Particle SurfaceSource::generate_particle(index_t i_particle, const Mesh& mesh)
     
     p.geometry.velocity = direction * v_norm;
 
+    std::exponential_distribution<real_t> dist_t(1.0);
+    p.u = dist_t(p.rng);
+
     return p;
 }
 

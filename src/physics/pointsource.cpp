@@ -33,6 +33,9 @@ Particle PointSource::generate_particle(index_t i_particle, const Mesh& mesh)
 
     p.geometry.velocity = Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
 
+    std::exponential_distribution<real_t> dist_t(1.0);
+    p.u = dist_t(p.rng);
+
     return p;
 }
 

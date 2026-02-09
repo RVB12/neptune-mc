@@ -5,6 +5,8 @@
 #include "neptune/common/version.hpp"
 #include "neptune/simulator/simulator.hpp"
 
+enum class Algorithm { Standard, KDMC, ARMC };
+
 using namespace neptune;
 
 int main(int argc, char** argv)
@@ -54,6 +56,33 @@ int main(int argc, char** argv)
 
     input_file >> j;
 
+    Algorithm algorithm = Algorithm::Standard;
+    if (j.contains("algorithm")) {
+        std::string algorithm_str = j["algorithm"];
+        if (algorithm_str == "standard") {
+            algorithm = Algorithm::Standard;
+        }
+        else if (algorithm_str == "kdmc") {
+            algorithm = Algorithm::KDMC;
+        }
+        else if (algorithm_str == "arcmc") {
+            algorithm = Algorithm::ARMC;
+        }
+        else {
+            std::cerr << "Unknown algorithm: " << algorithm_str << std::endl;
+            return 1;
+        }
+    }
+
+    if(j.contains("dt") && algorithm != Algorithm::KDMC) {
+        std::cerr << "Warning: 'dt' is only used for KDMC, it will be ignored for other algorithms." << std::endl;
+    }
+
+     if(j.contains("M") && algorithm != Algorithm::ARMC) {
+        std::cerr << "Warning: 'M' is only used for ARMC, it will be ignored for other algorithms." << std::endl;
+
+    }
+
     ExecutionStatistics stats;
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -99,7 +128,18 @@ int main(int argc, char** argv)
     //
     // Run the simulation
     //
-    if (j.contains("dt")) {
+    if (algorithm == Algorithm::Standard) {
+        simulate(*mesh_ptr, bgk_processes, ion_processes, sources, estimator,
+                 boundary_conditions, params, stats);
+    }
+    else if (algorithm == Algorithm::KDMC) {
+        if (!j.contains("dt")) {
+            std::cerr
+                << "If running KDMC, 'dt' must be specified in the input file."
+                << std::endl;
+            return 1;
+        }
+
         real_t dt = j["dt"];
         bool use_new_kd = true;
         if (j.contains("use_old_kd")) {
@@ -131,9 +171,19 @@ int main(int argc, char** argv)
             estimator.combine(fluid_estimator);
         }
     }
-    else {
-        simulate(*mesh_ptr, bgk_processes, ion_processes, sources, estimator,
-                 boundary_conditions, params, stats);
+    else if (algorithm == Algorithm::ARMC) {
+        if (!j.contains("M")) {
+            std::cerr
+                << "If running ARMC, 'M' must be specified in the input file."
+                << std::endl;
+            return 1;
+        }
+
+        index_t M = j["M"];
+        ArcmcEstimator estimator2(mesh_ptr->n_cells());
+        simulate_armc(*mesh_ptr, bgk_processes, ion_processes, sources,
+                      estimator2, boundary_conditions, params, stats, M);
+        estimator.combine(estimator2);
     }
 
     end = std::chrono::high_resolution_clock::now();

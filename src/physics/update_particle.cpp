@@ -14,6 +14,7 @@ EventType update_particle(
 {
     std::uniform_real_distribution<real_t> r_unif(0, 1);
     std::normal_distribution<real_t> r_normal(0, 1);
+    std::exponential_distribution<real_t> r_exp(1.0);
 
     index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
@@ -23,11 +24,8 @@ EventType update_particle(
     for (int i = 0; i < bgk_processes.size(); i++) {
         collision_rate += bgk_processes[i]->rate[cell_id];
     }
-
-    // random number to determine time till collision
-    real_t eps = r_unif(p.rng);
     // time till collision
-    real_t tc = -std::log(eps) / collision_rate;
+    real_t tc = p.u / collision_rate;
 
     // Calculate the next cell crossing
     CellCrossing crossing = mesh.get_next_crossing(p.geometry);
@@ -77,6 +75,7 @@ EventType update_particle(
                     Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
                 p.geometry.velocity = mesh.transform_direction(
                     p.geometry.position, new_velocity_notransform);
+                p.u = r_exp(p.rng);
                 break;
             }
         }
@@ -89,6 +88,7 @@ EventType update_particle(
     else {
         event_type = EventType::CELL_CROSSING;
         dt = crossing.t;
+        p.u -= collision_rate * dt; // Update the scaled time till next collision
         if (crossing.next_cell_id != -1) {
             // Regular grid crossing, move the particle to the next
             // cell
@@ -101,7 +101,8 @@ EventType update_particle(
             p.geometry.position = crossing.position;
             p.geometry.boundary_id = crossing.surface_id;
 
-            Vec3 normal = mesh.get_surface_normal(cell_id, crossing.surface_id, crossing.position);
+            Vec3 normal = mesh.get_surface_normal(cell_id, crossing.surface_id,
+                                                  crossing.position);
 
             boundary_conditions[crossing.boundary_condition_id]->apply(p,
                                                                        normal);

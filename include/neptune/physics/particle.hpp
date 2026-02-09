@@ -4,8 +4,8 @@
 #include <cassert>
 
 #include "neptune/common/utils.hpp"
-#include "neptune/geometry/vec3.hpp"
 #include "neptune/geometry/particlegeometry.hpp"
+#include "neptune/geometry/vec3.hpp"
 
 namespace neptune {
 
@@ -16,7 +16,7 @@ class Particle {
    public:
     /**
      * @brief Construct a new Particle object
-     * 
+     *
      * @param id_ A unique id for the particle
      *            Note: it is super important that this id is unique.
      *            it is used to seed the random number generator for
@@ -30,9 +30,13 @@ class Particle {
     index_t id = -1;      // (unique) id of the particle
     real_t t = 0;         // Time
     real_t weight = 1.0;  // Weight (used for continuous ionisation)
-    real_t mass = 2.0;    // Mass of the particle [atom mass units] (default: deuterium)
-    real_t intensity = 1.0; // How many particles this particle represents
-    rng_t rng;            // Random number generator
+    real_t mass =
+        2.0;  // Mass of the particle [atom mass units] (default: deuterium)
+    real_t intensity = 1.0;  // How many particles this particle represents
+    rng_t rng;               // Random number generator
+    real_t u = 0;  // Scaled time till next background collision, this is
+                   // typically drawn from an exp(1) distribution, but can be
+                   // scaled for ARMC simulations
 };
 
 }  // namespace neptune

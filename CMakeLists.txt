@@ -46,6 +46,7 @@ list(APPEND neptune_SOURCES
     src/simulator/simulate_kdmc.cpp
     src/estimation/estimators.cpp
     src/finitevolume/advectiondiffusionsolver.cpp
+    src/simulator/simulate_arcmc.cpp
 )
 
 add_library(neptune ${neptune_SOURCES})
