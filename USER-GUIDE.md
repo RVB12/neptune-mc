@@ -203,7 +203,9 @@ Some extra parameters are:
 - `max_steps`: int, the maximum number of steps a single particle can undergo before being removed. This is meant as a protection against infinite loops and we recommend setting this parameter very high to avoid biased simulations.
 - `seed`: int, the seed for this simulation. Each particle uses a random number generator with seed `seed + particle_id`. Be careful, this means that simulations with close seeds will be heavily correlated. (Fixing this with proper seed selection for the particles is in the works)
 - `t_final`: float, maximum time to simulate the particles. Also enables a special final_time tally
-- `dt`: float, timestep for KDMC. If this parameter is set, KDMC will be used instead of MC.
+- `algorithm`: string, either `standard`, `kdmc`, or `arcmc`. By default, the standard algorithm is used.
+- `dt`: float, timestep for KDMC. If `kdmc` is selected for the algorithm, this parameter is required.
+- `M`: int, parameter for ARC-MC that determines the number of collisions to combine. If `arcmc` is selected, this parameter is required.
 
 ### JSON Output
 
