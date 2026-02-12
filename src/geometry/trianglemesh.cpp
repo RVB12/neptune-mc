@@ -435,10 +435,4 @@ Vec3 TriangleMesh::generate_random_surface_position(index_t cell_index,
     }
 }
 
-Vec3 TriangleMesh::transform_direction(Vec3 position, Vec3 direction) const
-{
-    // For a triangle mesh, no transformation is needed
-    return direction;
-}
-
 }  // namespace neptune

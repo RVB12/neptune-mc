@@ -115,16 +115,10 @@ class VoxelMesh : public Mesh {
     Vec3 generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const;
 
     /**
-     * @brief Transform a direction vector to take the mesh and the local position of a particle into account
-     * 
-     * (This is useful for meshes that represent curved geometries, such as rotated triangle meshes)
-     * 
-     * @param position The current position of the particle
-     * @param direction The direction to be transformed
-     * 
-     * @return Vec3 The transformed direction
+     * @brief Return whether the mesh uses toroidal coordinates or carthesian
+     * coordinates
      */
-    Vec3 transform_direction(Vec3 position, Vec3 direction) const;
+    bool is_toroidal() const { return false; }
 
     // Member variables
     real_t Lx = 0.;  // Length of the mesh in x direction

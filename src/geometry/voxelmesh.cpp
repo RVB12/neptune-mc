@@ -385,10 +385,4 @@ Vec3 VoxelMesh::generate_random_surface_position(index_t cell_index,
     }
 }
 
-Vec3 VoxelMesh::transform_direction(Vec3 position, Vec3 direction) const
-{
-    // For a voxel mesh, no transformation is needed
-    return direction;
-}
-
 }  // namespace neptune

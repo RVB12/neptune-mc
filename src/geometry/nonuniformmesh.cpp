@@ -393,10 +393,4 @@ Vec3 NonUniformMesh::generate_random_surface_position(index_t cell_index,
     }
 }
 
-Vec3 NonUniformMesh::transform_direction(Vec3 position, Vec3 direction) const
-{
-    // For a non-uniform mesh, no transformation is needed
-    return direction;
-}
-
 }  // namespace neptune

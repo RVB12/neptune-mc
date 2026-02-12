@@ -1,5 +1,6 @@
 #include "neptune/physics/update_particle.hpp"
 
+#include "neptune/geometry/cart_to_tor.hpp"
 #include "neptune/physics/physicalconstants.hpp"
 
 namespace neptune {
@@ -73,8 +74,15 @@ EventType update_particle(
                     bgk_processes[i]->bgk_mean_z[cell_id], stddev);
                 Vec3 new_velocity_notransform =
                     Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
-                p.geometry.velocity = mesh.transform_direction(
-                    p.geometry.position, new_velocity_notransform);
+                if (mesh.is_toroidal()) {
+                    // If the mesh uses toroidal coordinates, we need to
+                    // transform the velocity
+                    new_velocity_notransform = transform_tor_dir_to_cart(
+                        p.geometry.position, new_velocity_notransform);
+                }
+                else {
+                    p.geometry.velocity = new_velocity_notransform;
+                }
                 p.u = r_exp(p.rng);
                 break;
             }
@@ -88,7 +96,8 @@ EventType update_particle(
     else {
         event_type = EventType::CELL_CROSSING;
         dt = crossing.t;
-        p.u -= collision_rate * dt; // Update the scaled time till next collision
+        p.u -=
+            collision_rate * dt;  // Update the scaled time till next collision
         if (crossing.next_cell_id != -1) {
             // Regular grid crossing, move the particle to the next
             // cell

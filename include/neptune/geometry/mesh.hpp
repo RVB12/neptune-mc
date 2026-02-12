@@ -1,11 +1,11 @@
 #ifndef NEPTUNE_MESH_HPP
 #define NEPTUNE_MESH_HPP
 
+#include "neptune/common/utils.hpp"
+#include "neptune/common/vector.hpp"
 #include "neptune/geometry/cellcrossing.hpp"
 #include "neptune/geometry/particlegeometry.hpp"
 #include "neptune/geometry/vec2.hpp"
-#include "neptune/common/vector.hpp"
-#include "neptune/common/utils.hpp"
 
 namespace neptune {
 
@@ -39,7 +39,7 @@ class Mesh {
     /**
      * Find the cell index corresponding to a given position.
      * Note: this may be very slow for unstructured meshes.
-     * 
+     *
      * returns -1 if no cell was found.
      */
     virtual index_t get_cell_index(Vec3 position) const = 0;
@@ -51,13 +51,15 @@ class Mesh {
 
     /**
      * @brief Return the normal of a given surface
-     * 
+     *
      * @param cell_index The index of the cell
      * @param surface_id The id of the surface within the cell
      * @param position The position on the surface where the normal is requested
      *                 (this is needed for curved surfaces)
      */
-    virtual Vec3 get_surface_normal(index_t cell_index, index_t surface_id, Vec3 position) const = 0;
+    virtual Vec3 get_surface_normal(index_t cell_index,
+                                    index_t surface_id,
+                                    Vec3 position) const = 0;
 
     /**
      * @brief Return the number of surfaces of a given cell
@@ -67,12 +69,14 @@ class Mesh {
     /**
      * @brief Return the index of the neighbour cell that shares a given surface
      */
-    virtual index_t get_neighbour(index_t cell_index, index_t surface_id) const = 0;
+    virtual index_t get_neighbour(index_t cell_index,
+                                  index_t surface_id) const = 0;
 
     /**
      * @brief Return the surface area of a given surface of a cell
      */
-    virtual real_t get_surface_area(index_t cell_index, index_t surface_id) const = 0;
+    virtual real_t get_surface_area(index_t cell_index,
+                                    index_t surface_id) const = 0;
 
     /**
      * @brief Return the center of a given cell
@@ -82,35 +86,34 @@ class Mesh {
     /**
      * @brief Return the center of a given surface of a cell
      */
-    virtual Vec3 get_surface_center(index_t cell_index, index_t surface_id) const = 0;
+    virtual Vec3 get_surface_center(index_t cell_index,
+                                    index_t surface_id) const = 0;
 
     /**
-     * @brief Return the first boundary crossing (i.e. an actual boundary, not a cell boundary)
-     * That a particle will cross.
+     * @brief Return the first boundary crossing (i.e. an actual boundary, not a
+     * cell boundary) That a particle will cross.
      */
-    virtual std::pair<index_t, index_t> get_boundary_crossing(Vec3 position, Vec3 direction) const = 0;
+    virtual std::pair<index_t, index_t> get_boundary_crossing(
+        Vec3 position, Vec3 direction) const = 0;
 
     /**
      * @brief Generate a random position within a given cell
      */
-    virtual Vec3 generate_random_position(index_t cell_index, rng_t& rng) const = 0;
+    virtual Vec3 generate_random_position(index_t cell_index,
+                                          rng_t& rng) const = 0;
 
     /**
      * @brief Generate a random position on a given surface of a cell
      */
-    virtual Vec3 generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const = 0;
+    virtual Vec3 generate_random_surface_position(index_t cell_index,
+                                                  index_t surface_id,
+                                                  rng_t& rng) const = 0;
 
     /**
-     * @brief Transform a direction vector to take the mesh and the local position of a particle into account
-     * 
-     * (This is useful for meshes that represent curved geometries, such as rotated triangle meshes)
-     * 
-     * @param position The current position of the particle
-     * @param direction The direction to be transformed
-     * 
-     * @return Vec3 The transformed direction
+     * @brief Return whether the mesh uses toroidal coordinates or carthesian
+     * coordinates
      */
-    virtual Vec3 transform_direction(Vec3 position, Vec3 direction) const = 0;
+    virtual bool is_toroidal() const { return false; }
 };
 
 }  // namespace neptune

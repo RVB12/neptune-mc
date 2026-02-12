@@ -403,20 +403,4 @@ Vec3 RotatedTriangleMesh::generate_random_surface_position(index_t cell_index,
     }
 }
 
-Vec3 RotatedTriangleMesh::transform_direction(Vec3 position,
-                                              Vec3 direction) const
-{
-    // Get cos and sine of the angle of the position
-    real_t r = std::sqrt(position.x * position.x + position.y * position.y);
-    real_t c = position.x / r;
-    real_t s = position.y / r;
-
-    // Rotate the direction vector
-    real_t x_new = direction.x * c + direction.y * s;
-    real_t y_new = -direction.x * s + direction.y * c;
-    real_t z_new = direction.z;
-
-    return Vec3(x_new, y_new, z_new);
-}
-
 }  // namespace neptune
