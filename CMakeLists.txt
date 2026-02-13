@@ -36,6 +36,7 @@ list(APPEND neptune_SOURCES
     src/geometry/trianglemesh.cpp
     src/geometry/rotatedtrianglemesh.cpp
     src/geometry/nonuniformmesh.cpp
+    src/geometry/rotatednonuniformmesh.cpp
     src/physics/pointsource.cpp
     src/physics/surfacesource.cpp
     src/physics/volumesource.cpp

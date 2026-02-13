@@ -47,21 +47,6 @@ real_t NonUniformMesh::get_volume(index_t cell_index) const
            (cb_z[ind.k + 1] - cb_z[ind.k]);
 }
 
-index_t binary_search(const vector<real_t>& vec, real_t value)
-{
-    index_t low = 0;
-    index_t high = vec.size() - 1;
-    while (low <= high) {
-        index_t mid = (low + high) / 2;
-        if (vec[mid] == value) return mid;
-        if (vec[mid] < value)
-            low = mid + 1;
-        else
-            high = mid - 1;
-    }
-    return low - 1;
-}
-
 index_t NonUniformMesh::get_cell_index(Vec3 p) const
 {
     Index3D ind;
@@ -194,17 +179,17 @@ Vec3 NonUniformMesh::get_surface_normal(index_t cell_index,
                                         Vec3 position) const
 {
     switch (surface_id) {
-        case 0:
+        case 0: // x == 0
             return Vec3(1, 0, 0);
-        case 1:
+        case 1: // y == 0
             return Vec3(0, 1, 0);
-        case 2:
+        case 2: // z == 0
             return Vec3(0, 0, 1);
-        case 3:
+        case 3: // x == Lx
             return Vec3(-1, 0, 0);
-        case 4:
+        case 4: // y == Ly
             return Vec3(0, -1, 0);
-        case 5:
+        case 5: // z == Lz
             return Vec3(0, 0, -1);
         default:
             throw std::runtime_error("Invalid surface id");

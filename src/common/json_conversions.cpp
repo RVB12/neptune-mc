@@ -264,6 +264,9 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Mesh>& m)
     } else if (type == "nonuniform") {
         NonUniformMesh num = j;
         m = std::make_unique<NonUniformMesh>(num);
+    } else if (type == "rotated_nonuniform") {
+        RotatedNonUniformMesh num = j;
+        m = std::make_unique<RotatedNonUniformMesh>(num);
     }
     else {
         throw std::runtime_error("Unknown mesh type");

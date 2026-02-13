@@ -8,19 +8,20 @@
 
 #include "neptune/common/vector.hpp"
 #include "neptune/finitevolume/fluidboundarycondition.hpp"
+#include "neptune/geometry/nonuniformmesh.hpp"
+#include "neptune/geometry/rotatednonuniformmesh.hpp"
+#include "neptune/geometry/rotatedtrianglemesh.hpp"
 #include "neptune/geometry/spatialindex.hpp"
 #include "neptune/geometry/trianglemesh.hpp"
-#include "neptune/geometry/rotatedtrianglemesh.hpp"
-#include "neptune/geometry/nonuniformmesh.hpp"
 #include "neptune/geometry/vec2.hpp"
 #include "neptune/geometry/vec3.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
 #include "neptune/physics/boundarycondition.hpp"
 #include "neptune/physics/collision_processes.hpp"
 #include "neptune/physics/pointsource.hpp"
+#include "neptune/physics/source.hpp"
 #include "neptune/physics/surfacesource.hpp"
 #include "neptune/physics/volumesource.hpp"
-#include "neptune/physics/source.hpp"
 #include "neptune/simulator/execution_statistics.hpp"
 #include "neptune/simulator/simulator.hpp"
 
@@ -50,7 +51,8 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<Source>>& v);
 void from_json(const nlohmann::json& j, std::unique_ptr<BoundaryCondition>& v);
 void from_json(const nlohmann::json& j,
                vector<std::unique_ptr<BoundaryCondition>>& v);
-void from_json(const nlohmann::json& j, std::unique_ptr<FluidBoundaryCondition>& v);
+void from_json(const nlohmann::json& j,
+               std::unique_ptr<FluidBoundaryCondition>& v);
 void from_json(const nlohmann::json& j,
                vector<std::unique_ptr<FluidBoundaryCondition>>& v);
 void from_json(const nlohmann::json& j,
@@ -156,7 +158,8 @@ struct adl_serializer<neptune::SurfaceSource> {
         neptune::index_t cell_idx = j.at("cell_idx");
         neptune::index_t surface_id = j.at("surface_id");
 
-        neptune::SurfaceSource s(num_particles, intensity, cell_idx, surface_id, vel_magnitude);
+        neptune::SurfaceSource s(num_particles, intensity, cell_idx, surface_id,
+                                 vel_magnitude);
         return s;
     }
 };
@@ -172,7 +175,7 @@ struct adl_serializer<neptune::VolumeSource> {
         neptune::index_t cell_idx = j.at("cell_idx");
 
         neptune::VolumeSource s(num_particles, intensity, cell_idx, vel_mean,
-                                  vel_stddev);
+                                vel_stddev);
 
         return s;
     }
@@ -213,9 +216,23 @@ struct adl_serializer<neptune::NonUniformMesh> {
 
     static void to_json(json& j, const neptune::NonUniformMesh& m)
     {
-        j = json{{"cb_x", m.cb_x},
-                 {"cb_y", m.cb_y},
-                 {"cb_z", m.cb_z}};
+        j = json{{"cb_x", m.cb_x}, {"cb_y", m.cb_y}, {"cb_z", m.cb_z}};
+    }
+};
+
+template <>
+struct adl_serializer<neptune::RotatedNonUniformMesh> {
+    static neptune::RotatedNonUniformMesh from_json(const json& j)
+    {
+        neptune::vector<neptune::real_t> cb_r = j.at("cb_r");
+        neptune::vector<neptune::real_t> cb_z = j.at("cb_z");
+
+        return neptune::RotatedNonUniformMesh(cb_r, cb_z);
+    }
+
+    static void to_json(json& j, const neptune::RotatedNonUniformMesh& m)
+    {
+        j = json{{"cb_r", m.cb_r}, {"cb_z", m.cb_z}};
     }
 };
 

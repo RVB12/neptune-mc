@@ -481,6 +481,21 @@ template <typename T>
     return left;
 }
 
+inline index_t binary_search(const vector<real_t>& vec, real_t value)
+{
+    index_t low = 0;
+    index_t high = vec.size() - 1;
+    while (low <= high) {
+        index_t mid = (low + high) / 2;
+        if (vec[mid] == value) return mid;
+        if (vec[mid] < value)
+            low = mid + 1;
+        else
+            high = mid - 1;
+    }
+    return low - 1;
+}
+
 /**
  * Insert a value into a vector a position i
  * The value at position size - 1 will be lost
