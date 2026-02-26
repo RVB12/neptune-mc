@@ -106,6 +106,18 @@ EventType update_particle_arcmc(
         real_t bgk_std = bgk_processes[0]->bgk_stddev[cell_id];
 
         p.geometry.velocity = drift + std::sqrt(W) * bgk_std * xi;
+
+        // V2_eff and V2_eff_x are used for the energy estimator,
+        // since we can't just use v_eff^2 for the energy estimate, we need to calculate
+        // which is a standin for v_eff^2 that accounts for the fact that the actual velocity varies more
+
+        // Very strange behavior here, the following two lines should be better,
+        // since it corrects the mean while taking the actual velocity into account,
+        // but it seems to lead to worse estimates.
+        // Just setting V2_eff to its expected value seems to work better, maybe it has to do with some covariance or something?
+        // V2_eff = p.geometry.velocity.norm2() + 3 * bgk_std * bgk_std * (1.0 - W);
+        // V2_eff_x = p.geometry.velocity.x * p.geometry.velocity.x + bgk_std * bgk_std * (1.0 - W);
+        
         V2_eff = drift.norm2() + 3 * bgk_std * bgk_std;
         V2_eff_x = drift.x * drift.x + bgk_std * bgk_std;
 

@@ -74,6 +74,11 @@ int main(int argc, char** argv)
     real_t dt = j["dt"];
 
     vector<real_t> density_integral(density.size(), 0.0);
+    vector<real_t> momentum_x_integral(density.size(), 0.0);
+    vector<real_t> momentum_y_integral(density.size(), 0.0);
+    vector<real_t> momentum_z_integral(density.size(), 0.0);
+    vector<real_t> energy_integral(density.size(), 0.0);
+    vector<real_t> energy_x_integral(density.size(), 0.0);
 
     vector<std::unique_ptr<FluidBoundaryCondition>> boundary_conditions =
         j["boundary_conditions"];
@@ -82,7 +87,8 @@ int main(int argc, char** argv)
     advection_diffusion_solver(*mesh_ptr, boundary_conditions, advection_x,
                                advection_y, advection_z, diffusion_rate,
                                diffusion_factor, t_final, dt, density,
-                               density_integral);
+                               density_integral, momentum_x_integral, momentum_y_integral,
+                               momentum_z_integral, energy_integral, energy_x_integral);
     end = std::chrono::high_resolution_clock::now();
 
     stats.trace_time = std::chrono::duration<double>(end - start).count();
@@ -96,6 +102,11 @@ int main(int argc, char** argv)
 
     output["density"] = density;
     output["density_integral"] = density_integral;
+    output["momentum_x_integral"] = momentum_x_integral;
+    output["momentum_y_integral"] = momentum_y_integral;
+    output["momentum_z_integral"] = momentum_z_integral;
+    output["energy_integral"] = energy_integral;
+    output["energy_x_integral"] = energy_x_integral;
     output["stats"] = stats;
 
     output_file << output.dump(4);

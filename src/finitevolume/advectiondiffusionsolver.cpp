@@ -4,8 +4,6 @@
 
 namespace neptune {
 
-
-
 void advection_diffusion_solver(
     const Mesh& mesh,
     const vector<std::unique_ptr<FluidBoundaryCondition>>& boundary_conditions,
@@ -17,13 +15,23 @@ void advection_diffusion_solver(
     real_t t_final,
     real_t dt,
     vector<real_t>& density,
-    vector<real_t>& density_integral)
+    vector<real_t>& density_integral,
+    vector<real_t>& momentum_x_integral,
+    vector<real_t>& momentum_y_integral,
+    vector<real_t>& momentum_z_integral,
+    vector<real_t>& energy_integral,
+    vector<real_t>& energy_x_integral)
 {
     index_t n_cells = mesh.n_cells();
     vector<real_t> total_flux(n_cells, 0.0);
 
     for (index_t i = 0; i < n_cells; i++) {
         density_integral[i] = 0.0;
+        momentum_x_integral[i] = 0.0;
+        momentum_y_integral[i] = 0.0;
+        momentum_z_integral[i] = 0.0;
+        energy_integral[i] = 0.0;
+        energy_x_integral[i] = 0.0;
     }
 
     // Construct the Update matrix
@@ -73,8 +81,7 @@ void advection_diffusion_solver(
                 //     (density[neighbour_id] * diffusion_factor[neighbour_id] -
                 //      density[i] * diffusion_factor[i]);
 
-                real_t temp =
-                    Dr * dot(dpdx, normal) * area * dt / volume;
+                real_t temp = Dr * dot(dpdx, normal) * area * dt / volume;
 
                 diag_coeff += temp * diffusion_factor[i];
                 neighbour_coeff -= temp * diffusion_factor[neighbour_id];
@@ -117,8 +124,7 @@ void advection_diffusion_solver(
                 //     (density[neighbour_id] * diffusion_factor[neighbour_id] -
                 //      density[i] * diffusion_factor[i]);
 
-                real_t temp =
-                    Dr * dot(dpdx, normal) * area * dt / volume;
+                real_t temp = Dr * dot(dpdx, normal) * area * dt / volume;
 
                 diag_coeff += temp * diffusion_factor[i];
                 neighbour_coeff -= temp * diffusion_factor[i];
@@ -188,9 +194,119 @@ void advection_diffusion_solver(
 
         for (index_t i = 0; i < n_cells; i++) {
             density_integral[i] += density[i] * dt2;
+
+            // TODO: this differential form is not great, we should do this in a
+            // similar flux style
+            if (i < n_cells - 1) {
+                real_t dx = mesh.get_center(i + 1).x - mesh.get_center(i).x;
+                real_t dy = mesh.get_center(i + 1).y - mesh.get_center(i).y;
+                real_t dz = mesh.get_center(i + 1).z - mesh.get_center(i).z;
+                momentum_x_integral[i] +=
+                    (density[i] * advection_x[i] -
+                     diffusion_rate[i] *
+                         (density[i + 1] * diffusion_factor[i + 1] -
+                          density[i] * diffusion_factor[i]) /
+                         dx) *
+                    dt2;
+                momentum_y_integral[i] +=
+                    (density[i] * advection_y[i] -
+                     diffusion_rate[i] *
+                         (density[i + 1] * diffusion_factor[i + 1] -
+                          density[i] * diffusion_factor[i]) /
+                         dy) *
+                    dt2;
+                momentum_z_integral[i] +=
+                    (density[i] * advection_z[i] -
+                     diffusion_rate[i] *
+                         (density[i + 1] * diffusion_factor[i + 1] -
+                          density[i] * diffusion_factor[i]) /
+                         dz) *
+                    dt2;
+
+                energy_x_integral[i] +=
+                    (0.5 * density[i] *
+                         (advection_x[i] * advection_x[i] +
+                          diffusion_factor[i]) -
+                     diffusion_rate[i] *
+                         (density[i + 1] * advection_x[i + 1] *
+                              diffusion_factor[i + 1] -
+                          density[i] * advection_x[i] * diffusion_factor[i]) /
+                         dx) *
+                    dt2;
+                energy_integral[i] +=
+                    (0.5 * density[i] *
+                         (advection_x[i] * advection_x[i] +
+                          advection_y[i] * advection_y[i] +
+                          advection_z[i] * advection_z[i] +
+                          3.0 * diffusion_factor[i]) -
+                     diffusion_rate[i] *
+                         (density[i + 1] * advection_x[i + 1] *
+                              diffusion_factor[i + 1] -
+                          density[i] * advection_x[i] * diffusion_factor[i]) /
+                         dx) *
+                    dt2;
+            }
+            else {
+                real_t dx = mesh.get_center(i - 1).x - mesh.get_center(i).x;
+                real_t dy = mesh.get_center(i - 1).y - mesh.get_center(i).y;
+                real_t dz = mesh.get_center(i - 1).z - mesh.get_center(i).z;
+                momentum_x_integral[i] +=
+                    (density[i] * advection_x[i] -
+                     diffusion_rate[i] *
+                         (density[i - 1] * diffusion_factor[i - 1] -
+                          density[i] * diffusion_factor[i]) /
+                         dx) *
+                    dt2;
+                momentum_y_integral[i] +=
+                    (density[i] * advection_y[i] -
+                     diffusion_rate[i] *
+                         (density[i - 1] * diffusion_factor[i - 1] -
+                          density[i] * diffusion_factor[i]) /
+                         dy) *
+                    dt2;
+                momentum_z_integral[i] +=
+                    (density[i] * advection_z[i] -
+                     diffusion_rate[i] *
+                         (density[i - 1] * diffusion_factor[i - 1] -
+                          density[i] * diffusion_factor[i]) /
+                         dz) *
+                    dt2;
+
+
+
+                energy_x_integral[i] +=
+                    (0.5 * density[i] *
+                         (advection_x[i] * advection_x[i] +
+                          diffusion_factor[i]) -
+                     diffusion_rate[i] *
+                         (density[i - 1] * advection_x[i - 1] *
+                              diffusion_factor[i - 1] -
+                          density[i] * advection_x[i] * diffusion_factor[i]) /
+                         dx) *
+                    dt2;
+                energy_integral[i] +=
+                    (0.5 * density[i] *
+                         (advection_x[i] * advection_x[i] +
+                          advection_y[i] * advection_y[i] +
+                          advection_z[i] * advection_z[i] +
+                          3.0 * diffusion_factor[i]) -
+                     diffusion_rate[i] *
+                         (density[i - 1] * advection_x[i - 1] *
+                              diffusion_factor[i - 1] -
+                          density[i] * advection_x[i] * diffusion_factor[i]) /
+                         dx) *
+                    dt2;
+            }
         }
 
         t += dt2;
+    }
+
+    // Multiple energy integrals by 2 * constants::m_p / constants::eV_to_Joules
+    // to change units
+    for (index_t i = 0; i < n_cells; i++) {
+        energy_x_integral[i] *= 2.0 * constants::m_p / constants::eV_to_Joules;
+        energy_integral[i] *= 2.0 * constants::m_p / constants::eV_to_Joules;
     }
 }
 

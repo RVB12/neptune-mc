@@ -24,6 +24,7 @@ namespace neptune{
      * @param dt The time step to use (s)
      * @param density On input, the particle density in each cell (m^-3)
      *                On output, the updated density in each cell (m^-3)
+     * @param density_integral The integral of the density over time in each cell (m^-3 s)
      */
     void advection_diffusion_solver(
         const Mesh& mesh,
@@ -36,7 +37,12 @@ namespace neptune{
         real_t t_final,
         real_t dt,
         vector<real_t>& density,
-        vector<real_t>& density_integral);
+        vector<real_t>& density_integral,
+        vector<real_t>& momentum_x_integral,
+        vector<real_t>& momentum_y_integral,
+        vector<real_t>& momentum_z_integral,
+        vector<real_t>& energy_integral,
+        vector<real_t>& energy_x_integral);
 
 }
 

@@ -26,7 +26,9 @@ void Estimator::add_track_length(const Particle& particle,
         constants::m_p / constants::eV_to_Joules;
 
     energy_x[cell_id_old] +=
-        s * (0.5 * particle_old.mass * particle_old.geometry.velocity.x * particle_old.geometry.velocity.x) *
+        s *
+        (0.5 * particle_old.mass * particle_old.geometry.velocity.x *
+         particle_old.geometry.velocity.x) *
         constants::m_p / constants::eV_to_Joules;
 }
 
@@ -47,7 +49,8 @@ void Estimator::add_final(const Particle& particle, const Mesh& mesh)
         particle.weight / volume * particle.intensity;
 
     energy_x_final[cell_id] +=
-        (0.5 * particle.mass * particle.geometry.velocity.x * particle.geometry.velocity.x) *
+        (0.5 * particle.mass * particle.geometry.velocity.x *
+         particle.geometry.velocity.x) *
         particle.weight / volume * particle.intensity;
 }
 
@@ -73,7 +76,11 @@ void Estimator::combine(const FluidEstimator& fluid_estimator)
 {
     for (index_t i = 0; i < density.size(); i++) {
         density[i] += fluid_estimator.fluid_density_integral[i];
-        // TODO: add momentum and energy contributions from fluid estimator
+        momentum_x[i] += fluid_estimator.fluid_momentum_x_integral[i];
+        momentum_y[i] += fluid_estimator.fluid_momentum_y_integral[i];
+        momentum_z[i] += fluid_estimator.fluid_momentum_z_integral[i];
+        energy[i] += fluid_estimator.fluid_energy_integral[i];
+        energy_x[i] += fluid_estimator.fluid_energy_x_integral[i];
     }
 }
 
@@ -133,24 +140,32 @@ void FluidEstimator::finalize(
     dt /= n_particles;
 
     fluid_density_integral.resize(density.size());
+    fluid_momentum_x_integral.resize(density.size());
+    fluid_momentum_y_integral.resize(density.size());
+    fluid_momentum_z_integral.resize(density.size());
+    fluid_energy_integral.resize(density.size());
+    fluid_energy_x_integral.resize(density.size());
 
     real_t dt_fluid2 = dt;
 
-    advection_diffusion_solver(mesh, boundary_conditions, advection_x,
-                               advection_y, advection_z, diffusion_rate,
-                               diffusion_factor, dt, dt_fluid2, density,
-                               fluid_density_integral);
+    std::cout << "Running fluid solver with dt = " << dt_fluid2 << std::endl;
+
+    advection_diffusion_solver(
+        mesh, boundary_conditions, advection_x, advection_y, advection_z,
+        diffusion_rate, diffusion_factor, dt, dt_fluid2, density,
+        fluid_density_integral, fluid_momentum_x_integral,
+        fluid_momentum_y_integral, fluid_momentum_z_integral,
+        fluid_energy_integral, fluid_energy_x_integral);
 }
 
-
 // This track length estimator is almost identical to the normal estimator
-// except that we correct the energy estimate by a factor of 1/W to account for difference
-// between the effective velocity and the actual velocity.
+// except that we correct the energy estimate by a factor of 1/W to account for
+// difference between the effective velocity and the actual velocity.
 void ArcmcEstimator::add_track_length(const Particle& particle,
-                                 const Particle& particle_old,
-                                 const Mesh& mesh,
-                                 real_t V2_eff,
-                                 real_t V2_eff_x)
+                                      const Particle& particle_old,
+                                      const Mesh& mesh,
+                                      real_t V2_eff,
+                                      real_t V2_eff_x)
 {
     real_t weight_old = particle_old.weight;
     real_t t_old = particle_old.t;
@@ -165,16 +180,17 @@ void ArcmcEstimator::add_track_length(const Particle& particle,
     momentum_y[cell_id_old] += particle_old.geometry.velocity.y * s;
     momentum_z[cell_id_old] += particle_old.geometry.velocity.z * s;
 
-    energy[cell_id_old] +=
-        s * (0.5 * particle_old.mass * V2_eff) *
-        constants::m_p / constants::eV_to_Joules;
+    energy[cell_id_old] += s * (0.5 * particle_old.mass * V2_eff) *
+                           constants::m_p / constants::eV_to_Joules;
 
-    energy_x[cell_id_old] +=
-        s * (0.5 * particle_old.mass * V2_eff_x) *
-        constants::m_p / constants::eV_to_Joules;
+    energy_x[cell_id_old] += s * (0.5 * particle_old.mass * V2_eff_x) *
+                             constants::m_p / constants::eV_to_Joules;
 }
 
-void ArcmcEstimator::add_final(const Particle& particle, const Mesh& mesh, real_t V2_eff, real_t V2_eff_x)
+void ArcmcEstimator::add_final(const Particle& particle,
+                               const Mesh& mesh,
+                               real_t V2_eff,
+                               real_t V2_eff_x)
 {
     index_t cell_id = particle.geometry.cell_id;
     real_t volume = mesh.get_volume(cell_id);
@@ -186,13 +202,11 @@ void ArcmcEstimator::add_final(const Particle& particle, const Mesh& mesh, real_
                                  particle.weight / volume * particle.intensity;
     momentum_z_final[cell_id] += particle.geometry.velocity.z *
                                  particle.weight / volume * particle.intensity;
-    energy_final[cell_id] +=
-        (0.5 * particle.mass * V2_eff) *
-        particle.weight / volume * particle.intensity;
+    energy_final[cell_id] += (0.5 * particle.mass * V2_eff) * particle.weight /
+                             volume * particle.intensity;
 
-    energy_x_final[cell_id] +=
-        (0.5 * particle.mass * V2_eff_x) *
-        particle.weight / volume * particle.intensity;
+    energy_x_final[cell_id] += (0.5 * particle.mass * V2_eff_x) *
+                               particle.weight / volume * particle.intensity;
 }
 
 void ArcmcEstimator::combine(const ArcmcEstimator& other)

@@ -66,6 +66,11 @@ class FluidEstimator {
     const real_t dt_fluid = 1e-5;
     // Fluid density integral
     vector<real_t> fluid_density_integral;
+    vector<real_t> fluid_momentum_x_integral;
+    vector<real_t> fluid_momentum_y_integral;
+    vector<real_t> fluid_momentum_z_integral;
+    vector<real_t> fluid_energy_integral;
+    vector<real_t> fluid_energy_x_integral;
 };
 
 class ArcmcEstimator {
