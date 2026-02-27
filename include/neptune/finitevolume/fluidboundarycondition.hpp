@@ -7,18 +7,54 @@ namespace neptune {
 
 /**
  * A fluid boundary condition
- * This is just a robin boundary condition:
- *  alpha * f + beta * df/dn = gamma
  */
 class FluidBoundaryCondition {
    public:
-    FluidBoundaryCondition(real_t alpha, real_t beta, real_t gamma)
-        : alpha(alpha), beta(beta), gamma(gamma)
+    FluidBoundaryCondition() = default;
+    ~FluidBoundaryCondition() = default;
+
+    virtual char get_type() const = 0;
+};
+
+/**
+ * Purely absorbing fluid boundary condition
+ */
+class AbsorbingFluidBoundaryCondition : public FluidBoundaryCondition {
+   public:
+    AbsorbingFluidBoundaryCondition()
+        : FluidBoundaryCondition()
     {}
 
-    real_t alpha = 0.0;  // The absorption coefficient
-    real_t beta = 0.0;   // The reflection coefficient
-    real_t gamma = 0.0;
+    char get_type() const override { return 'a'; }
+};
+
+
+/**
+ * No flux fluid boundary condition.
+ * This is the same as a reflective boundary condition
+ */
+class NoFluxFluidBoundaryCondition : public FluidBoundaryCondition {
+   public:
+    NoFluxFluidBoundaryCondition()
+        : FluidBoundaryCondition()
+    {}
+    char get_type() const override { return 'n'; }
+};
+
+/**
+ * 
+ */
+class RobinFluidBoundaryCondition : public FluidBoundaryCondition {
+   public:
+    RobinFluidBoundaryCondition(real_t alpha, real_t beta, real_t gamma)
+        : FluidBoundaryCondition(), alpha(alpha), beta(beta), gamma(gamma)
+    {}
+
+    real_t alpha;
+    real_t beta;
+    real_t gamma;
+
+    char get_type() const override { return 'r'; }
 };
 
 }  // namespace neptune

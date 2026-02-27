@@ -134,10 +134,20 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<BoundaryCondition
 
 void from_json(const nlohmann::json& j, std::unique_ptr<FluidBoundaryCondition>& m)
 {
-    real_t alpha = j.at("alpha");
-    real_t beta = j.at("beta");
-    real_t gamma = j.at("gamma");
-    m = std::make_unique<FluidBoundaryCondition>(alpha, beta, gamma);
+    std::string type;
+    j.at("type").get_to(type);
+    if(type == "noflux"){
+        m = std::make_unique<NoFluxFluidBoundaryCondition>();
+    } else if(type == "absorbing"){
+        m = std::make_unique<AbsorbingFluidBoundaryCondition>();
+    } else if(type == "robin"){
+        real_t alpha = j.at("alpha");
+        real_t beta = j.at("beta");
+        real_t gamma = j.at("gamma");
+        m = std::make_unique<RobinFluidBoundaryCondition>(alpha, beta, gamma);
+    } else {
+        throw std::runtime_error("Unknown boundary condition type");
+    }
 }
 
 void from_json(const nlohmann::json& j, vector<std::unique_ptr<FluidBoundaryCondition>>& v)

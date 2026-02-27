@@ -89,63 +89,97 @@ construct_update_matrix(
             }
             else {
                 // boundary condition
+                index_t boundary_id = -neighbour_id - 1;
+                FluidBoundaryCondition* bc =
+                    boundary_conditions[-neighbour_id - 1].get();
 
-                // introduce a ghost cell at the cell boundary
-                index_t ghost_id = n_cells + n_ghost_cells;
-                n_ghost_cells++;
-                real_t neighbour_coeff = 0.0;
-
-                //
-                // Diffusion term
-                //
-                Vec3 surface_center = mesh.get_surface_center(i, j);
-                real_t Dr = diffusion_rate[i];
-
-                Vec3 dpdx = (surface_center - center);
-                real_t dist = dpdx.norm();
-                dpdx /= dpdx.norm2();
-                // dpdx *=
-                //     (density[neighbour_id] * diffusion_factor[neighbour_id] -
-                //      density[i] * diffusion_factor[i]);
-
-                real_t temp = Dr * dot(dpdx, normal) * area * dt / volume;
-
-                diag_coeff += temp * diffusion_factor[i];
-                neighbour_coeff -= temp * diffusion_factor[i];
-
-                //
-                // Advection term (upwind)
-                //
-                Vec3 advection_vector =
-                    Vec3(advection_x[i], advection_y[i], advection_z[i]);
-                real_t v = dot(advection_vector, normal);
-                if (v > 0) {
-                    diag_coeff += v * area * dt / volume;
+                // Check which type of boundary condition we have
+                if (dynamic_cast<NoFluxFluidBoundaryCondition*>(bc)) {
+                    // No flux boundary condition, we can just ignore the
+                    // neighbour and not add any terms to the diagonal
                 }
                 else {
-                    neighbour_coeff += v * area * dt / volume;
+                    // introduce a ghost cell at the cell boundary
+                    index_t ghost_id = n_cells + n_ghost_cells;
+                    n_ghost_cells++;
+                    real_t neighbour_coeff = 0.0;
+
+                    //
+                    // Diffusion term
+                    //
+                    Vec3 surface_center = mesh.get_surface_center(i, j);
+                    real_t Dr = diffusion_rate[i];
+
+                    Vec3 dpdx = (surface_center - center);
+                    real_t dist = dpdx.norm();
+                    dpdx /= dpdx.norm2();
+                    // dpdx *=
+                    //     (density[neighbour_id] *
+                    //     diffusion_factor[neighbour_id] -
+                    //      density[i] * diffusion_factor[i]);
+
+                    real_t temp = Dr * dot(dpdx, normal) * area * dt / volume;
+
+                    diag_coeff += temp * diffusion_factor[i];
+                    neighbour_coeff -= temp * diffusion_factor[i];
+
+                    //
+                    // Advection term (upwind)
+                    //
+                    Vec3 advection_vector =
+                        Vec3(advection_x[i], advection_y[i], advection_z[i]);
+                    real_t v = dot(advection_vector, normal);
+                    if (v > 0) {
+                        diag_coeff += v * area * dt / volume;
+                    }
+                    else {
+                        neighbour_coeff += v * area * dt / volume;
+                    }
+                    // Set the neighbour coefficient
+                    tripletList.push_back(Trip(i, ghost_id, neighbour_coeff));
+
+                    // Now we also need to add some equations to determine the
+                    // value of the ghost cell
+                    if (dynamic_cast<AbsorbingFluidBoundaryCondition*>(bc)) {
+                        // Absorbing boundary condition, we can just set the
+                        // ghost cell value to zero
+                        tripletList.push_back(Trip(ghost_id, ghost_id, 1.0));
+                        gamma_vals.push_back(0.0);
+                        continue;
+                    }
+                    else if (dynamic_cast<RobinFluidBoundaryCondition*>(bc)) {
+                        // Robin boundary condition, we will add the equation
+                        real_t alpha =
+                            dynamic_cast<RobinFluidBoundaryCondition*>(bc)
+                                ->alpha;
+                        real_t beta =
+                            dynamic_cast<RobinFluidBoundaryCondition*>(bc)
+                                ->beta;
+                        real_t gamma =
+                            dynamic_cast<RobinFluidBoundaryCondition*>(bc)
+                                ->gamma;
+
+                        if (beta == 0) {
+                            tripletList.push_back(
+                                Trip(ghost_id, ghost_id, alpha));
+                            gamma_vals.push_back(gamma);
+                        }
+                        else {
+                            tripletList.push_back(
+                                Trip(ghost_id, i, (alpha - beta / dist)));
+                            tripletList.push_back(
+                                Trip(ghost_id, ghost_id, beta / dist));
+                            gamma_vals.push_back(gamma);
+                        }
+                    }
                 }
-                // Set the neighbour coefficient
-                tripletList.push_back(Trip(i, ghost_id, neighbour_coeff));
-
-                // Also add the dynamics for the value of the ghost cell
-                // alpha * f - beta * df/dn = gamma
-                // => alpha * f - beta * (f - f_ghost) / dist = gamma
-                // => (alpha - beta / dist) * f + beta / dist * f_ghost = gamma
-                index_t boundary_id = -neighbour_id - 1;
-                real_t alpha = boundary_conditions[boundary_id]->alpha;
-                real_t beta = boundary_conditions[boundary_id]->beta;
-                real_t gamma = boundary_conditions[boundary_id]->gamma;
-
-                tripletList.push_back(Trip(ghost_id, i, (alpha - beta / dist)));
-                tripletList.push_back(Trip(ghost_id, ghost_id, beta / dist));
-                gamma_vals.push_back(gamma);
             }
         }
         tripletList.push_back(Trip(i, i, diag_coeff));
     }
 
-    Eigen::SparseMatrix<real_t> update_matrix(n_cells + n_ghost_cells, n_cells + n_ghost_cells);
+    Eigen::SparseMatrix<real_t> update_matrix(n_cells + n_ghost_cells,
+                                              n_cells + n_ghost_cells);
     update_matrix.setFromTriplets(tripletList.begin(), tripletList.end());
 
     return {update_matrix, gamma_vals};
@@ -188,10 +222,13 @@ void advection_diffusion_solver(
 
     size_t n_ghost_cells = gamma_vals.size();
 
-    // Construct the Update matrix
     Eigen::SparseLU<Eigen::SparseMatrix<real_t>> solver;
     solver.analyzePattern(update_matrix);
     solver.factorize(update_matrix);
+
+    if (solver.info() != Eigen::Success) {
+        throw std::runtime_error("Failed to factorize the update matrix");
+    }
 
     real_t t = 0;
     Eigen::VectorXd rhs(n_cells + n_ghost_cells);
@@ -199,15 +236,20 @@ void advection_diffusion_solver(
     while (t < t_final) {
         // Determine time step and potentially recalculate the update matrix
         real_t dt2;
-        if(t + dt > t_final) {
+        if (t + dt > t_final) {
             dt2 = t_final - t;
             auto [new_update_matrix, new_gamma_vals] = construct_update_matrix(
-                mesh, boundary_conditions, advection_x, advection_y, advection_z,
-                diffusion_rate, diffusion_factor, ionisation_rate, dt2);
+                mesh, boundary_conditions, advection_x, advection_y,
+                advection_z, diffusion_rate, diffusion_factor, ionisation_rate,
+                dt2);
             update_matrix = new_update_matrix;
             gamma_vals = new_gamma_vals;
-            solver.analyzePattern(update_matrix);
             solver.factorize(update_matrix);
+
+            if (solver.info() != Eigen::Success) {
+                throw std::runtime_error(
+                    "Failed to factorize the update matrix");
+            }
         }
         else {
             dt2 = dt;
