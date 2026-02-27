@@ -134,7 +134,8 @@ void FluidEstimator::finalize(
     const vector<real_t>& advection_y,
     const vector<real_t>& advection_z,
     const vector<real_t>& diffusion_rate,
-    const vector<real_t>& diffusion_factor)
+    const vector<real_t>& diffusion_factor,
+    const vector<real_t>& ionisation_rate)
 {
     // Determine the average timestep
     dt /= n_particles;
@@ -152,7 +153,7 @@ void FluidEstimator::finalize(
 
     advection_diffusion_solver(
         mesh, boundary_conditions, advection_x, advection_y, advection_z,
-        diffusion_rate, diffusion_factor, dt, dt_fluid2, density,
+        diffusion_rate, diffusion_factor, ionisation_rate, dt, dt_fluid2, density,
         fluid_density_integral, fluid_momentum_x_integral,
         fluid_momentum_y_integral, fluid_momentum_z_integral,
         fluid_energy_integral, fluid_energy_x_integral);

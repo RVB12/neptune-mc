@@ -4,7 +4,8 @@
 
 namespace neptune {
 
-void advection_diffusion_solver(
+std::pair<Eigen::SparseMatrix<real_t>, std::vector<real_t>>
+construct_update_matrix(
     const Mesh& mesh,
     const vector<std::unique_ptr<FluidBoundaryCondition>>& boundary_conditions,
     const vector<real_t>& advection_x,
@@ -12,35 +13,15 @@ void advection_diffusion_solver(
     const vector<real_t>& advection_z,
     const vector<real_t>& diffusion_rate,
     const vector<real_t>& diffusion_factor,
-    real_t t_final,
-    real_t dt,
-    vector<real_t>& density,
-    vector<real_t>& density_integral,
-    vector<real_t>& momentum_x_integral,
-    vector<real_t>& momentum_y_integral,
-    vector<real_t>& momentum_z_integral,
-    vector<real_t>& energy_integral,
-    vector<real_t>& energy_x_integral)
+    const vector<real_t>& ionisation_rate,
+    real_t dt)
 {
-    index_t n_cells = mesh.n_cells();
-    vector<real_t> total_flux(n_cells, 0.0);
+    const index_t n_cells = mesh.n_cells();
 
-    for (index_t i = 0; i < n_cells; i++) {
-        density_integral[i] = 0.0;
-        momentum_x_integral[i] = 0.0;
-        momentum_y_integral[i] = 0.0;
-        momentum_z_integral[i] = 0.0;
-        energy_integral[i] = 0.0;
-        energy_x_integral[i] = 0.0;
-    }
-
-    // Construct the Update matrix
-    typedef Eigen::SparseMatrix<real_t> SpMat;
     typedef Eigen::Triplet<real_t> Trip;
 
     std::vector<Trip> tripletList;
 
-    // List of the gamma values in the order of the ghost cells
     std::vector<real_t> gamma_vals;
 
     index_t n_ghost_cells = 0;
@@ -52,6 +33,9 @@ void advection_diffusion_solver(
 
         Vec3 center = mesh.get_center(i);
         real_t volume = mesh.get_volume(i);
+
+        // Add the ionisation term
+        diag_coeff += ionisation_rate[i] * dt;
 
         // Loop over the neighbours of the cell
         for (index_t j = 0; j < mesh.get_n_surfaces(i); j++) {
@@ -161,10 +145,51 @@ void advection_diffusion_solver(
         tripletList.push_back(Trip(i, i, diag_coeff));
     }
 
-    SpMat update_matrix(n_cells + n_ghost_cells, n_cells + n_ghost_cells);
+    Eigen::SparseMatrix<real_t> update_matrix(n_cells + n_ghost_cells, n_cells + n_ghost_cells);
     update_matrix.setFromTriplets(tripletList.begin(), tripletList.end());
 
-    Eigen::SparseLU<SpMat> solver;
+    return {update_matrix, gamma_vals};
+}
+
+void advection_diffusion_solver(
+    const Mesh& mesh,
+    const vector<std::unique_ptr<FluidBoundaryCondition>>& boundary_conditions,
+    const vector<real_t>& advection_x,
+    const vector<real_t>& advection_y,
+    const vector<real_t>& advection_z,
+    const vector<real_t>& diffusion_rate,
+    const vector<real_t>& diffusion_factor,
+    const vector<real_t>& ionisation_rate,
+    real_t t_final,
+    real_t dt,
+    vector<real_t>& density,
+    vector<real_t>& density_integral,
+    vector<real_t>& momentum_x_integral,
+    vector<real_t>& momentum_y_integral,
+    vector<real_t>& momentum_z_integral,
+    vector<real_t>& energy_integral,
+    vector<real_t>& energy_x_integral)
+{
+    index_t n_cells = mesh.n_cells();
+    vector<real_t> total_flux(n_cells, 0.0);
+
+    for (index_t i = 0; i < n_cells; i++) {
+        density_integral[i] = 0.0;
+        momentum_x_integral[i] = 0.0;
+        momentum_y_integral[i] = 0.0;
+        momentum_z_integral[i] = 0.0;
+        energy_integral[i] = 0.0;
+        energy_x_integral[i] = 0.0;
+    }
+
+    auto [update_matrix, gamma_vals] = construct_update_matrix(
+        mesh, boundary_conditions, advection_x, advection_y, advection_z,
+        diffusion_rate, diffusion_factor, ionisation_rate, dt);
+
+    size_t n_ghost_cells = gamma_vals.size();
+
+    // Construct the Update matrix
+    Eigen::SparseLU<Eigen::SparseMatrix<real_t>> solver;
     solver.analyzePattern(update_matrix);
     solver.factorize(update_matrix);
 
@@ -172,8 +197,21 @@ void advection_diffusion_solver(
     Eigen::VectorXd rhs(n_cells + n_ghost_cells);
     Eigen::VectorXd solution(n_cells + n_ghost_cells);
     while (t < t_final) {
-        // Determine time step
-        real_t dt2 = std::min(dt, t_final - t);
+        // Determine time step and potentially recalculate the update matrix
+        real_t dt2;
+        if(t + dt > t_final) {
+            dt2 = t_final - t;
+            auto [new_update_matrix, new_gamma_vals] = construct_update_matrix(
+                mesh, boundary_conditions, advection_x, advection_y, advection_z,
+                diffusion_rate, diffusion_factor, ionisation_rate, dt2);
+            update_matrix = new_update_matrix;
+            gamma_vals = new_gamma_vals;
+            solver.analyzePattern(update_matrix);
+            solver.factorize(update_matrix);
+        }
+        else {
+            dt2 = dt;
+        }
 
         // Construct the right-hand side
         for (index_t i = 0; i < n_cells; i++) {
@@ -192,6 +230,7 @@ void advection_diffusion_solver(
             density[i] = solution[i];
         }
 
+        // Update the integrals
         for (index_t i = 0; i < n_cells; i++) {
             density_integral[i] += density[i] * dt2;
 
@@ -271,8 +310,6 @@ void advection_diffusion_solver(
                           density[i] * diffusion_factor[i]) /
                          dz) *
                     dt2;
-
-
 
                 energy_x_integral[i] +=
                     (0.5 * density[i] *

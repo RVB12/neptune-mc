@@ -118,6 +118,10 @@ EventType update_particle_arcmc(
         // V2_eff = p.geometry.velocity.norm2() + 3 * bgk_std * bgk_std * (1.0 - W);
         // V2_eff_x = p.geometry.velocity.x * p.geometry.velocity.x + bgk_std * bgk_std * (1.0 - W);
         
+        // Vec3 V2_temp = drift + bgk_std * xi;
+        // V2_eff = V2_temp.norm2();
+        // V2_eff_x = V2_temp.x * V2_temp.x;
+
         V2_eff = drift.norm2() + 3 * bgk_std * bgk_std;
         V2_eff_x = drift.x * drift.x + bgk_std * bgk_std;
 

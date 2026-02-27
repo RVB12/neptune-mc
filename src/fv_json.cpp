@@ -69,6 +69,12 @@ int main(int argc, char** argv)
     vector<real_t> diffusion_rate = j["diffusion_rate"];
     vector<real_t> diffusion_factor = j["diffusion_factor"];
     vector<real_t> density = j["density"];
+    vector<real_t> ionisation_rate;
+    if(j.contains("ionisation_rate")) {
+        ionisation_rate = j["ionisation_rate"];
+    } else {
+        ionisation_rate = vector<real_t>(density.size(), 0.0);
+    }
 
     real_t t_final = j["t_final"];
     real_t dt = j["dt"];
@@ -86,7 +92,7 @@ int main(int argc, char** argv)
     start = std::chrono::high_resolution_clock::now();
     advection_diffusion_solver(*mesh_ptr, boundary_conditions, advection_x,
                                advection_y, advection_z, diffusion_rate,
-                               diffusion_factor, t_final, dt, density,
+                               diffusion_factor, ionisation_rate, t_final, dt, density,
                                density_integral, momentum_x_integral, momentum_y_integral,
                                momentum_z_integral, energy_integral, energy_x_integral);
     end = std::chrono::high_resolution_clock::now();

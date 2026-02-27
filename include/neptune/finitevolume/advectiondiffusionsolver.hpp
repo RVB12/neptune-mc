@@ -19,7 +19,9 @@ namespace neptune{
      * @param advection_x The x component of the advection velocity in each cell (m/s)
      * @param advection_y The y component of the advection velocity in each cell (m/s)
      * @param advection_z The z component of the advection velocity in each cell (m/s)
-     * @param diffusion The diffusion coefficient in each cell (m^2/s)
+     * @param diffusion_rate The diffusion rate in each cell (this is typically bgk_stddev^2)
+     * @param diffusion_factor The diffusion factor in each cell (this is typically 1/bgk_rate)
+     * @param ionisation_rate The ionisation rate in each cell (1/s)
      * @param t_final The final time to simulate (s)
      * @param dt The time step to use (s)
      * @param density On input, the particle density in each cell (m^-3)
@@ -34,6 +36,7 @@ namespace neptune{
         const vector<real_t>& advection_z,
         const vector<real_t>& diffusion_rate,
         const vector<real_t>& diffusion_factor,
+        const vector<real_t>& ionisation_rate,
         real_t t_final,
         real_t dt,
         vector<real_t>& density,

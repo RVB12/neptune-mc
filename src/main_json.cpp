@@ -161,11 +161,15 @@ int main(int argc, char** argv)
                 diffusion_factor[i] = bgk_processes[0]->bgk_stddev[i] *
                                       bgk_processes[0]->bgk_stddev[i];
             }
+            vector<real_t> ionisation_rate(mesh_ptr->n_cells(), 0.0);
+            if(ion_processes.size() > 0) {
+                ionisation_rate = ion_processes[0]->rate;
+            }
 
             fluid_estimator.finalize(
                 *mesh_ptr, fluid_boundary_conditions,
                 bgk_processes[0]->bgk_mean_x, bgk_processes[0]->bgk_mean_y,
-                bgk_processes[0]->bgk_mean_z, diffusion_rate, diffusion_factor);
+                bgk_processes[0]->bgk_mean_z, diffusion_rate, diffusion_factor, ionisation_rate);
 
             // Combine the estimators
             estimator.combine(fluid_estimator);

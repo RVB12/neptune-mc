@@ -54,7 +54,8 @@ class FluidEstimator {
                   const vector<real_t>& advection_y,
                   const vector<real_t>& advection_z,
                   const vector<real_t>& diffusion_rate,
-                  const vector<real_t>& diffusion_factor);
+                  const vector<real_t>& diffusion_factor,
+                  const vector<real_t>& ionisation_rate);
 
     // initial density for fluid solver (and final density afterwards)
     vector<real_t> density;
