@@ -702,33 +702,33 @@ void simulate_kdmc(
                     // next kinetic step will take care of the kinetic part.
 
                     // Final free flight time
-                    // while (particle.t < t_kdmc_end) {
-                    //     particle_old = particle;
-                    //     // Create empty collision lists to simulate no
-                    //     // collisions
-                    //     vector<std::unique_ptr<BGKScatteringProcess>>
-                    //         empty_bgk_processes;
-                    //     vector<std::unique_ptr<IonisationProcess>>
-                    //         empty_ion_processes;
-                    //     EventType event = update_particle(
-                    //         mesh, empty_bgk_processes, empty_ion_processes,
-                    //         boundary_conditions, particle, t_kdmc_end);
+                    while (particle.t < t_kdmc_end) {
+                        particle_old = particle;
+                        // Create empty collision lists to simulate no
+                        // collisions
+                        vector<std::unique_ptr<BGKScatteringProcess>>
+                            empty_bgk_processes;
+                        vector<std::unique_ptr<IonisationProcess>>
+                            empty_ion_processes;
+                        EventType event = update_particle(
+                            mesh, empty_bgk_processes, empty_ion_processes,
+                            boundary_conditions, particle, t_kdmc_end);
 
-                    //     estimator.add_track_length(particle, particle_old,
-                    //                                mesh);
-                    //     if (std::abs(particle.weight) < 1.0e-4) {
-                    //         break;
-                    //     }
-                    //     if (event == EventType::FINAL_TIME) {
-                    //         break;
-                    //     }
-                    //     else if (event == EventType::CHARGE_EXCHANGE) {
-                    //         num_collisions++;
-                    //     }
-                    //     else if (event == EventType::CELL_CROSSING) {
-                    //         num_crossings++;
-                    //     }
-                    // }
+                        estimator.add_track_length(particle, particle_old,
+                                                   mesh);
+                        if (std::abs(particle.weight) < 1.0e-4) {
+                            break;
+                        }
+                        if (event == EventType::FINAL_TIME) {
+                            break;
+                        }
+                        else if (event == EventType::CHARGE_EXCHANGE) {
+                            num_collisions++;
+                        }
+                        else if (event == EventType::CELL_CROSSING) {
+                            num_crossings++;
+                        }
+                    }
                 }
 
                 if (std::abs(particle.weight) < 1.0e-4) {
