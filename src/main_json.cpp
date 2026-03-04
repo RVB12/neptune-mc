@@ -125,6 +125,13 @@ int main(int argc, char** argv)
 
     Estimator estimator(mesh_ptr->n_cells());
 
+
+    //
+    // Object to write the output to
+    // Will mostly be filled later, but some kdmc stuff will already be added here
+    //
+    nlohmann::json output;
+
     //
     // Run the simulation
     //
@@ -149,6 +156,9 @@ int main(int argc, char** argv)
         simulate_kdmc(*mesh_ptr, bgk_processes, ion_processes, sources,
                       estimator, fluid_estimator, boundary_conditions, params,
                       stats, dt, use_new_kd);
+
+        output["initial_fluid_density"] = fluid_estimator.density;
+        output["fluid_estimator_dt"] = fluid_estimator.dt / fluid_estimator.n_particles;
         // Finalize the fluid estimator
         if (j.contains("fluid_boundary_conditions")) {
             vector<std::unique_ptr<FluidBoundaryCondition>>
@@ -170,9 +180,19 @@ int main(int argc, char** argv)
                 *mesh_ptr, fluid_boundary_conditions,
                 bgk_processes[0]->bgk_mean_x, bgk_processes[0]->bgk_mean_y,
                 bgk_processes[0]->bgk_mean_z, diffusion_rate, diffusion_factor, ionisation_rate);
+                
+            output["fluid_density_integral"] = fluid_estimator.fluid_density_integral;
+            output["fluid_momentum_x_integral"] = fluid_estimator.fluid_momentum_x_integral;
+            output["fluid_momentum_y_integral"] = fluid_estimator.fluid_momentum_y_integral;
+            output["fluid_momentum_z_integral"] = fluid_estimator.fluid_momentum_z_integral;
+            output["fluid_energy_integral"] = fluid_estimator.fluid_energy_integral;
+            output["fluid_energy_x_integral"] = fluid_estimator.fluid_energy_x_integral;
 
             // Combine the estimators
-            estimator.combine(fluid_estimator);
+            // Output the fluid estimator output separately for now
+            // Makes it easier to evaluatie different estimators
+
+            // estimator.combine(fluid_estimator);
         }
     }
     else if (algorithm == Algorithm::ARMC) {
@@ -196,10 +216,6 @@ int main(int argc, char** argv)
 
     stats.total_time = stats.grid_building_time + stats.trace_time;
 
-    //
-    // Write output to file
-    //
-    nlohmann::json output;
 
     output["density"] = estimator.density;
     output["momentum_x"] = estimator.momentum_x;
@@ -207,6 +223,8 @@ int main(int argc, char** argv)
     output["momentum_z"] = estimator.momentum_z;
     output["energy"] = estimator.energy;
     output["energy_x"] = estimator.energy_x;
+    output["moment2_x"] = estimator.moment2_x;
+    output["moment3_x"] = estimator.moment3_x;
 
     output["density_final"] = estimator.density_final;
     output["momentum_x_final"] = estimator.momentum_x_final;

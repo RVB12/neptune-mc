@@ -600,7 +600,9 @@ void simulate_kdmc(
                 // time step
 
                 real_t t_kdmc_end = std::ceil(particle.t / dt) * dt;
-                t_kdmc_end = std::min(t_kdmc_end, params.t_final);
+                if (params.t_final > 0) {
+                    t_kdmc_end = std::min(t_kdmc_end, params.t_final);
+                }
 
                 if (particle.t < t_kdmc_end) {
                     // Now determine the final free flight time
@@ -708,10 +710,10 @@ void simulate_kdmc(
                         // collisions
                         vector<std::unique_ptr<BGKScatteringProcess>>
                             empty_bgk_processes;
-                        vector<std::unique_ptr<IonisationProcess>>
-                            empty_ion_processes;
+                        // vector<std::unique_ptr<IonisationProcess>>
+                        //     empty_ion_processes;
                         EventType event = update_particle(
-                            mesh, empty_bgk_processes, empty_ion_processes,
+                            mesh, empty_bgk_processes, ion_processes,
                             boundary_conditions, particle, t_kdmc_end);
 
                         estimator.add_track_length(particle, particle_old,
@@ -736,9 +738,11 @@ void simulate_kdmc(
                 }
 
                 // Tally
-                if (particle.t >= params.t_final) {
-                    estimator.add_final(particle, mesh);
-                    break;
+                if (params.t_final > 0) {
+                    if (particle.t >= params.t_final) {
+                        estimator.add_final(particle, mesh);
+                        break;
+                    }
                 }
             }
         }

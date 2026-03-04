@@ -167,6 +167,8 @@ class Estimator {
           momentum_z(n_cells, 0),
           energy(n_cells, 0),
           energy_x(n_cells, 0),
+          moment2_x(n_cells, 0),
+          moment3_x(n_cells, 0),
           density_final(n_cells, 0),
           momentum_x_final(n_cells, 0),
           momentum_y_final(n_cells, 0),
@@ -237,6 +239,11 @@ class Estimator {
     // Energy at the final time of the simulation
     vector<real_t> energy_final;
     vector<real_t> energy_x_final;
+
+    // Time averaged second moment (x only)
+    vector<real_t> moment2_x;
+    // Time averaged third moment (x only)
+    vector<real_t> moment3_x;
 };
 
 #pragma omp declare reduction(EstimatorReduction \
