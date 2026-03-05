@@ -12,13 +12,17 @@ namespace neptune {
 class FluidEstimator {
    public:
     // Constructor
-    FluidEstimator(index_t n_cells) : density(n_cells, 0) {}
-
-    FluidEstimator(index_t n_cells, real_t dt_fluid)
-        : density(n_cells, 0), dt_fluid(dt_fluid)
+    FluidEstimator(index_t n_cells)
+        : initial_density(n_cells, 0), end_density(n_cells, 0)
     {}
 
-    index_t size() const { return density.size(); }
+    FluidEstimator(index_t n_cells, real_t dt_fluid)
+        : initial_density(n_cells, 0),
+          end_density(n_cells, 0),
+          dt_fluid(dt_fluid)
+    {}
+
+    index_t size() const { return initial_density.size(); }
 
     /**
      * Add the influence of the particle to the estimates
@@ -57,8 +61,10 @@ class FluidEstimator {
                   const vector<real_t>& diffusion_factor,
                   const vector<real_t>& ionisation_rate);
 
-    // initial density for fluid solver (and final density afterwards)
-    vector<real_t> density;
+    // initial density for fluid solver
+    vector<real_t> initial_density;
+    // density at the end of the fluid step
+    vector<real_t> end_density;
     // average timestep to be used as final time in the fluid solver
     real_t dt = 0.0;
     // number of particles that were used to estimate the density

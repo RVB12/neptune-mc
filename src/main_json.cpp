@@ -157,7 +157,8 @@ int main(int argc, char** argv)
                       estimator, fluid_estimator, boundary_conditions, params,
                       stats, dt, use_new_kd);
 
-        output["initial_fluid_density"] = fluid_estimator.density;
+        output["initial_fluid_density"] = fluid_estimator.initial_density;
+        output["end_fluid_density"] = fluid_estimator.end_density;
         output["fluid_estimator_dt"] = fluid_estimator.dt / fluid_estimator.n_particles;
         // Finalize the fluid estimator
         if (j.contains("fluid_boundary_conditions")) {

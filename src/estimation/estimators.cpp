@@ -120,7 +120,12 @@ void FluidEstimator::add_fluid_step(const Particle& particle,
     real_t volume = mesh.get_volume(cell_id_old);
 
     real_t s = weight_old / volume * particle.intensity;
-    density[cell_id_old] += s;
+    initial_density[cell_id_old] += s;
+
+    index_t cell_id = particle.geometry.cell_id;
+    real_t volume_new = mesh.get_volume(cell_id);
+    real_t s2 = particle.weight / volume_new * particle.intensity;
+    end_density[cell_id] += s2;
 
     dt += particle.t - t_old;
     n_particles++;
@@ -128,8 +133,9 @@ void FluidEstimator::add_fluid_step(const Particle& particle,
 
 void FluidEstimator::combine(const FluidEstimator& other)
 {
-    for (index_t i = 0; i < density.size(); i++) {
-        density[i] += other.density[i];
+    for (index_t i = 0; i < initial_density.size(); i++) {
+        initial_density[i] += other.initial_density[i];
+        end_density[i] += other.end_density[i];
     }
     dt += other.dt;
     n_particles += other.n_particles;
@@ -148,12 +154,12 @@ void FluidEstimator::finalize(
     // Determine the average timestep
     dt /= n_particles;
 
-    fluid_density_integral.resize(density.size());
-    fluid_momentum_x_integral.resize(density.size());
-    fluid_momentum_y_integral.resize(density.size());
-    fluid_momentum_z_integral.resize(density.size());
-    fluid_energy_integral.resize(density.size());
-    fluid_energy_x_integral.resize(density.size());
+    fluid_density_integral.resize(initial_density.size());
+    fluid_momentum_x_integral.resize(initial_density.size());
+    fluid_momentum_y_integral.resize(initial_density.size());
+    fluid_momentum_z_integral.resize(initial_density.size());
+    fluid_energy_integral.resize(initial_density.size());
+    fluid_energy_x_integral.resize(initial_density.size());
 
     real_t dt_fluid2 = dt;
 
@@ -161,7 +167,7 @@ void FluidEstimator::finalize(
 
     advection_diffusion_solver(
         mesh, boundary_conditions, advection_x, advection_y, advection_z,
-        diffusion_rate, diffusion_factor, ionisation_rate, dt, dt_fluid2, density,
+        diffusion_rate, diffusion_factor, ionisation_rate, dt, dt_fluid2, initial_density,
         fluid_density_integral, fluid_momentum_x_integral,
         fluid_momentum_y_integral, fluid_momentum_z_integral,
         fluid_energy_integral, fluid_energy_x_integral);
