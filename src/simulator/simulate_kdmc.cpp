@@ -292,201 +292,105 @@ void kdmc_fluid_step(
                 }
 
                 real_t drift_normal = dot(drift, normal);
-                if (std::abs(drift_normal) < 1.0e-6) {
-                    // There is no (significant) drift in the direction
-                    // of the normal, simplified case
-
-                    // Velocity can just be reflected
-                    p.geometry.velocity =
-                        p.geometry.velocity -
-                        2 * dot(p.geometry.velocity, normal) * normal;
-
-                    AbsorbingBC* absorbing_bc = dynamic_cast<AbsorbingBC*>(
-                        boundary_conditions[crossing.boundary_condition_id]
-                            .get());
-                    if (absorbing_bc != nullptr) {
-                        p.weight *= -1;
-                    }
-                    // TODO: handle partial absorption
+                // Alpha and beta are the coefficients of the robin bc:
+                // alpha * p + beta * dp/dn = 0
+                real_t alpha, beta;
+                AbsorbingBC* absorbing_bc = dynamic_cast<AbsorbingBC*>(
+                    boundary_conditions[crossing.boundary_condition_id].get());
+                if (absorbing_bc != nullptr) {
+                    alpha = 1;
+                    beta = 0;
                 }
                 else {
-                    // There is a drift, we can't just reflect the velocity,
-                    // we need to resample the new position from the tail of
-                    // the mirrored transition function
-                    // potentially even sampling from an infinite amount
-                    // of reflected solutions
-
-                    AbsorbingBC* absorbing_bc = dynamic_cast<AbsorbingBC*>(
+                    SpecularBC* reflecting_bc = dynamic_cast<SpecularBC*>(
                         boundary_conditions[crossing.boundary_condition_id]
                             .get());
-                    if (absorbing_bc != nullptr) {
-                        // Absorbing is the "easy" case,
-                        // we only have one truncated gaussian to sample from
-
-                        Vec3 mirror_pos =
-                            old_pos -
-                            2 * dot(old_pos - crossing.position, normal) *
-                                normal;
-                        Vec3 new_center = mirror_pos + drift * dt;
-
-                        // Get the two vectors that are orthogonal to the normal
-                        // and to each other using Gram-Schmidt
-                        Vec3 v2(r_normal(p.rng), r_normal(p.rng),
-                                r_normal(p.rng));
-                        v2 -= dot(v2, normal) * normal;
-                        v2 /= v2.norm();
-                        Vec3 v3 = normal.cross(v2);
-
-                        real_t n2 = r_normal(p.rng);
-                        real_t n3 = r_normal(p.rng);
-
-                        // Sample n1 from the normal distribution constrained to
-                        // n1
-                        real_t dist_to_crossing =
-                            -dot(crossing.position - new_center, normal);
-                        real_t n1 = -truncated_normal_right_tail(
-                            dist_to_crossing / D, p.rng);
-
-                        Vec3 new_pos2 = new_center + n1 * D * normal +
-                                        n2 * D * v2 + n3 * D * v3;
-
-                        // This is an extra check that should not really be
-                        // necessary, check if the new position is actually
-                        // inside the domain
-                        if (dot(new_pos2 - crossing.position, normal) >= 0) {
-                            // We are inside the cell, we can break
-                            throw std::runtime_error(
-                                "New position is not inside the domain");
-                        }
-
-                        // Determine a new assumed velocity
-                        // so that the particle will move to the new position
-                        p.geometry.velocity =
-                            (1 / time_left) * (new_pos2 - p.geometry.position);
-
-                        //
-                        // Now we need to update the weight:
-                        //
-
-                        Vec3 old_center = old_pos + drift * dt;
-                        // Calculate area from the original distribution
-                        // that is outside of the domain
-                        real_t distance_left =
-                            dot(crossing.position - old_center, normal);
-                        real_t area_left =
-                            1 - normal_cdf(distance_left, 0, 2 * D0 * dt);
-                        // Calculate area from the new distribution
-                        // that is inside the domain
-                        real_t distance_right =
-                            dot(crossing.position - new_center, normal);
-                        real_t area_right =
-                            normal_cdf(distance_right, 0, 2 * D0 * dt);
-                        real_t A =
-                            -std::exp(drift_normal / D0 *
-                                      dot(crossing.position - old_pos, normal));
-
-                        p.weight *= A * area_right / area_left;
-
-                        old_pos = mirror_pos;
+                    if (reflecting_bc != nullptr) {
+                        alpha = drift_normal;
+                        beta = -D0;
                     }
                     else {
-                        // reflecting boundary condition
-                        // the "hard" case
-                        // use accept-reject
-
-                        Vec3 mirror_pos =
-                            old_pos -
-                            2 * dot(old_pos - crossing.position, normal) *
-                                normal;
-                        Vec3 old_center = old_pos + drift * dt;
-                        Vec3 new_center = mirror_pos + drift * dt;
-
-                        // Coefficient for p2
-                        real_t A =
-                            std::exp(drift_normal / D0 *
-                                     dot(crossing.position - old_pos, normal)) /
-                            std::sqrt(4 * M_PI * D0 * dt);
-
-                        // Coefficient for p3
-                        real_t alpha = dot(drift, normal);
-                        real_t beta = -D0;
-                        real_t A2 =
-                            A * 2 * (alpha / beta + drift_normal / (2 * D0));
-                        // real_t A2 = 2 * (alpha / beta + drift_normal / (2 *
-                        // D0));
-
-                        real_t dist_to_crossing =
-                            -dot(crossing.position - new_center, normal);
-                        real_t n1;
-                        while (true) {
-                            // Sample from p2
-                            n1 = -truncated_normal_right_tail(
-                                dist_to_crossing / D, p.rng);
-
-                            real_t n1d = n1 * D;
-                            // Determine p2(x) and p3(x) for the sampled n1
-                            // Scaling factors are ignored because we are only
-                            // interested in the ratio
-                            real_t p2 =
-                                A * std::exp(-(n1d * n1d) / (4 * D0 * dt));
-
-                            // Use numerical integration to approximate p3
-                            // Note: this could definitely be improved with even
-                            // something like a trapezoidal rule
-                            real_t p3 = 0;
-                            real_t dxi = 0.1 * std::abs(beta / alpha);
-                            for (index_t i = 0; i < 10; i++) {
-                                real_t xi = i * dxi;
-                                real_t nn1 = n1d - xi;
-                                p3 += A2 *
-                                      std::exp(-(nn1 * nn1) / (4 * D0 * dt)) *
-                                      std::exp(alpha / beta * xi) * dxi;
-                            }
-
-                            real_t u = r_unif(p.rng);
-                            if (p2 + p3 < 0) {
-                                // This is never going to get accepted
-                                throw std::runtime_error(
-                                    "p2 + p3 < 0, this should not happen");
-                            }
-                            if (u < (p2 + p3) / p2) {
-                                // Accept the sample
-                                break;
-                            }
-                        }
-
-                        // Get the two vectors that are orthogonal to the normal
-                        // and to each other using Gram-Schmidt
-                        Vec3 v2(r_normal(p.rng), r_normal(p.rng),
-                                r_normal(p.rng));
-                        v2 -= dot(v2, normal) * normal;
-                        v2 /= v2.norm();
-                        Vec3 v3 = normal.cross(v2);
-
-                        real_t n2 = r_normal(p.rng);
-                        real_t n3 = r_normal(p.rng);
-
-                        Vec3 new_pos2 = new_center + n1 * D * normal +
-                                        n2 * D * v2 + n3 * D * v3;
-
-                        // This is an extra check that should not really be
-                        // necessary, check if the new position is actually
-                        // inside the domain
-                        if (dot(new_pos2 - crossing.position, normal) >= 0) {
-                            throw std::runtime_error(
-                                "New position is not inside the domain");
-                        }
-
-                        // Determine a new assumed velocity
-                        // so that the particle will move to the new position
-                        p.geometry.velocity =
-                            (1 / time_left) * (new_pos2 - p.geometry.position);
-
-                        old_pos = mirror_pos;
+                        throw std::runtime_error(
+                            "The chosen boundary condition is not supported "
+                            "for kdmc");
                     }
                 }
 
-                // TODO: handle partial absorption
+                Vec3 mirror_pos =
+                    old_pos -
+                    2 * dot(old_pos - crossing.position, normal) * normal;
+                Vec3 old_center = old_pos + drift * dt;
+                Vec3 new_center = mirror_pos + drift * dt;
+
+                // Coefficient for p2
+                real_t A = std::exp(drift_normal / D0 *
+                                    dot(crossing.position - old_pos, normal));
+
+                // Coefficient for p3
+                real_t A2;
+                if (beta == 0) {
+                    A2 = 0;
+                    A = -A;
+                }
+                else {
+                    A2 = - 2 * A * (alpha / beta + drift_normal / (2 * D0));
+                }
+
+                real_t dist_to_crossing =
+                    -dot(crossing.position - new_center, normal);
+                // Sample from p2
+                real_t n1 =
+                    -truncated_normal_right_tail(dist_to_crossing / D, p.rng);
+
+                real_t n1d = n1 * D;
+                real_t s = new_center.x + n1d * normal.x;
+                // Determine p2(x) and p3(x) for the sampled n1
+                real_t p2 = A / std::sqrt(4 * M_PI * D0 * dt) * std::exp(-(n1d * n1d) / (4 * D0 * dt));
+
+                real_t p3 = 0;
+                if (beta != 0 and std::abs(A2) > 1.0e-8) {
+                    real_t sqrt4Dt = std::sqrt(4.0 * D0 * dt);
+                    real_t z = (-n1d + 2.0 * (alpha/beta) * D0 * dt) / sqrt4Dt;
+                    real_t B = (alpha / beta) * (-n1d) + (alpha / beta) * (alpha / beta) * D0 * dt;
+                    p3 = A2 * 0.5 * std::exp(B) * std::erfc(z);
+                }
+
+                // Multiply particle weight by int_-inf^L p2(x)dx / int_L^inf p1(x)dx to account for the area's under p1 and p2
+                real_t dist_to_crossing_p1 =
+                    -dot(crossing.position - old_center, normal);
+                real_t area_p1 = 0.5 * std::erfc(-dist_to_crossing_p1 / (D * std::sqrt(2)));
+                real_t area_p2 = A * (1 - 0.5 * std::erfc(-dist_to_crossing / (D * std::sqrt(2))));
+                p.weight *= (area_p2) / (area_p1);
+                // Multiply particle weight by (p2 + p3) / p2 to account for the fact that we are only sampling from p2 for the reflected particles
+                p.weight *= (p2 + p3) / p2;
+
+                // Get the two vectors that are orthogonal to the normal
+                // and to each other using Gram-Schmidt
+                Vec3 v2(r_normal(p.rng), r_normal(p.rng), r_normal(p.rng));
+                v2 -= dot(v2, normal) * normal;
+                v2 /= v2.norm();
+                Vec3 v3 = normal.cross(v2);
+
+                real_t n2 = r_normal(p.rng);
+                real_t n3 = r_normal(p.rng);
+
+                Vec3 new_pos2 =
+                    new_center + n1 * D * normal + n2 * D * v2 + n3 * D * v3;
+
+                // This is an extra check that should not really be
+                // necessary, check if the new position is actually
+                // inside the domain
+                if (dot(new_pos2 - crossing.position, normal) >= 0) {
+                    throw std::runtime_error(
+                        "New position is not inside the domain");
+                }
+
+                // Determine a new assumed velocity
+                // so that the particle will move to the new position
+                p.geometry.velocity =
+                    (1 / time_left) * (new_pos2 - p.geometry.position);
+
+                old_pos = mirror_pos;
             }
         }
         else {
