@@ -16,6 +16,7 @@ real_t normal_cdf(real_t x, real_t mean, real_t variance)
 Vec3 calculate_drift(
     const Mesh& mesh,
     const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
     real_t dt,
     index_t cell_id)
 {
@@ -23,8 +24,11 @@ Vec3 calculate_drift(
                   bgk_processes[0]->bgk_mean_y[cell_id],
                   bgk_processes[0]->bgk_mean_z[cell_id]);
 
-    real_t R_cx = bgk_processes[0]->rate[cell_id];
-    real_t R_cx_theta = R_cx * dt;
+    real_t R_t = bgk_processes[0]->rate[cell_id];
+    if(ion_processes.size() > 0) {
+        R_t += ion_processes[0]->rate[cell_id];
+    }
+    real_t R_t_theta = R_t * dt;
 
     real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
 
@@ -61,11 +65,41 @@ Vec3 calculate_drift(
                 (2 * voxel_mesh->dz);
         }
 
+        if(ion_processes.size() > 0) {
+
+            if (ij.i > 0 and ij.i < voxel_mesh->nx - 1) {
+                diffusion_induced_drift.x +=
+                    (ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                        Index3D(ij.i + 1, ij.j, ij.k))] -
+                    ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                        Index3D(ij.i - 1, ij.j, ij.k))]) /
+                    (2 * voxel_mesh->dx);
+            }
+
+            if (ij.j > 0 and ij.j < voxel_mesh->ny - 1) {
+                diffusion_induced_drift.y +=
+                    (ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                        Index3D(ij.i, ij.j + 1, ij.k))] -
+                    ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                        Index3D(ij.i, ij.j - 1, ij.k))]) /
+                    (2 * voxel_mesh->dy);
+            }
+
+            if (ij.k > 0 and ij.k < voxel_mesh->nz - 1) {
+                diffusion_induced_drift.z +=
+                    (ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                        Index3D(ij.i, ij.j, ij.k + 1))] -
+                    ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                        Index3D(ij.i, ij.j, ij.k - 1))]) /
+                    (2 * voxel_mesh->dz);
+            }
+        }
+
         real_t dDdsigma = (-2 * bgk_stddev * bgk_stddev) /
-                          (R_cx * R_cx * R_cx_theta) *
-                          (std::exp(-R_cx_theta) - 1 + R_cx_theta);
-        dDdsigma += (bgk_stddev * bgk_stddev) / (R_cx * R_cx) *
-                    (1 - std::exp(-R_cx_theta));
+                          (R_t * R_t * R_t_theta) *
+                          (std::exp(-R_t_theta) - 1 + R_t_theta);
+        dDdsigma += (bgk_stddev * bgk_stddev) / (R_t * R_t) *
+                    (1 - std::exp(-R_t_theta));
         diffusion_induced_drift *= dDdsigma;
     }
     TriangleMesh* triangle_mesh =
@@ -79,21 +113,25 @@ Vec3 calculate_drift(
                 continue;  // No neighbour, skip
             }
 
-            real_t R_cx_neighbour = bgk_processes[0]->rate[neighbour_id];
+            real_t R_t_neighbour = bgk_processes[0]->rate[neighbour_id];
+            if(ion_processes.size() > 0) {
+                R_t_neighbour += ion_processes[0]->rate[neighbour_id];
+            }
+
 
             Vec3 normal =
                 triangle_mesh->get_surface_normal(cell_id, i, center0);
             Vec3 neighbour_center = triangle_mesh->get_center(neighbour_id);
             real_t distance = (neighbour_center - center0).norm();
             diffusion_induced_drift +=
-                (R_cx_neighbour - R_cx) / distance * normal;
+                (R_t_neighbour - R_t) / distance * normal;
         }
 
         real_t dDdsigma = (-2 * bgk_stddev * bgk_stddev) /
-                          (R_cx * R_cx * R_cx_theta) *
-                          (std::exp(-R_cx_theta) - 1 + R_cx_theta);
-        dDdsigma += (bgk_stddev * bgk_stddev) / (R_cx * R_cx) *
-                    (1 - std::exp(-R_cx_theta));
+                          (R_t * R_t * R_t_theta) *
+                          (std::exp(-R_t_theta) - 1 + R_t_theta);
+        dDdsigma += (bgk_stddev * bgk_stddev) / (R_t * R_t) *
+                    (1 - std::exp(-R_t_theta));
         diffusion_induced_drift *= dDdsigma;
     }
 
@@ -103,6 +141,7 @@ Vec3 calculate_drift(
 real_t calculate_diffusion_coef(
     const Mesh& mesh,
     const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
     real_t dt,
     index_t cell_id)
 {
@@ -110,19 +149,22 @@ real_t calculate_diffusion_coef(
                   bgk_processes[0]->bgk_mean_y[cell_id],
                   bgk_processes[0]->bgk_mean_z[cell_id]);
 
-    real_t R_cx = bgk_processes[0]->rate[cell_id];
-    real_t R_cx_theta = R_cx * dt;
+    real_t R_t = bgk_processes[0]->rate[cell_id];
+    if(ion_processes.size() > 0) {
+        R_t += ion_processes[0]->rate[cell_id];
+    }
+    real_t R_t_theta = R_t * dt;
 
     real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
 
-    real_t D = bgk_stddev * bgk_stddev / (R_cx * R_cx_theta);
-    D *= (std::exp(-R_cx_theta) - 1 + R_cx_theta);
-    // D *= (2. * (std::exp(-R_cx_theta) - 1) +
-    //       R_cx_theta * (std::exp(-R_cx_theta) + 1));
+    real_t D = bgk_stddev * bgk_stddev / (R_t * R_t_theta);
+    D *= (std::exp(-R_t_theta) - 1 + R_t_theta);
+    // D *= (2. * (std::exp(-R_t_theta) - 1) +
+    //       R_t_theta * (std::exp(-R_t_theta) + 1));
     if (D < 0) {
         D = 0;
     }
-    if (R_cx == 0) D = 0;
+    if (R_t == 0) D = 0;
     return D;
 }
 
@@ -155,7 +197,7 @@ bool kdmc_fluid_step_old(
     index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
     // Intermediate position to determine the drift and diffusion terms
-    Vec3 drift_old = calculate_drift(mesh, bgk_processes, dt, cell_id);
+    Vec3 drift_old = calculate_drift(mesh, bgk_processes, ion_processes, dt, cell_id);
     Vec3 intermediate_pos = p.geometry.position + drift_old * dt / 2.0;
 
     index_t intermediate_cell_id = mesh.get_cell_index(intermediate_pos);
@@ -165,9 +207,9 @@ bool kdmc_fluid_step_old(
         return false;
     }
 
-    Vec3 drift = calculate_drift(mesh, bgk_processes, dt, intermediate_cell_id);
+    Vec3 drift = calculate_drift(mesh, bgk_processes, ion_processes, dt, intermediate_cell_id);
 
-    real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, dt, cell_id);
+    real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, ion_processes, dt, cell_id);
     real_t D = std::sqrt(2 * D0 * dt);
 
     Vec3 diffusion_term;
@@ -231,7 +273,7 @@ void kdmc_fluid_step(
     index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
     // Intermediate position to determine the drift and diffusion terms
-    Vec3 drift_old = calculate_drift(mesh, bgk_processes, dt, cell_id);
+    Vec3 drift_old = calculate_drift(mesh, bgk_processes, ion_processes, dt, cell_id);
     Vec3 intermediate_pos = p.geometry.position + drift_old * dt / 2.0;
 
     index_t intermediate_cell_id = mesh.get_cell_index(intermediate_pos);
@@ -241,9 +283,9 @@ void kdmc_fluid_step(
         intermediate_cell_id = cell_id;
     }
 
-    Vec3 drift = calculate_drift(mesh, bgk_processes, dt, intermediate_cell_id);
+    Vec3 drift = calculate_drift(mesh, bgk_processes, ion_processes, dt, intermediate_cell_id);
 
-    real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, dt, cell_id);
+    real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, ion_processes, dt, cell_id);
     real_t D = std::sqrt(2 * D0 * dt);
 
     Vec3 diffusion_term;
