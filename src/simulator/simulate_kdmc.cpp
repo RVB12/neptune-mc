@@ -25,7 +25,7 @@ Vec3 calculate_drift(
                   bgk_processes[0]->bgk_mean_z[cell_id]);
 
     real_t R_t = bgk_processes[0]->rate[cell_id];
-    if(ion_processes.size() > 0) {
+    if (ion_processes.size() > 0) {
         R_t += ion_processes[0]->rate[cell_id];
     }
     real_t R_t_theta = R_t * dt;
@@ -65,32 +65,31 @@ Vec3 calculate_drift(
                 (2 * voxel_mesh->dz);
         }
 
-        if(ion_processes.size() > 0) {
-
+        if (ion_processes.size() > 0) {
             if (ij.i > 0 and ij.i < voxel_mesh->nx - 1) {
                 diffusion_induced_drift.x +=
                     (ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
-                        Index3D(ij.i + 1, ij.j, ij.k))] -
-                    ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
-                        Index3D(ij.i - 1, ij.j, ij.k))]) /
+                         Index3D(ij.i + 1, ij.j, ij.k))] -
+                     ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                         Index3D(ij.i - 1, ij.j, ij.k))]) /
                     (2 * voxel_mesh->dx);
             }
 
             if (ij.j > 0 and ij.j < voxel_mesh->ny - 1) {
                 diffusion_induced_drift.y +=
                     (ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
-                        Index3D(ij.i, ij.j + 1, ij.k))] -
-                    ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
-                        Index3D(ij.i, ij.j - 1, ij.k))]) /
+                         Index3D(ij.i, ij.j + 1, ij.k))] -
+                     ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                         Index3D(ij.i, ij.j - 1, ij.k))]) /
                     (2 * voxel_mesh->dy);
             }
 
             if (ij.k > 0 and ij.k < voxel_mesh->nz - 1) {
                 diffusion_induced_drift.z +=
                     (ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
-                        Index3D(ij.i, ij.j, ij.k + 1))] -
-                    ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
-                        Index3D(ij.i, ij.j, ij.k - 1))]) /
+                         Index3D(ij.i, ij.j, ij.k + 1))] -
+                     ion_processes[0]->rate[voxel_mesh->tuple_to_linear(
+                         Index3D(ij.i, ij.j, ij.k - 1))]) /
                     (2 * voxel_mesh->dz);
             }
         }
@@ -114,10 +113,9 @@ Vec3 calculate_drift(
             }
 
             real_t R_t_neighbour = bgk_processes[0]->rate[neighbour_id];
-            if(ion_processes.size() > 0) {
+            if (ion_processes.size() > 0) {
                 R_t_neighbour += ion_processes[0]->rate[neighbour_id];
             }
-
 
             Vec3 normal =
                 triangle_mesh->get_surface_normal(cell_id, i, center0);
@@ -150,7 +148,7 @@ real_t calculate_diffusion_coef(
                   bgk_processes[0]->bgk_mean_z[cell_id]);
 
     real_t R_t = bgk_processes[0]->rate[cell_id];
-    if(ion_processes.size() > 0) {
+    if (ion_processes.size() > 0) {
         R_t += ion_processes[0]->rate[cell_id];
     }
     real_t R_t_theta = R_t * dt;
@@ -197,7 +195,8 @@ bool kdmc_fluid_step_old(
     index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
     // Intermediate position to determine the drift and diffusion terms
-    Vec3 drift_old = calculate_drift(mesh, bgk_processes, ion_processes, dt, cell_id);
+    Vec3 drift_old =
+        calculate_drift(mesh, bgk_processes, ion_processes, dt, cell_id);
     Vec3 intermediate_pos = p.geometry.position + drift_old * dt / 2.0;
 
     index_t intermediate_cell_id = mesh.get_cell_index(intermediate_pos);
@@ -207,9 +206,11 @@ bool kdmc_fluid_step_old(
         return false;
     }
 
-    Vec3 drift = calculate_drift(mesh, bgk_processes, ion_processes, dt, intermediate_cell_id);
+    Vec3 drift = calculate_drift(mesh, bgk_processes, ion_processes, dt,
+                                 intermediate_cell_id);
 
-    real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, ion_processes, dt, cell_id);
+    real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, ion_processes, dt,
+                                         cell_id);
     real_t D = std::sqrt(2 * D0 * dt);
 
     Vec3 diffusion_term;
@@ -273,7 +274,8 @@ void kdmc_fluid_step(
     index_t cell_id = p.geometry.cell_id;  // Current cell id of the particle
 
     // Intermediate position to determine the drift and diffusion terms
-    Vec3 drift_old = calculate_drift(mesh, bgk_processes, ion_processes, dt, cell_id);
+    Vec3 drift_old =
+        calculate_drift(mesh, bgk_processes, ion_processes, dt, cell_id);
     Vec3 intermediate_pos = p.geometry.position + drift_old * dt / 2.0;
 
     index_t intermediate_cell_id = mesh.get_cell_index(intermediate_pos);
@@ -283,9 +285,11 @@ void kdmc_fluid_step(
         intermediate_cell_id = cell_id;
     }
 
-    Vec3 drift = calculate_drift(mesh, bgk_processes, ion_processes, dt, intermediate_cell_id);
+    Vec3 drift = calculate_drift(mesh, bgk_processes, ion_processes, dt,
+                                 intermediate_cell_id);
 
-    real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, ion_processes, dt, cell_id);
+    real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, ion_processes, dt,
+                                         cell_id);
     real_t D = std::sqrt(2 * D0 * dt);
 
     Vec3 diffusion_term;
@@ -340,8 +344,32 @@ void kdmc_fluid_step(
                 AbsorbingBC* absorbing_bc = dynamic_cast<AbsorbingBC*>(
                     boundary_conditions[crossing.boundary_condition_id].get());
                 if (absorbing_bc != nullptr) {
-                    alpha = 1;
-                    beta = 0;
+                    //
+                    // Calculate robin BC coefficients based on maxwellian
+                    // approximation of velocity distribution at the boundary.
+                    //
+
+                    real_t boundary_bgk_stddev =
+                        bgk_processes[0]->bgk_stddev[p.geometry.cell_id];
+                    Vec3 boundary_drift_3d =
+                        Vec3(bgk_processes[0]->bgk_mean_x[p.geometry.cell_id],
+                             bgk_processes[0]->bgk_mean_y[p.geometry.cell_id],
+                             bgk_processes[0]->bgk_mean_z[p.geometry.cell_id]);
+                    real_t boundary_drift = dot(boundary_drift_3d, normal);
+
+                    real_t flux =
+                        boundary_bgk_stddev / std::sqrt(2 * M_PI) *
+                            std::exp(-0.5 *
+                                     (boundary_drift / boundary_bgk_stddev) *
+                                     (boundary_drift / boundary_bgk_stddev)) +
+                        boundary_drift * 0.5 *
+                            (1 +
+                             std::erf(boundary_drift /
+                                      (boundary_bgk_stddev * std::sqrt(2))));
+                    alpha = drift_normal - flux;
+                    beta = -D0;
+                    // alpha = 1;
+                    // beta = 0;
                 }
                 else {
                     SpecularBC* reflecting_bc = dynamic_cast<SpecularBC*>(
@@ -375,7 +403,7 @@ void kdmc_fluid_step(
                     A = -A;
                 }
                 else {
-                    A2 = - 2 * A * (alpha / beta + drift_normal / (2 * D0));
+                    A2 = -2 * A * (alpha / beta + drift_normal / (2 * D0));
                 }
 
                 real_t dist_to_crossing =
@@ -387,23 +415,45 @@ void kdmc_fluid_step(
                 real_t n1d = n1 * D;
                 real_t s = new_center.x + n1d * normal.x;
                 // Determine p2(x) and p3(x) for the sampled n1
-                real_t p2 = A / std::sqrt(4 * M_PI * D0 * dt) * std::exp(-(n1d * n1d) / (4 * D0 * dt));
+                real_t p2 = A / std::sqrt(4 * M_PI * D0 * dt) *
+                            std::exp(-(n1d * n1d) / (4 * D0 * dt));
 
                 real_t p3 = 0;
                 if (beta != 0 and std::abs(A2) > 1.0e-8) {
                     real_t sqrt4Dt = std::sqrt(4.0 * D0 * dt);
-                    real_t z = (-n1d + 2.0 * (alpha/beta) * D0 * dt) / sqrt4Dt;
-                    real_t B = (alpha / beta) * (-n1d) + (alpha / beta) * (alpha / beta) * D0 * dt;
-                    p3 = A2 * 0.5 * std::exp(B) * std::erfc(z);
+                    real_t z =
+                        (-n1d + 2.0 * (alpha / beta) * D0 * dt) / sqrt4Dt;
+                    real_t B = (alpha / beta) * (-n1d) +
+                               (alpha / beta) * (alpha / beta) * D0 * dt;
+                    if (B > 700) {
+                        // To prevent overflow in the exp, we can use the
+                        // asymptotic expansion of the erfc for large z
+                        p3 = A2 * 0.5 * std::exp(B - z * z) /
+                             (z * std::sqrt(M_PI));
+                    }
+                    else {
+                        p3 = A2 * 0.5 * std::exp(B) * std::erfc(z);
+                    }
+                    // Check if p3 is NaN, if so, throw an error
+                    if (std::isnan(p3)) {
+                        throw std::runtime_error(
+                            "p3 is NaN, this should not happen, check the "
+                            "calculations for p3");
+                    }
                 }
 
-                // Multiply particle weight by int_-inf^L p2(x)dx / int_L^inf p1(x)dx to account for the area's under p1 and p2
+                // Multiply particle weight by int_-inf^L p2(x)dx / int_L^inf
+                // p1(x)dx to account for the area's under p1 and p2
                 real_t dist_to_crossing_p1 =
                     -dot(crossing.position - old_center, normal);
-                real_t area_p1 = 0.5 * std::erfc(-dist_to_crossing_p1 / (D * std::sqrt(2)));
-                real_t area_p2 = A * (1 - 0.5 * std::erfc(-dist_to_crossing / (D * std::sqrt(2))));
+                real_t area_p1 =
+                    0.5 * std::erfc(-dist_to_crossing_p1 / (D * std::sqrt(2)));
+                real_t area_p2 = A * (1 - 0.5 * std::erfc(-dist_to_crossing /
+                                                          (D * std::sqrt(2))));
                 p.weight *= (area_p2) / (area_p1);
-                // Multiply particle weight by (p2 + p3) / p2 to account for the fact that we are only sampling from p2 for the reflected particles
+                // Multiply particle weight by (p2 + p3) / p2 to account for the
+                // fact that we are only sampling from p2 for the reflected
+                // particles
                 p.weight *= (p2 + p3) / p2;
 
                 // Get the two vectors that are orthogonal to the normal
