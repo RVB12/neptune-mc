@@ -100,31 +100,35 @@ void from_json(const nlohmann::json& j, vector<TriangleIndices>& v)
     }
 }
 
-
 void from_json(const nlohmann::json& j, std::unique_ptr<BoundaryCondition>& m)
 {
     std::string type;
     j.at("type").get_to(type);
-    if(type == "specular"){
+    if (type == "specular") {
         m = std::make_unique<SpecularBC>();
-    } else if(type == "absorbing"){
+    }
+    else if (type == "absorbing") {
         m = std::make_unique<AbsorbingBC>();
-    } else if(type == "partially_specular"){
+    }
+    else if (type == "partially_specular") {
         real_t coeff;
         j.at("absorption_coefficient").get_to(coeff);
         m = std::make_unique<PartiallySpecularBC>(coeff);
-    } else if(type == "mixed"){
+    }
+    else if (type == "mixed") {
         real_t alpha;
         real_t coeff;
         j.at("alpha").get_to(alpha);
         j.at("absorption_coefficient").get_to(coeff);
         m = std::make_unique<MixedDiffuseReflectiveBC>(alpha, coeff);
-    } else {
+    }
+    else {
         throw std::runtime_error("Unknown boundary condition type");
     }
 }
 
-void from_json(const nlohmann::json& j, vector<std::unique_ptr<BoundaryCondition>>& v)
+void from_json(const nlohmann::json& j,
+               vector<std::unique_ptr<BoundaryCondition>>& v)
 {
     v.resize(j.size());
     for (index_t i = 0; i < v.size(); i++) {
@@ -132,25 +136,30 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<BoundaryCondition
     }
 }
 
-void from_json(const nlohmann::json& j, std::unique_ptr<FluidBoundaryCondition>& m)
+void from_json(const nlohmann::json& j,
+               std::unique_ptr<FluidBoundaryCondition>& m)
 {
     std::string type;
     j.at("type").get_to(type);
-    if(type == "noflux"){
+    if (type == "noflux") {
         m = std::make_unique<NoFluxFluidBoundaryCondition>();
-    } else if(type == "absorbing"){
+    }
+    else if (type == "absorbing") {
         m = std::make_unique<AbsorbingFluidBoundaryCondition>();
-    } else if(type == "robin"){
+    }
+    else if (type == "robin") {
         real_t alpha = j.at("alpha");
         real_t beta = j.at("beta");
         real_t gamma = j.at("gamma");
         m = std::make_unique<RobinFluidBoundaryCondition>(alpha, beta, gamma);
-    } else {
+    }
+    else {
         throw std::runtime_error("Unknown boundary condition type");
     }
 }
 
-void from_json(const nlohmann::json& j, vector<std::unique_ptr<FluidBoundaryCondition>>& v)
+void from_json(const nlohmann::json& j,
+               vector<std::unique_ptr<FluidBoundaryCondition>>& v)
 {
     v.resize(j.size());
     for (index_t i = 0; i < v.size(); i++) {
@@ -158,11 +167,9 @@ void from_json(const nlohmann::json& j, vector<std::unique_ptr<FluidBoundaryCond
     }
 }
 
-
-
-void from_json(const nlohmann::json& j, std::unique_ptr<BGKScatteringProcess>& m)
+void from_json(const nlohmann::json& j,
+               std::unique_ptr<BGKScatteringProcess>& m)
 {
-
     neptune::index_t n_cells = j.at("rate").size();
 
     neptune::BGKScatteringProcess bgk(n_cells);
@@ -175,7 +182,8 @@ void from_json(const nlohmann::json& j, std::unique_ptr<BGKScatteringProcess>& m
     m = std::make_unique<BGKScatteringProcess>(bgk);
 }
 
-void from_json(const nlohmann::json& j, vector<std::unique_ptr<BGKScatteringProcess>>& m)
+void from_json(const nlohmann::json& j,
+               vector<std::unique_ptr<BGKScatteringProcess>>& m)
 {
     m.resize(j.size());
     for (index_t i = 0; i < m.size(); i++) {
@@ -193,14 +201,14 @@ void from_json(const nlohmann::json& j, std::unique_ptr<IonisationProcess>& m)
     m = std::make_unique<IonisationProcess>(ion);
 }
 
-void from_json(const nlohmann::json& j, vector<std::unique_ptr<IonisationProcess>>& m)
+void from_json(const nlohmann::json& j,
+               vector<std::unique_ptr<IonisationProcess>>& m)
 {
     m.resize(j.size());
     for (index_t i = 0; i < m.size(); i++) {
         j.at(i).get_to(m[i]);
     }
 }
-
 
 void to_json(nlohmann::json& j, const ExecutionStatistics& stats)
 {
@@ -223,13 +231,20 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Source>& s)
     if (type == "volume") {
         VolumeSource vs = j;
         s = std::make_unique<VolumeSource>(vs);
-    } else if (type == "point") {
+    }
+    else if (type == "point") {
         PointSource ps = j;
         s = std::make_unique<PointSource>(ps);
-    } else if (type == "surface") {
+    }
+    else if (type == "surface") {
         SurfaceSource ss = j;
         s = std::make_unique<SurfaceSource>(ss);
-    } else {
+    }
+    else if (type == "wall_reflection") {
+        WallReflectionSource wrs = j;
+        s = std::make_unique<WallReflectionSource>(wrs);
+    }
+    else {
         throw std::runtime_error("Unknown source type");
     }
 }
@@ -265,16 +280,20 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Mesh>& m)
     if (type == "voxel") {
         VoxelMesh vm = j;
         m = std::make_unique<VoxelMesh>(vm);
-    } else if (type == "triangle") {
+    }
+    else if (type == "triangle") {
         TriangleMesh tm = j;
         m = std::make_unique<TriangleMesh>(tm);
-    } else if (type == "rotated_triangle") {
+    }
+    else if (type == "rotated_triangle") {
         RotatedTriangleMesh rtm = j;
         m = std::make_unique<RotatedTriangleMesh>(rtm);
-    } else if (type == "nonuniform") {
+    }
+    else if (type == "nonuniform") {
         NonUniformMesh num = j;
         m = std::make_unique<NonUniformMesh>(num);
-    } else if (type == "rotated_nonuniform") {
+    }
+    else if (type == "rotated_nonuniform") {
         RotatedNonUniformMesh num = j;
         m = std::make_unique<RotatedNonUniformMesh>(num);
     }

@@ -22,6 +22,7 @@
 #include "neptune/physics/source.hpp"
 #include "neptune/physics/surfacesource.hpp"
 #include "neptune/physics/volumesource.hpp"
+#include "neptune/physics/wallreflectionsource.hpp"
 #include "neptune/simulator/execution_statistics.hpp"
 #include "neptune/simulator/simulator.hpp"
 
@@ -176,6 +177,31 @@ struct adl_serializer<neptune::VolumeSource> {
 
         neptune::VolumeSource s(num_particles, intensity, cell_idx, vel_mean,
                                 vel_stddev);
+
+        return s;
+    }
+};
+
+template <>
+struct adl_serializer<neptune::WallReflectionSource> {
+    static neptune::WallReflectionSource from_json(const json& j)
+    {
+        neptune::index_t num_particles = j.at("n_particles");
+        neptune::index_t cell_idx = j.at("cell_idx");
+        neptune::index_t surface_id = j.at("surface_id");
+        neptune::real_t ion_vel_x = j.at("ion_vel_x");
+        neptune::real_t ion_vel_y = j.at("ion_vel_y");
+        neptune::real_t ion_vel_z = j.at("ion_vel_z");
+        neptune::real_t ion_temp = j.at("ion_temp");
+        neptune::real_t ion_density = j.at("ion_density");
+        neptune::real_t sheath_potential = j.at("sheath_potential");
+        neptune::real_t franck_condon_temp = j.at("franck_condon_temp");
+        neptune::real_t Rt = j.at("Rt");
+        neptune::real_t Rr = j.at("Rr");
+
+        neptune::WallReflectionSource s(num_particles, cell_idx, surface_id, ion_vel_x, ion_vel_y,
+                                        ion_vel_z, ion_temp, ion_density, sheath_potential,
+                                        franck_condon_temp, Rt, Rr);
 
         return s;
     }
