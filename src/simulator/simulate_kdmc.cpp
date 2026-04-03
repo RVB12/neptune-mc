@@ -380,9 +380,41 @@ void kdmc_fluid_step(
                         beta = -D0;
                     }
                     else {
-                        throw std::runtime_error(
-                            "The chosen boundary condition is not supported "
-                            "for kdmc");
+                        PartiallySpecularBC* partially_reflecting_bc =
+                            dynamic_cast<PartiallySpecularBC*>(
+                                boundary_conditions[crossing
+                                                        .boundary_condition_id]
+                                    .get());
+                        if (partially_reflecting_bc != nullptr) {
+                            // For a partially reflecting BC, we do something in between
+                            // specular and absorbing
+                            real_t boundary_bgk_stddev =
+                                bgk_processes[0]->bgk_stddev[p.geometry.cell_id];
+                            Vec3 boundary_drift_3d =
+                                Vec3(bgk_processes[0]->bgk_mean_x[p.geometry.cell_id],
+                                    bgk_processes[0]->bgk_mean_y[p.geometry.cell_id],
+                                    bgk_processes[0]->bgk_mean_z[p.geometry.cell_id]);
+                            real_t boundary_drift = dot(boundary_drift_3d, normal);
+
+                            real_t flux =
+                                boundary_bgk_stddev / std::sqrt(2 * M_PI) *
+                                    std::exp(-0.5 *
+                                            (boundary_drift / boundary_bgk_stddev) *
+                                            (boundary_drift / boundary_bgk_stddev)) +
+                                boundary_drift * 0.5 *
+                                    (1 +
+                                    std::erf(boundary_drift /
+                                            (boundary_bgk_stddev * std::sqrt(2))));
+
+                            alpha = drift_normal - flux * partially_reflecting_bc->absorption_coefficient;
+                            beta = -D0;
+                        }
+                        else {
+                            throw std::runtime_error(
+                                "The chosen boundary condition is not "
+                                "supported "
+                                "for kdmc");
+                        }
                     }
                 }
 
