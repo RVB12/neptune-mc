@@ -74,7 +74,6 @@ class PartiallySpecularBC : public BoundaryCondition {
         p.weight *= (1 - absorption_coefficient);
     }
 
-   private:
     real_t absorption_coefficient;
 };
 

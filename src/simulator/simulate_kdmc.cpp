@@ -775,6 +775,14 @@ void simulate_kdmc(
             }
         }
     }
+    stats.num_crossings = num_crossings;
+    stats.num_collisions = num_collisions;
+    stats.num_kd_steps = num_kd_steps;
+    stats.num_kd_to_kinetic_switches = num_kd_to_kinetic_switches;
+    stats.total_particles = 0.0;
+    for (const auto& source : sources) {
+        stats.total_particles += source->num_particles();
+    }
 }
 
 }  // namespace neptune
