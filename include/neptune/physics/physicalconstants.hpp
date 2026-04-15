@@ -57,7 +57,7 @@ namespace constants {
      */
     inline real_t calculate_BGK_stddev(real_t T){
         // Assume mass of a single proton
-        return std::sqrt(T * eV_to_Joules / m_p);
+        return std::sqrt(T * eV_to_Joules / (m_p * 2.014));
     }
 
 }  // namespace constants

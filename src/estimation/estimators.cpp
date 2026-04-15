@@ -6,14 +6,22 @@ namespace neptune {
 
 void Estimator::add_track_length(const Particle& particle,
                                  const Particle& particle_old,
-                                 const Mesh& mesh)
+                                 const Mesh& mesh,
+                                 const real_t R_i)
 {
     real_t weight_old = particle_old.weight;
     real_t t_old = particle_old.t;
     index_t cell_id_old = particle_old.geometry.cell_id;
     real_t volume = mesh.get_volume(cell_id_old);
 
-    real_t s = (particle.t - t_old) * weight_old / volume * particle.intensity;
+    real_t dt = particle.t - t_old;
+    real_t s;
+    if(R_i * dt < 1.0e-4) {
+        // Avoid division by zero if ionisation rate is very low
+        s = weight_old * dt / volume * particle.intensity;
+    } else {
+        s = weight_old * (1 - std::exp(-R_i * dt))/R_i / volume * particle.intensity;
+    }
 
     density[cell_id_old] += s;
 
@@ -179,6 +187,7 @@ void FluidEstimator::finalize(
 void ArcmcEstimator::add_track_length(const Particle& particle,
                                       const Particle& particle_old,
                                       const Mesh& mesh,
+                                      real_t R_i,
                                       real_t V2_eff,
                                       real_t V2_eff_x)
 {
@@ -187,7 +196,14 @@ void ArcmcEstimator::add_track_length(const Particle& particle,
     index_t cell_id_old = particle_old.geometry.cell_id;
     real_t volume = mesh.get_volume(cell_id_old);
 
-    real_t s = (particle.t - t_old) * weight_old / volume * particle.intensity;
+    real_t dt = particle.t - t_old;
+    real_t s;
+    if(R_i * dt < 1.0e-4) {
+        // Avoid division by zero if ionisation rate is very low
+        s = weight_old * dt / volume * particle.intensity;
+    } else {
+        s = weight_old * (1 - std::exp(-R_i * dt))/R_i / volume * particle.intensity;
+    }
 
     density[cell_id_old] += s;
 

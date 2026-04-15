@@ -31,7 +31,7 @@ class Particle {
     real_t t = 0;         // Time
     real_t weight = 1.0;  // Weight (used for continuous ionisation)
     real_t mass =
-        2.0;  // Mass of the particle [atom mass units] (default: deuterium)
+        2.0141017778;  // Mass of the particle [atom mass units] (default: deuterium)
     real_t intensity = 1.0;  // How many particles this particle represents
     rng_t rng;               // Random number generator
     real_t u = 0;  // Scaled time till next background collision, this is

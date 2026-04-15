@@ -211,7 +211,11 @@ void simulate_armc(
                     mesh, bgk_processes, ion_processes, boundary_conditions,
                     particle, params.t_final, M, V2_eff, V2_eff_x);
 
-                estimator.add_track_length(particle, particle_old, mesh, V2_eff, V2_eff_x);
+                real_t R_i = 0;
+                if (ion_processes.size() > 0) {
+                    R_i = ion_processes[0]->rate[particle_old.geometry.cell_id];
+                }
+                estimator.add_track_length(particle, particle_old, mesh, R_i, V2_eff, V2_eff_x);
 
                 if (particle.weight < 1.0e-4) {
                     break;

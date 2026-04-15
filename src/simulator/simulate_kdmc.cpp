@@ -203,7 +203,9 @@ bool kdmc_fluid_step_old(
     if (intermediate_cell_id == -1) {
         // The particle has left the mesh, just use the old position for the
         // parameters
-        return false;
+        intermediate_cell_id = cell_id;
+        intermediate_pos = p.geometry.position;
+        // return false;
     }
 
     Vec3 drift = calculate_drift(mesh, bgk_processes, ion_processes, dt,
@@ -386,27 +388,36 @@ void kdmc_fluid_step(
                                                         .boundary_condition_id]
                                     .get());
                         if (partially_reflecting_bc != nullptr) {
-                            // For a partially reflecting BC, we do something in between
-                            // specular and absorbing
+                            // For a partially reflecting BC, we do something in
+                            // between specular and absorbing
                             real_t boundary_bgk_stddev =
-                                bgk_processes[0]->bgk_stddev[p.geometry.cell_id];
+                                bgk_processes[0]
+                                    ->bgk_stddev[p.geometry.cell_id];
                             Vec3 boundary_drift_3d =
-                                Vec3(bgk_processes[0]->bgk_mean_x[p.geometry.cell_id],
-                                    bgk_processes[0]->bgk_mean_y[p.geometry.cell_id],
-                                    bgk_processes[0]->bgk_mean_z[p.geometry.cell_id]);
-                            real_t boundary_drift = dot(boundary_drift_3d, normal);
+                                Vec3(bgk_processes[0]
+                                         ->bgk_mean_x[p.geometry.cell_id],
+                                     bgk_processes[0]
+                                         ->bgk_mean_y[p.geometry.cell_id],
+                                     bgk_processes[0]
+                                         ->bgk_mean_z[p.geometry.cell_id]);
+                            real_t boundary_drift =
+                                dot(boundary_drift_3d, normal);
 
                             real_t flux =
                                 boundary_bgk_stddev / std::sqrt(2 * M_PI) *
-                                    std::exp(-0.5 *
-                                            (boundary_drift / boundary_bgk_stddev) *
-                                            (boundary_drift / boundary_bgk_stddev)) +
+                                    std::exp(
+                                        -0.5 *
+                                        (boundary_drift / boundary_bgk_stddev) *
+                                        (boundary_drift /
+                                         boundary_bgk_stddev)) +
                                 boundary_drift * 0.5 *
-                                    (1 +
-                                    std::erf(boundary_drift /
-                                            (boundary_bgk_stddev * std::sqrt(2))));
+                                    (1 + std::erf(boundary_drift /
+                                                  (boundary_bgk_stddev *
+                                                   std::sqrt(2))));
 
-                            alpha = drift_normal - flux * partially_reflecting_bc->absorption_coefficient;
+                            alpha = drift_normal -
+                                    flux * partially_reflecting_bc
+                                               ->absorption_coefficient;
                             beta = -D0;
                         }
                         else {
@@ -604,7 +615,13 @@ void simulate_kdmc(
                         mesh, bgk_processes, ion_processes, boundary_conditions,
                         particle, params.t_final);
 
-                    estimator.add_track_length(particle, particle_old, mesh);
+                    real_t R_i = 0;
+                    if (ion_processes.size() > 0) {
+                        R_i = ion_processes[0]
+                                  ->rate[particle_old.geometry.cell_id];
+                    }
+                    estimator.add_track_length(particle, particle_old, mesh,
+                                               R_i);
                     if (std::abs(particle.weight) < 1.0e-4) {
                         break;
                     }
@@ -678,18 +695,22 @@ void simulate_kdmc(
                                                            particle_old, mesh);
                         }
                         else {
+                            particle_old = particle;
                             bool step_succesfull = kdmc_fluid_step_old(
                                 mesh, bgk_processes, ion_processes,
                                 boundary_conditions, particle,
                                 t_kdmc_end - particle.t -
                                     final_free_flight_time);
 
-                            if (!step_succesfull) {
+                            if (step_succesfull) {
+                                fluid_estimator.add_fluid_step(
+                                    particle, particle_old, mesh);
+                            }
+                            else {
                                 num_kd_to_kinetic_switches++;
                                 // Particle left the mesh, switch to
                                 // kinetic simulation
-                                final_free_flight_time =
-                                    t_kdmc_end - particle.t;
+                                final_free_flight_time = 0.0;
                                 while (true) {
                                     particle_old = particle;
                                     EventType event = update_particle(
@@ -697,8 +718,14 @@ void simulate_kdmc(
                                         boundary_conditions, particle,
                                         t_kdmc_end);
 
+                                    real_t R_i = 0;
+                                    if (ion_processes.size() > 0) {
+                                        R_i = ion_processes[0]
+                                                  ->rate[particle_old.geometry
+                                                             .cell_id];
+                                    }
                                     estimator.add_track_length(
-                                        particle, particle_old, mesh);
+                                        particle, particle_old, mesh, R_i);
                                     if (std::abs(particle.weight) < 1.0e-4) {
                                         break;
                                     }
@@ -714,10 +741,6 @@ void simulate_kdmc(
                                         num_crossings++;
                                     }
                                 }
-                            }
-                            else {
-                                fluid_estimator.add_fluid_step(
-                                    particle, particle_old, mesh);
                             }
                         }
                     }
@@ -744,8 +767,13 @@ void simulate_kdmc(
                             mesh, empty_bgk_processes, ion_processes,
                             boundary_conditions, particle, t_kdmc_end);
 
-                        estimator.add_track_length(particle, particle_old,
-                                                   mesh);
+                        real_t R_i = 0;
+                        if (ion_processes.size() > 0) {
+                            R_i = ion_processes[0]
+                                      ->rate[particle_old.geometry.cell_id];
+                        }
+                        estimator.add_track_length(particle, particle_old, mesh,
+                                                   R_i);
                         if (std::abs(particle.weight) < 1.0e-4) {
                             break;
                         }

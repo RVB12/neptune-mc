@@ -50,7 +50,11 @@ void simulate(
                     mesh, bgk_processes, ion_processes, boundary_conditions,
                     particle, params.t_final);
 
-                estimator.add_track_length(particle, particle_old, mesh);
+                real_t R_i = 0.0;
+                if (ion_processes.size() > 0) {
+                    R_i = ion_processes[0]->rate[particle_old.geometry.cell_id];
+                }
+                estimator.add_track_length(particle, particle_old, mesh, R_i);
 
                 if (particle.weight < 1.0e-4) {
                     break;

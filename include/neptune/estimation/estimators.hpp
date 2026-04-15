@@ -110,10 +110,16 @@ class ArcmcEstimator {
      *                     The particle before the last update
      * @param mesh         Mesh
      *                     The mesh
+     * @param R_i          real_t
+     *                     The ionisation rate, used to integrate
+     *                     the weight reduction over the timestep
+     *                     if zero, we just use the weight of the
+     *                     old particle for the full timestep
      */
     void add_track_length(const Particle& particle,
                           const Particle& particle_old,
                           const Mesh& mesh,
+                          real_t R_i,
                           real_t V2_corr,
                           real_t V2_corr_x);
     /**
@@ -195,10 +201,16 @@ class Estimator {
      *                     The particle before the last update
      * @param mesh         Mesh
      *                     The mesh
+     * @param R_i          real_t
+     *                     The ionisation rate, used to integrate
+     *                     the weight reduction over the timestep
+     *                     if zero, we just use the weight of the
+     *                     old particle for the full timestep
      */
     void add_track_length(const Particle& particle,
                           const Particle& particle_old,
-                          const Mesh& mesh);
+                          const Mesh& mesh,
+                          const real_t R_i = 0.0);
     /**
      * Add the influence of the particle to the estimates
      *
