@@ -83,6 +83,11 @@ target_link_libraries(neptune-generate-neighborlist PRIVATE neptune)
 add_executable(neptune-mc src/main_json.cpp)
 target_link_libraries(neptune-mc PRIVATE neptune)
 
+add_executable(neptune-mc-hdf5 src/main_hdf5.cpp)
+target_link_libraries(neptune-mc-hdf5 PRIVATE neptune)
+find_package(HDF5 REQUIRED COMPONENTS CXX)
+target_link_libraries(neptune-mc-hdf5 PRIVATE HDF5::HDF5)
+
 add_executable(neptune-fv src/fv_json.cpp)
 target_link_libraries(neptune-fv PRIVATE neptune)
 
