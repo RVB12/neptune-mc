@@ -4,7 +4,7 @@
 #include "neptune/physics/physicalconstants.hpp"
 namespace neptune {
 
-void Estimator::add_track_length(const Particle& particle,
+void Estimator_old::add_track_length(const Particle& particle,
                                  const Particle& particle_old,
                                  const Mesh& mesh,
                                  const real_t R_i)
@@ -46,7 +46,7 @@ void Estimator::add_track_length(const Particle& particle,
     s * particle_old.geometry.velocity.x * particle_old.geometry.velocity.x * particle_old.geometry.velocity.x;
 }
 
-void Estimator::add_final(const Particle& particle, const Mesh& mesh)
+void Estimator_old::add_final(const Particle& particle, const Mesh& mesh)
 {
     index_t cell_id = particle.geometry.cell_id;
     real_t volume = mesh.get_volume(cell_id);
@@ -68,7 +68,7 @@ void Estimator::add_final(const Particle& particle, const Mesh& mesh)
         particle.weight / volume * particle.intensity;
 }
 
-void Estimator::combine(const Estimator& other)
+void Estimator_old::combine(const Estimator_old& other)
 {
     for (index_t i = 0; i < density.size(); i++) {
         density[i] += other.density[i];
@@ -88,7 +88,7 @@ void Estimator::combine(const Estimator& other)
     }
 }
 
-void Estimator::combine(const FluidEstimator& fluid_estimator)
+void Estimator_old::combine(const FluidEstimator& fluid_estimator)
 {
     for (index_t i = 0; i < density.size(); i++) {
         density[i] += fluid_estimator.fluid_density_integral[i];
@@ -100,7 +100,7 @@ void Estimator::combine(const FluidEstimator& fluid_estimator)
     }
 }
 
-void Estimator::combine(const ArcmcEstimator& other)
+void Estimator_old::combine(const ArcmcEstimator& other)
 {
     for (index_t i = 0; i < density.size(); i++) {
         density[i] += other.density[i];

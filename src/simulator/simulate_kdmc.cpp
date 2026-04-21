@@ -565,7 +565,7 @@ void simulate_kdmc(
     const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
     const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
     vector<std::unique_ptr<Source>>& sources,
-    Estimator& estimator,
+    Estimator_old& estimator,
     FluidEstimator& fluid_estimator,
     vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
     SimulationParams params,

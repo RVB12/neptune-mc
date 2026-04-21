@@ -57,24 +57,30 @@ sources["n_particles"] = 10000
 sources["stratification"] = "source_strength"
 
 # Some volume recombination sources
-for i in range(n_cells):
-    source = sources.create_group("R_vol" + str(i))
-    source["type"] = "recombination"
-    source["background_species"] = "D+"
-    source["particle_species"] = "D"
-    source["cell_index"] = i
+source = sources.create_group("R_vol")
+source["type"] = "recombination"
+source["background_species"] = "D+"
+source["particle_species"] = "D"
+source["cell_indices"] = np.arange(n_cells, dtype=np.int64)
 
 # Also some wall recycling sources
 source = sources.create_group("R_wall")
 source["type"] = "wall_recycling"
 source["background_species"] = "D+"
 source["particle_species"] = "D"
-source["cell_index"] = n_cells - 1
-source["surface_index"] = 3
+source["cell_indices"] = np.array([n_cells - 1], dtype=np.int64)
+source["surface_indices"] = np.array([3], dtype=np.int64)
 source["sheath_potential"] = 3.1
 source["franck_condon_temp"] = 2.0
 source["franck_condon_temp"].attrs["units"] = "eV"
 source["Rt"] = 0.9
 source["Rr"] = 0.9
 
+# Estimators
+estimators = f.create_group("estimators")
+D_estimator = estimators.create_group("D")
+D_estimator["species"] = "D"
+D_estimator["qoi"] = "density"
+D_estimator["estimator_type"] = "track_length"
+D_estimator["estimate_variance"] = 0
 

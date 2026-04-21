@@ -49,6 +49,7 @@ list(APPEND neptune_SOURCES
     src/simulator/simulate_arcmc.cpp
     src/physics/wallreflectionsource.cpp
     src/physics/recombinationsource.cpp
+    src/estimation/estimator.cpp
 )
 
 add_library(neptune ${neptune_SOURCES})

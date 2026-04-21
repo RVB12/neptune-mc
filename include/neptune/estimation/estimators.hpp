@@ -169,10 +169,10 @@ class ArcmcEstimator {
     vector<real_t> energy_x_final;
 };
 
-class Estimator {
+class Estimator_old {
    public:
     // Constructor
-    Estimator(index_t n_cells)
+    Estimator_old(index_t n_cells)
         : density(n_cells, 0),
           momentum_x(n_cells, 0),
           momentum_y(n_cells, 0),
@@ -232,7 +232,7 @@ class Estimator {
      * where each thread has its own estimator
      * and we want to combine them at the end
      */
-    void combine(const Estimator& other);
+    void combine(const Estimator_old& other);
 
     void combine(const FluidEstimator& fluid_estimator);
 
@@ -265,8 +265,8 @@ class Estimator {
 };
 
 #pragma omp declare reduction(EstimatorReduction \
-:Estimator : omp_out.combine(omp_in))            \
-    initializer(omp_priv = Estimator(omp_orig.size()))
+:Estimator_old : omp_out.combine(omp_in))            \
+    initializer(omp_priv = Estimator_old(omp_orig.size()))
 
 #pragma omp declare reduction(FluidEstimatorReduction \
 :FluidEstimator : omp_out.combine(omp_in))            \

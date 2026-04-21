@@ -12,6 +12,7 @@
 #include "neptune/physics/source.hpp"
 #include "neptune/physics/species.hpp"
 #include "neptune/physics/wallreflectionsource.hpp"
+#include "neptune/estimation/estimator.hpp"
 
 using namespace neptune;
 
@@ -57,6 +58,12 @@ index_t read_index_number(const H5::DataSet& dataset)
     index_t value;
     dataset.read(&value, H5::PredType::NATIVE_INT64);
     return value;
+}
+
+bool read_bool(const H5::DataSet& dataset)
+{
+    index_t value = read_index_number(dataset);
+    return value != 0;
 }
 
 vector<real_t> read_real_vector(const H5::DataSet& dataset)
@@ -312,12 +319,14 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
                 read_species(source_group.openDataSet("background_species"));
             Species particle_species =
                 read_species(source_group.openDataSet("particle_species"));
-            index_t cell_index =
-                read_index_number(source_group.openDataSet("cell_index"));
             if (background_species == Species::Dplus &&
                 particle_species == Species::D) {
-                sources.push_back(std::make_unique<RecombinationSource>(
-                    0, cell_index, mesh, background));
+                vector<index_t> cell_indices =
+                    read_index_vector(source_group.openDataSet("cell_indices"));
+                for (index_t cell_index : cell_indices) {
+                    sources.push_back(std::make_unique<RecombinationSource>(
+                        0, cell_index, mesh, background));
+                }
             }
             else {
                 throw std::runtime_error(
@@ -329,10 +338,10 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
         }
         else if (source_type == "wall_recycling") {
             // Read wall recycling source data
-            index_t cell_index =
-                read_index_number(source_group.openDataSet("cell_index"));
-            index_t surface_index =
-                read_index_number(source_group.openDataSet("surface_index"));
+            vector<index_t> cell_indices =
+                read_index_vector(source_group.openDataSet("cell_indices"));
+            vector<index_t> surface_indices =
+                read_index_vector(source_group.openDataSet("surface_indices"));
             real_t sheath_potential =
                 read_real_number(source_group.openDataSet("sheath_potential"));
             real_t franck_condon_temp = read_real_number(
@@ -345,9 +354,13 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
                 read_species(source_group.openDataSet("particle_species"));
             if (background_species == Species::Dplus &&
                 particle_species == Species::D) {
-                sources.push_back(std::make_unique<WallReflectionSource>(
-                    0, cell_index, surface_index, sheath_potential,
-                    franck_condon_temp, Rt, Rr, mesh, background));
+                for (size_t j = 0; j < cell_indices.size(); j++) {
+                    index_t cell_index = cell_indices[j];
+                    index_t surface_index = surface_indices[j];
+                    sources.push_back(std::make_unique<WallReflectionSource>(
+                        0, cell_index, surface_index, sheath_potential,
+                        franck_condon_temp, Rt, Rr, mesh, background));
+                }
             }
             else {
                 throw std::runtime_error(
@@ -391,6 +404,31 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
     return sources_vector;
 }
 
+EstimatorGroup read_estimators(const H5::Group& estimators_group, index_t n_cells)
+{
+    std::vector<std::tuple<Species, QOI, EstimatorType>> estimators_definitions;
+
+    // Go over all the subgroups of the estimators group, each subgroup corresponds
+    // to an estimator
+    for (hsize_t i = 0; i < estimators_group.getNumObjs(); i++) {
+        if (!estimators_group.getObjTypeByIdx(i) == H5G_GROUP) {
+            continue;
+        }
+        std::string estimator_name = estimators_group.getObjnameByIdx(i);
+        H5::Group estimator_group = estimators_group.openGroup(estimator_name);
+        Species species = read_species(estimator_group.openDataSet("species"));
+        QOI qoi = stringtoQOI(read_string(estimator_group.openDataSet("qoi")));
+        EstimatorType estimator_type =
+            stringtoEstimatorType(read_string(estimator_group.openDataSet("estimator_type")));
+        bool estimate_variance =
+            read_bool(estimator_group.openDataSet("estimate_variance"));
+
+        estimators_definitions.emplace_back(species, qoi, estimator_type);
+    }
+
+    return EstimatorGroup(estimators_definitions, n_cells);
+}
+
 int main(int argc, char** argv)
 {
     //
@@ -429,6 +467,9 @@ int main(int argc, char** argv)
 
     vector<std::unique_ptr<Source>> sources =
         read_sources(input_file.openGroup("/sources"), *mesh, background);
+
+    EstimatorGroup estimator_group =
+        read_estimators(input_file.openGroup("/estimators"), mesh->n_cells());
 
     return 0;
 }

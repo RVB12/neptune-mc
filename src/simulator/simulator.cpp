@@ -13,7 +13,7 @@ void simulate(
     const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
     const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
     vector<std::unique_ptr<Source>>& sources,
-    Estimator& estimator,
+    Estimator_old& estimator,
     vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
     SimulationParams params,
     ExecutionStatistics& stats)

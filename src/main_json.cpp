@@ -123,7 +123,7 @@ int main(int argc, char** argv)
         params.t_final = -1;
     }
 
-    Estimator estimator(mesh_ptr->n_cells());
+    Estimator_old estimator(mesh_ptr->n_cells());
 
 
     //
