@@ -1,21 +1,21 @@
 import h5py
 import numpy as np
 
-f = h5py.File("input.h5", "w")
+f = h5py.File("build/input.h5", "w")
 
 n_cells = 10
 
 # Background
 background = f.create_group("background")
-Dplus = background.create_group("Dplus")
-Dplus["density"] = np.ones(n_cells, dtype=np.float64)
+Dplus = background.create_group("D+")
+Dplus["density"] = 1.0e21 * np.ones(n_cells, dtype=np.float64)
 Dplus["density"].attrs["units"] = "m^-3"
-Dplus["momentum_x"] = np.zeros(n_cells, dtype=np.float64)
-Dplus["momentum_x"].attrs["units"] = "u*m/s"
-Dplus["momentum_y"] = np.zeros(n_cells, dtype=np.float64)
-Dplus["momentum_y"].attrs["units"] = "u*m/s"
-Dplus["momentum_z"] = np.zeros(n_cells, dtype=np.float64)
-Dplus["momentum_z"].attrs["units"] = "u*m/s"
+Dplus["velocity_x"] = np.zeros(n_cells, dtype=np.float64)
+Dplus["velocity_x"].attrs["units"] = "u*m/s"
+Dplus["velocity_y"] = np.zeros(n_cells, dtype=np.float64)
+Dplus["velocity_y"].attrs["units"] = "u*m/s"
+Dplus["velocity_z"] = np.zeros(n_cells, dtype=np.float64)
+Dplus["velocity_z"].attrs["units"] = "u*m/s"
 Dplus["temperature"] = np.ones(n_cells, dtype=np.float64)
 Dplus["temperature"].attrs["units"] = "eV"
 
@@ -51,6 +51,30 @@ coll1["model"] = "simple"
 
 # Sources
 
+sources = f.create_group("sources")
 
+sources["n_particles"] = 10000
+sources["stratification"] = "source_strength"
+
+# Some volume recombination sources
+for i in range(n_cells):
+    source = sources.create_group("R_vol" + str(i))
+    source["type"] = "recombination"
+    source["background_species"] = "D+"
+    source["particle_species"] = "D"
+    source["cell_index"] = i
+
+# Also some wall recycling sources
+source = sources.create_group("R_wall")
+source["type"] = "wall_recycling"
+source["background_species"] = "D+"
+source["particle_species"] = "D"
+source["cell_index"] = n_cells - 1
+source["surface_index"] = 3
+source["sheath_potential"] = 3.1
+source["franck_condon_temp"] = 2.0
+source["franck_condon_temp"].attrs["units"] = "eV"
+source["Rt"] = 0.9
+source["Rr"] = 0.9
 
 

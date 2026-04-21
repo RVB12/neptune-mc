@@ -581,6 +581,8 @@ void simulate_kdmc(
     index_t num_kd_steps = 0;
     index_t num_kd_to_kinetic_switches = 0;
 
+    Background background;
+
     // History based simulation (because its easy)
 #pragma omp parallel reduction(+ : num_crossings, num_collisions,            \
                                    num_kd_steps, num_kd_to_kinetic_switches) \
@@ -592,10 +594,7 @@ void simulate_kdmc(
              i_particle < sources[i_source]->num_particles(); i_particle++) {
             // Generate particle
             Particle particle =
-                sources[i_source]->generate_particle(i_particle, mesh);
-
-            particle.intensity = sources[i_source]->intensity() /
-                                 sources[i_source]->num_particles();
+                sources[i_source]->generate_particle(i_particle, mesh, background);
 
             for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
                 num_kd_steps++;

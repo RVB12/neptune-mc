@@ -40,7 +40,6 @@ list(APPEND neptune_SOURCES
     src/physics/pointsource.cpp
     src/physics/surfacesource.cpp
     src/physics/volumesource.cpp
-    src/physics/source.cpp
     src/physics/update_particle.cpp
     src/common/json_conversions.cpp
     src/geometry/triangle.cpp
@@ -49,6 +48,7 @@ list(APPEND neptune_SOURCES
     src/finitevolume/advectiondiffusionsolver.cpp
     src/simulator/simulate_arcmc.cpp
     src/physics/wallreflectionsource.cpp
+    src/physics/recombinationsource.cpp
 )
 
 add_library(neptune ${neptune_SOURCES})

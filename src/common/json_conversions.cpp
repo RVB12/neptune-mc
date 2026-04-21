@@ -240,10 +240,10 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Source>& s)
         SurfaceSource ss = j;
         s = std::make_unique<SurfaceSource>(ss);
     }
-    else if (type == "wall_reflection") {
-        WallReflectionSource wrs = j;
-        s = std::make_unique<WallReflectionSource>(wrs);
-    }
+    // else if (type == "wall_reflection") {
+    //     WallReflectionSource wrs = j;
+    //     s = std::make_unique<WallReflectionSource>(wrs);
+    // }
     else {
         throw std::runtime_error("Unknown source type");
     }

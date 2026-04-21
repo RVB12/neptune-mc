@@ -188,6 +188,8 @@ void simulate_armc(
     index_t num_crossings = 0;
     index_t num_collisions = 0;
 
+    Background background;
+
     // History based simulation (because its easy)
 #pragma omp parallel reduction(+ : num_crossings, num_collisions) \
     reduction(ArcmcEstimatorReduction : estimator)
@@ -197,12 +199,9 @@ void simulate_armc(
              i_particle < sources[i_source]->num_particles(); i_particle++) {
             // Generate particle
             Particle particle =
-                sources[i_source]->generate_particle(i_particle, mesh);
+                sources[i_source]->generate_particle(i_particle, mesh, background);
             real_t V2_eff = particle.geometry.velocity.norm();
             real_t V2_eff_x = particle.geometry.velocity.x * particle.geometry.velocity.x;
-
-            particle.intensity = sources[i_source]->intensity() /
-                                 sources[i_source]->num_particles();
 
             for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
                 Particle particle_old = particle;

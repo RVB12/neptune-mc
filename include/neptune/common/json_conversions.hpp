@@ -145,7 +145,7 @@ struct adl_serializer<neptune::PointSource> {
                  {"vel_mean", t.vel_mean},
                  {"vel_stddev", t.vel_stddev},
                  {"n_particles", t.num_particles()},
-                 {"intensity", t.intensity()}};
+                 {"intensity", t.intensity}};
     }
 };
 
@@ -182,30 +182,30 @@ struct adl_serializer<neptune::VolumeSource> {
     }
 };
 
-template <>
-struct adl_serializer<neptune::WallReflectionSource> {
-    static neptune::WallReflectionSource from_json(const json& j)
-    {
-        neptune::index_t num_particles = j.at("n_particles");
-        neptune::index_t cell_idx = j.at("cell_idx");
-        neptune::index_t surface_id = j.at("surface_id");
-        neptune::real_t ion_vel_x = j.at("ion_vel_x");
-        neptune::real_t ion_vel_y = j.at("ion_vel_y");
-        neptune::real_t ion_vel_z = j.at("ion_vel_z");
-        neptune::real_t ion_temp = j.at("ion_temp");
-        neptune::real_t ion_density = j.at("ion_density");
-        neptune::real_t sheath_potential = j.at("sheath_potential");
-        neptune::real_t franck_condon_temp = j.at("franck_condon_temp");
-        neptune::real_t Rt = j.at("Rt");
-        neptune::real_t Rr = j.at("Rr");
+// template <>
+// struct adl_serializer<neptune::WallReflectionSource> {
+//     static neptune::WallReflectionSource from_json(const json& j)
+//     {
+//         neptune::index_t num_particles = j.at("n_particles");
+//         neptune::index_t cell_idx = j.at("cell_idx");
+//         neptune::index_t surface_id = j.at("surface_id");
+//         neptune::real_t ion_vel_x = j.at("ion_vel_x");
+//         neptune::real_t ion_vel_y = j.at("ion_vel_y");
+//         neptune::real_t ion_vel_z = j.at("ion_vel_z");
+//         neptune::real_t ion_temp = j.at("ion_temp");
+//         neptune::real_t ion_density = j.at("ion_density");
+//         neptune::real_t sheath_potential = j.at("sheath_potential");
+//         neptune::real_t franck_condon_temp = j.at("franck_condon_temp");
+//         neptune::real_t Rt = j.at("Rt");
+//         neptune::real_t Rr = j.at("Rr");
 
-        neptune::WallReflectionSource s(num_particles, cell_idx, surface_id, ion_vel_x, ion_vel_y,
-                                        ion_vel_z, ion_temp, ion_density, sheath_potential,
-                                        franck_condon_temp, Rt, Rr);
+//         neptune::WallReflectionSource s(num_particles, cell_idx, surface_id, ion_vel_x, ion_vel_y,
+//                                         ion_vel_z, ion_temp, ion_density, sheath_potential,
+//                                         franck_condon_temp, Rt, Rr);
 
-        return s;
-    }
-};
+//         return s;
+//     }
+// };
 
 template <>
 struct adl_serializer<neptune::TriangleMesh> {

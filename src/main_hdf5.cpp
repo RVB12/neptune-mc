@@ -8,6 +8,10 @@
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
 #include "neptune/physics/background.hpp"
+#include "neptune/physics/recombinationsource.hpp"
+#include "neptune/physics/source.hpp"
+#include "neptune/physics/species.hpp"
+#include "neptune/physics/wallreflectionsource.hpp"
 
 using namespace neptune;
 
@@ -286,6 +290,107 @@ vector<std::unique_ptr<Collision>> read_collisions(
     return collisions_vector;
 }
 
+vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
+                                             const Mesh& mesh,
+                                             const Background& background)
+{
+    std::vector<std::unique_ptr<Source>> sources;
+
+    // Go over all the subgroups of the sources group, each subgroup corresponds
+    // to a source
+    for (hsize_t i = 0; i < sources_group.getNumObjs(); i++) {
+        if (!sources_group.getObjTypeByIdx(i) == H5G_GROUP) {
+            continue;
+        }
+        std::string source_name = sources_group.getObjnameByIdx(i);
+        H5::Group source_group = sources_group.openGroup(source_name);
+        std::string source_type = read_string(source_group.openDataSet("type"));
+
+        if (source_type == "recombination") {
+            // Read recombination source data
+            Species background_species =
+                read_species(source_group.openDataSet("background_species"));
+            Species particle_species =
+                read_species(source_group.openDataSet("particle_species"));
+            index_t cell_index =
+                read_index_number(source_group.openDataSet("cell_index"));
+            if (background_species == Species::Dplus &&
+                particle_species == Species::D) {
+                sources.push_back(std::make_unique<RecombinationSource>(
+                    0, cell_index, mesh, background));
+            }
+            else {
+                throw std::runtime_error(
+                    "Unsupported species combination for recombination source: "
+                    "background species " +
+                    speciestostring(background_species) +
+                    ", particle species " + speciestostring(particle_species));
+            }
+        }
+        else if (source_type == "wall_recycling") {
+            // Read wall recycling source data
+            index_t cell_index =
+                read_index_number(source_group.openDataSet("cell_index"));
+            index_t surface_index =
+                read_index_number(source_group.openDataSet("surface_index"));
+            real_t sheath_potential =
+                read_real_number(source_group.openDataSet("sheath_potential"));
+            real_t franck_condon_temp = read_real_number(
+                source_group.openDataSet("franck_condon_temp"));
+            real_t Rt = read_real_number(source_group.openDataSet("Rt"));
+            real_t Rr = read_real_number(source_group.openDataSet("Rr"));
+            Species background_species =
+                read_species(source_group.openDataSet("background_species"));
+            Species particle_species =
+                read_species(source_group.openDataSet("particle_species"));
+            if (background_species == Species::Dplus &&
+                particle_species == Species::D) {
+                sources.push_back(std::make_unique<WallReflectionSource>(
+                    0, cell_index, surface_index, sheath_potential,
+                    franck_condon_temp, Rt, Rr, mesh, background));
+            }
+            else {
+                throw std::runtime_error(
+                    "Unsupported species combination for wall recycling "
+                    "source: background species " +
+                    speciestostring(background_species) +
+                    ", particle species " + speciestostring(particle_species));
+            }
+        }
+        else {
+            throw std::runtime_error("Unknown source type: " + source_type);
+        }
+    }
+
+    // Automatic stratification, assign number of particles according to the
+    // intensity of the sources
+    index_t n_particles =
+        read_index_number(sources_group.openDataSet("n_particles"));
+    real_t total_intensity = 0;
+    for (const auto& source : sources) {
+        total_intensity += source->intensity();
+    }
+    for (auto& source : sources) {
+        source->num_particles_ = static_cast<index_t>(
+            n_particles * source->intensity() / total_intensity);
+    }
+
+    // Set the particle_id_offset_ for each source to ensure unique particle ids
+    // across sources
+    index_t particle_id_offset = 0;
+    for (auto& source : sources) {
+        source->particle_id_offset_ = particle_id_offset;
+        particle_id_offset += source->num_particles();
+    }
+
+    // Convert std::vector to neptune::vector
+    vector<std::unique_ptr<Source>> sources_vector(sources.size());
+    for (size_t i = 0; i < sources.size(); i++) {
+        sources_vector[i] = std::move(sources[i]);
+    }
+    return sources_vector;
+}
+
 int main(int argc, char** argv)
 {
     //
@@ -321,6 +426,9 @@ int main(int argc, char** argv)
 
     vector<std::unique_ptr<Collision>> collisions =
         read_collisions(input_file.openGroup("/collisions"));
+
+    vector<std::unique_ptr<Source>> sources =
+        read_sources(input_file.openGroup("/sources"), *mesh, background);
 
     return 0;
 }

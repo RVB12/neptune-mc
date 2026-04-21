@@ -6,7 +6,7 @@
 
 namespace neptune {
 
-Particle SurfaceSource::generate_particle(index_t i_particle, const Mesh& mesh)
+Particle SurfaceSource::generate_particle(index_t i_particle, const Mesh& mesh, const Background& background)
 {
     if (i_particle >= num_particles()) {
         throw std::runtime_error(

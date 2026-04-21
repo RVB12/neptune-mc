@@ -37,41 +37,20 @@ class WallReflectionSource : public Source {
     WallReflectionSource(index_t num_particles_,
                          index_t cell_idx_,
                          index_t surface_id_,
-                         real_t ion_vel_x_,
-                         real_t ion_vel_y_,
-                         real_t ion_vel_z_,
-                         real_t ion_temp_,
-                         real_t ion_density_,
                          real_t sheath_potential_,
                          real_t franck_condon_temp_,
                          real_t Rt_,
-                         real_t Rr_)
-        : Source(num_particles_, 0),
-          cell_idx(cell_idx_),
-          surface_id(surface_id_),
-          ion_vel_x(ion_vel_x_),
-          ion_vel_y(ion_vel_y_),
-          ion_vel_z(ion_vel_z_),
-          ion_temp(ion_temp_),
-          ion_density(ion_density_),
-          sheath_potential(sheath_potential_),
-          franck_condon_temp(franck_condon_temp_),
-          Rt(Rt_),
-          Rr(Rr_)
-    {}
+                         real_t Rr_,
+                         const Mesh& mesh,
+                         const Background& background);
 
     /**
      * @brief Generate a particle
      */
-    Particle generate_particle(index_t i_particle, const Mesh& mesh);
+    Particle generate_particle(index_t i_particle, const Mesh& mesh, const Background& background);
 
     index_t cell_idx = 0;    // The cell index where the particles are generated
     index_t surface_id = 0;  // The surface id where the particles are generated
-    real_t ion_vel_x;        // ion velocity in m/s
-    real_t ion_vel_y;
-    real_t ion_vel_z;
-    real_t ion_temp;  // ion temperature in eV
-    real_t ion_density;  // ion density in m^-3
     real_t sheath_potential = 3.1;
     real_t franck_condon_temp =
         2.0;    // temperature of dissociated molecules in eV

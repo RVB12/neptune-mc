@@ -37,6 +37,11 @@ inline std::string speciestostring(const Species& species)
     }
 }
 
+inline index_t get_index(const Species& species)
+{
+    return static_cast<index_t>(species);
+}
+
 // Mass of the species in atomic mass units (u)
 const real_t SPECIES_MASS[] = {
     1.00784,  // H

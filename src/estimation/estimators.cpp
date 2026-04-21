@@ -30,12 +30,12 @@ void Estimator::add_track_length(const Particle& particle,
     momentum_z[cell_id_old] += particle_old.geometry.velocity.z * s;
 
     energy[cell_id_old] +=
-        s * (0.5 * particle_old.mass * particle_old.geometry.velocity.norm2()) *
+        s * (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] * particle_old.geometry.velocity.norm2()) *
         constants::m_p / constants::eV_to_Joules;
 
     energy_x[cell_id_old] +=
         s *
-        (0.5 * particle_old.mass * particle_old.geometry.velocity.x *
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] * particle_old.geometry.velocity.x *
          particle_old.geometry.velocity.x) *
         constants::m_p / constants::eV_to_Joules;
 
@@ -59,11 +59,11 @@ void Estimator::add_final(const Particle& particle, const Mesh& mesh)
     momentum_z_final[cell_id] += particle.geometry.velocity.z *
                                  particle.weight / volume * particle.intensity;
     energy_final[cell_id] +=
-        (0.5 * particle.mass * particle.geometry.velocity.norm2()) *
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] * particle.geometry.velocity.norm2()) *
         particle.weight / volume * particle.intensity;
 
     energy_x_final[cell_id] +=
-        (0.5 * particle.mass * particle.geometry.velocity.x *
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] * particle.geometry.velocity.x *
          particle.geometry.velocity.x) *
         particle.weight / volume * particle.intensity;
 }
@@ -211,10 +211,10 @@ void ArcmcEstimator::add_track_length(const Particle& particle,
     momentum_y[cell_id_old] += particle_old.geometry.velocity.y * s;
     momentum_z[cell_id_old] += particle_old.geometry.velocity.z * s;
 
-    energy[cell_id_old] += s * (0.5 * particle_old.mass * V2_eff) *
+    energy[cell_id_old] += s * (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] * V2_eff) *
                            constants::m_p / constants::eV_to_Joules;
 
-    energy_x[cell_id_old] += s * (0.5 * particle_old.mass * V2_eff_x) *
+    energy_x[cell_id_old] += s * (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] * V2_eff_x) *
                              constants::m_p / constants::eV_to_Joules;
 }
 
@@ -233,10 +233,10 @@ void ArcmcEstimator::add_final(const Particle& particle,
                                  particle.weight / volume * particle.intensity;
     momentum_z_final[cell_id] += particle.geometry.velocity.z *
                                  particle.weight / volume * particle.intensity;
-    energy_final[cell_id] += (0.5 * particle.mass * V2_eff) * particle.weight /
+    energy_final[cell_id] += (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] * V2_eff) * particle.weight /
                              volume * particle.intensity;
 
-    energy_x_final[cell_id] += (0.5 * particle.mass * V2_eff_x) *
+    energy_x_final[cell_id] += (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] * V2_eff_x) *
                                particle.weight / volume * particle.intensity;
 }
 

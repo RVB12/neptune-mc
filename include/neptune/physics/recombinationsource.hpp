@@ -1,0 +1,42 @@
+#ifndef NEPTUNE_RECOMBINATIONSOURCE_HPP
+#define NEPTUNE_RECOMBINATIONSOURCE_HPP
+
+#include <cassert>
+#include <random>
+
+#include "neptune/common/utils.hpp"
+#include "neptune/geometry/vec2.hpp"
+#include "neptune/physics/particle.hpp"
+#include "neptune/physics/source.hpp"
+
+namespace neptune {
+
+/**
+ * @brief A volume source of particles
+ *
+ * The particles will be generated somewhere in a specified cell.
+ * 
+ * For now, this always models D+ recombining with an electron to form a D atom.
+ * Could be extended in the future.
+ * 
+ */
+class RecombinationSource : public Source {
+   public:
+    RecombinationSource(index_t num_particles,
+                        index_t cell_idx_,
+                        const Mesh& mesh,
+                        const Background& background);
+
+    /**
+     * @brief Generate a particle
+     */
+    Particle generate_particle(index_t i_particle,
+                               const Mesh& mesh,
+                               const Background& background);
+
+    index_t cell_idx = 0;  // The cell index where the particles are generated
+};
+
+}  // namespace neptune
+
+#endif
