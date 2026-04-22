@@ -84,3 +84,10 @@ D_estimator["qoi"] = "density"
 D_estimator["estimator_type"] = "track_length"
 D_estimator["estimate_variance"] = 0
 
+# Boundary conditions
+boundary_conditions = f.create_group("boundary_conditions")
+
+for i in range(6):
+    bc = boundary_conditions.create_group(f"bc{i}")
+    bc["type"] = "specular"
+

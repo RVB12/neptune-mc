@@ -13,6 +13,7 @@
 #include "neptune/physics/species.hpp"
 #include "neptune/physics/wallreflectionsource.hpp"
 #include "neptune/estimation/estimator.hpp"
+#include "neptune/physics/boundarycondition.hpp"
 
 using namespace neptune;
 
@@ -429,6 +430,46 @@ EstimatorGroup read_estimators(const H5::Group& estimators_group, index_t n_cell
     return EstimatorGroup(estimators_definitions, n_cells);
 }
 
+vector<std::unique_ptr<BoundaryCondition>> read_boundary_conditions(const H5::Group& boundary_conditions_group)
+{
+    std::vector<std::unique_ptr<BoundaryCondition>> boundary_conditions;
+
+    // Go over all the subgroups of the boundary conditions group, each subgroup
+    // corresponds to a boundary condition
+    for (hsize_t i = 0; i < boundary_conditions_group.getNumObjs(); i++) {
+        if (!boundary_conditions_group.getObjTypeByIdx(i) == H5G_GROUP) {
+            continue;
+        }
+        std::string bc_name = boundary_conditions_group.getObjnameByIdx(i);
+        H5::Group bc_group = boundary_conditions_group.openGroup(bc_name);
+        std::string bc_type = read_string(bc_group.openDataSet("type"));
+
+        if (bc_type == "specular") {
+            boundary_conditions.push_back(
+                std::make_unique<SpecularBC>());
+        }
+        else if (bc_type == "absorbing") {
+            boundary_conditions.push_back(
+                std::make_unique<AbsorbingBC>());
+        } else if (bc_type == "partially_specular") {
+            real_t absorption_coefficient = read_real_number(bc_group.openDataSet("absorption_coefficient"));
+            boundary_conditions.push_back(
+                std::make_unique<PartiallySpecularBC>(absorption_coefficient));
+        }
+        else {
+            throw std::runtime_error("Unknown boundary condition type: " +
+                                     bc_type);
+        }
+    }
+
+    // Convert std::vector to neptune::vector
+    vector<std::unique_ptr<BoundaryCondition>> bc_vector(boundary_conditions.size());
+    for (size_t i = 0; i < boundary_conditions.size(); i++) {
+        bc_vector[i] = std::move(boundary_conditions[i]);
+    }
+    return bc_vector;
+}
+
 int main(int argc, char** argv)
 {
     //
@@ -465,11 +506,38 @@ int main(int argc, char** argv)
     vector<std::unique_ptr<Collision>> collisions =
         read_collisions(input_file.openGroup("/collisions"));
 
+    // Split collisions into CX and ionisation
+    index_t n_cx_collisions = 0;
+    index_t n_ionisation_collisions = 0;
+    for (const auto& collision : collisions) {
+        if (dynamic_cast<ChargeExchangeCollision*>(collision.get()) != nullptr) {
+            n_cx_collisions++;
+        }
+        else if (dynamic_cast<IonisationCollision*>(collision.get()) != nullptr) {
+            n_ionisation_collisions++;
+        }
+    }
+    vector<std::unique_ptr<ChargeExchangeCollision>> cx_collisions(n_cx_collisions);
+    vector<std::unique_ptr<IonisationCollision>> ionisation_collisions(n_ionisation_collisions);
+    index_t cx_index = 0;
+    index_t ionisation_index = 0;
+    for (auto& collision : collisions) {
+        if (auto* cx_collision = dynamic_cast<ChargeExchangeCollision*>(collision.get())) {
+            cx_collisions[cx_index++] = std::unique_ptr<ChargeExchangeCollision>(cx_collision);
+        }
+        else if (auto* ionisation_collision = dynamic_cast<IonisationCollision*>(collision.get())) {
+            ionisation_collisions[ionisation_index++] = std::unique_ptr<IonisationCollision>(ionisation_collision);
+        }
+    }
+
     vector<std::unique_ptr<Source>> sources =
         read_sources(input_file.openGroup("/sources"), *mesh, background);
 
     EstimatorGroup estimator_group =
         read_estimators(input_file.openGroup("/estimators"), mesh->n_cells());
+
+    vector<std::unique_ptr<BoundaryCondition>> boundary_conditions =
+        read_boundary_conditions(input_file.openGroup("/boundary_conditions"));
 
     return 0;
 }
