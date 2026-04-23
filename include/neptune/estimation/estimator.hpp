@@ -153,9 +153,16 @@ class Estimator {
 
     void finalize()
     {
-        if (!estimate_variance and n_samples > 1) {
-            for (index_t i = 0; i < tally_vector.size(); i++) {
-                tally_vector[i] /= n_samples;
+        if (estimate_variance) {
+            for (index_t i = 0; i < tally_variance.size(); i++) {
+                tally_variance[i] /= n_samples - 1;
+            }
+        }
+        else {
+            if (n_samples > 1) {
+                for (index_t i = 0; i < tally_vector.size(); i++) {
+                    tally_vector[i] /= n_samples;
+                }
             }
         }
     }

@@ -442,8 +442,10 @@ EstimatorGroup read_estimators(const H5::Group& estimators_group,
         QOI qoi = stringtoQOI(read_string(estimator_group.openDataSet("qoi")));
         EstimatorType estimator_type = stringtoEstimatorType(
             read_string(estimator_group.openDataSet("estimator_type")));
-        bool estimate_variance =
-            read_bool(estimator_group.openDataSet("estimate_variance"));
+        bool estimate_variance = false;
+        if(H5Lexists(estimator_group.getId(), "estimate_variance", H5P_DEFAULT)) {
+            bool estimate_variance = read_bool(estimator_group.openDataSet("estimate_variance"));
+        }
 
         estimators_definitions.emplace_back(species, qoi, estimator_type, estimate_variance);
     }
