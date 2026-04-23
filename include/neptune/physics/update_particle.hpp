@@ -21,8 +21,9 @@ namespace neptune {
  */
 EventType update_particle(
     const Mesh& mesh,
-    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
-    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
+    const Background& background,
+    const vector<std::unique_ptr<ChargeExchangeCollision>>& cx_collisions,
+    const vector<std::unique_ptr<IonisationCollision>>& ion_collisions,
     const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
     Particle& p,
     real_t t_final = -1);

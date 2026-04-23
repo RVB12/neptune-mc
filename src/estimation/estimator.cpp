@@ -124,7 +124,7 @@ void EstimatorGroup::tally_track_length(const Particle& p,
         R_i += collision_rate;
     }
 
-    real_t volume = mesh.get_volume(p.geometry.cell_id);
+    real_t volume = mesh.get_volume(p_old.geometry.cell_id);
     real_t dt = p.t - p_old.t;
     real_t s;
     if(R_i * dt < 1.0e-4) {
@@ -135,7 +135,7 @@ void EstimatorGroup::tally_track_length(const Particle& p,
     }
 
     // Loop over the relevant track-length estimators for this particle and tally them
-    for (auto* estimator : track_length_estimators_by_species[static_cast<size_t>(p.species)]) {
+    for (auto* estimator : track_length_estimators_by_species[static_cast<size_t>(p_old.species)]) {
         estimator->tally(p_old, s);
     }
 }

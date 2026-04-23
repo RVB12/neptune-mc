@@ -7,3 +7,4 @@ Some big TODOs for the refactor:
 (though directly supplying rates should still be possible)
 - Don't always tally everything, allow the user to select which variables they want estimated.
 - Change name to ORCA-MC to avoid name conflict.
+- Use a better counter based RNG

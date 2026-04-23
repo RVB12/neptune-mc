@@ -5,15 +5,17 @@
 #include "neptune/collisions/abstract_collisions.hpp"
 #include "neptune/collisions/simple_collisions.hpp"
 #include "neptune/common/utils.hpp"
+#include "neptune/estimation/estimator.hpp"
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
 #include "neptune/physics/background.hpp"
+#include "neptune/physics/boundarycondition.hpp"
 #include "neptune/physics/recombinationsource.hpp"
 #include "neptune/physics/source.hpp"
 #include "neptune/physics/species.hpp"
+#include "neptune/physics/volumesource.hpp"
 #include "neptune/physics/wallreflectionsource.hpp"
-#include "neptune/estimation/estimator.hpp"
-#include "neptune/physics/boundarycondition.hpp"
+#include "neptune/simulator/simulator.hpp"
 
 using namespace neptune;
 
@@ -371,6 +373,32 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
                     ", particle species " + speciestostring(particle_species));
             }
         }
+        else if (source_type == "volume") {
+            Species species = read_species(source_group.openDataSet("species"));
+            vector<index_t> cell_indices =
+                read_index_vector(source_group.openDataSet("cell_indices"));
+            vector<real_t> intensities =
+                read_real_vector(source_group.openDataSet("intensities"));
+            vector<real_t> vel_x =
+                read_real_vector(source_group.openDataSet("velocity_x"));
+            vector<real_t> vel_y =
+                read_real_vector(source_group.openDataSet("velocity_y"));
+            vector<real_t> vel_z =
+                read_real_vector(source_group.openDataSet("velocity_z"));
+            vector<real_t> vel_std =
+                read_real_vector(source_group.openDataSet("velocity_std"));
+            for (size_t j = 0; j < cell_indices.size(); j++) {
+                index_t cell_index = cell_indices[j];
+                real_t intensity = intensities[j];
+                real_t velocity_x = vel_x[j];
+                real_t velocity_y = vel_y[j];
+                real_t velocity_z = vel_z[j];
+                real_t velocity_std = vel_std[j];
+                sources.push_back(std::make_unique<VolumeSource>(
+                    0, species, intensity, cell_index,
+                    Vec3(velocity_x, velocity_y, velocity_z), velocity_std));
+            }
+        }
         else {
             throw std::runtime_error("Unknown source type: " + source_type);
         }
@@ -405,12 +433,13 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
     return sources_vector;
 }
 
-EstimatorGroup read_estimators(const H5::Group& estimators_group, index_t n_cells)
+EstimatorGroup read_estimators(const H5::Group& estimators_group,
+                               index_t n_cells)
 {
     std::vector<std::tuple<Species, QOI, EstimatorType>> estimators_definitions;
 
-    // Go over all the subgroups of the estimators group, each subgroup corresponds
-    // to an estimator
+    // Go over all the subgroups of the estimators group, each subgroup
+    // corresponds to an estimator
     for (hsize_t i = 0; i < estimators_group.getNumObjs(); i++) {
         if (!estimators_group.getObjTypeByIdx(i) == H5G_GROUP) {
             continue;
@@ -419,8 +448,8 @@ EstimatorGroup read_estimators(const H5::Group& estimators_group, index_t n_cell
         H5::Group estimator_group = estimators_group.openGroup(estimator_name);
         Species species = read_species(estimator_group.openDataSet("species"));
         QOI qoi = stringtoQOI(read_string(estimator_group.openDataSet("qoi")));
-        EstimatorType estimator_type =
-            stringtoEstimatorType(read_string(estimator_group.openDataSet("estimator_type")));
+        EstimatorType estimator_type = stringtoEstimatorType(
+            read_string(estimator_group.openDataSet("estimator_type")));
         bool estimate_variance =
             read_bool(estimator_group.openDataSet("estimate_variance"));
 
@@ -430,7 +459,8 @@ EstimatorGroup read_estimators(const H5::Group& estimators_group, index_t n_cell
     return EstimatorGroup(estimators_definitions, n_cells);
 }
 
-vector<std::unique_ptr<BoundaryCondition>> read_boundary_conditions(const H5::Group& boundary_conditions_group)
+vector<std::unique_ptr<BoundaryCondition>> read_boundary_conditions(
+    const H5::Group& boundary_conditions_group)
 {
     std::vector<std::unique_ptr<BoundaryCondition>> boundary_conditions;
 
@@ -445,14 +475,14 @@ vector<std::unique_ptr<BoundaryCondition>> read_boundary_conditions(const H5::Gr
         std::string bc_type = read_string(bc_group.openDataSet("type"));
 
         if (bc_type == "specular") {
-            boundary_conditions.push_back(
-                std::make_unique<SpecularBC>());
+            boundary_conditions.push_back(std::make_unique<SpecularBC>());
         }
         else if (bc_type == "absorbing") {
-            boundary_conditions.push_back(
-                std::make_unique<AbsorbingBC>());
-        } else if (bc_type == "partially_specular") {
-            real_t absorption_coefficient = read_real_number(bc_group.openDataSet("absorption_coefficient"));
+            boundary_conditions.push_back(std::make_unique<AbsorbingBC>());
+        }
+        else if (bc_type == "partially_specular") {
+            real_t absorption_coefficient = read_real_number(
+                bc_group.openDataSet("absorption_coefficient"));
             boundary_conditions.push_back(
                 std::make_unique<PartiallySpecularBC>(absorption_coefficient));
         }
@@ -463,7 +493,8 @@ vector<std::unique_ptr<BoundaryCondition>> read_boundary_conditions(const H5::Gr
     }
 
     // Convert std::vector to neptune::vector
-    vector<std::unique_ptr<BoundaryCondition>> bc_vector(boundary_conditions.size());
+    vector<std::unique_ptr<BoundaryCondition>> bc_vector(
+        boundary_conditions.size());
     for (size_t i = 0; i < boundary_conditions.size(); i++) {
         bc_vector[i] = std::move(boundary_conditions[i]);
     }
@@ -510,23 +541,33 @@ int main(int argc, char** argv)
     index_t n_cx_collisions = 0;
     index_t n_ionisation_collisions = 0;
     for (const auto& collision : collisions) {
-        if (dynamic_cast<ChargeExchangeCollision*>(collision.get()) != nullptr) {
+        if (dynamic_cast<ChargeExchangeCollision*>(collision.get()) !=
+            nullptr) {
             n_cx_collisions++;
         }
-        else if (dynamic_cast<IonisationCollision*>(collision.get()) != nullptr) {
+        else if (dynamic_cast<IonisationCollision*>(collision.get()) !=
+                 nullptr) {
             n_ionisation_collisions++;
         }
     }
-    vector<std::unique_ptr<ChargeExchangeCollision>> cx_collisions(n_cx_collisions);
-    vector<std::unique_ptr<IonisationCollision>> ionisation_collisions(n_ionisation_collisions);
+    vector<std::unique_ptr<ChargeExchangeCollision>> cx_collisions(
+        n_cx_collisions);
+    vector<std::unique_ptr<IonisationCollision>> ionisation_collisions(
+        n_ionisation_collisions);
     index_t cx_index = 0;
     index_t ionisation_index = 0;
     for (auto& collision : collisions) {
-        if (auto* cx_collision = dynamic_cast<ChargeExchangeCollision*>(collision.get())) {
-            cx_collisions[cx_index++] = std::unique_ptr<ChargeExchangeCollision>(cx_collision);
+        if (auto* cx_collision =
+                dynamic_cast<ChargeExchangeCollision*>(collision.get())) {
+            cx_collisions[cx_index++] =
+                std::unique_ptr<ChargeExchangeCollision>(cx_collision);
+            collision.release();  // release ownership from the original vector
         }
-        else if (auto* ionisation_collision = dynamic_cast<IonisationCollision*>(collision.get())) {
-            ionisation_collisions[ionisation_index++] = std::unique_ptr<IonisationCollision>(ionisation_collision);
+        else if (auto* ionisation_collision =
+                     dynamic_cast<IonisationCollision*>(collision.get())) {
+            ionisation_collisions[ionisation_index++] =
+                std::unique_ptr<IonisationCollision>(ionisation_collision);
+            collision.release();  // release ownership from the original vector
         }
     }
 
@@ -538,6 +579,83 @@ int main(int argc, char** argv)
 
     vector<std::unique_ptr<BoundaryCondition>> boundary_conditions =
         read_boundary_conditions(input_file.openGroup("/boundary_conditions"));
+
+    SimulationParams params;
+    H5::Group params_group = input_file.openGroup("/params");
+    if (H5Lexists(params_group.getId(), "max_steps", H5P_DEFAULT)) {
+        params.max_steps =
+            read_index_number(params_group.openDataSet("max_steps"));
+    }
+    if (H5Lexists(params_group.getId(), "seed", H5P_DEFAULT)) {
+        params.seed = read_index_number(params_group.openDataSet("seed"));
+    }
+    if (H5Lexists(params_group.getId(), "t_final", H5P_DEFAULT)) {
+        params.t_final = read_real_number(params_group.openDataSet("t_final"));
+    }
+
+    ExecutionStatistics stats;
+
+    simulate(*mesh, background, cx_collisions, ionisation_collisions, sources,
+             estimator_group, boundary_conditions, params, stats);
+
+    // Now write the results to the output file
+    H5::H5File output_file(output_file_name, H5F_ACC_TRUNC);
+
+    for (const auto species : {Species::H, Species::D}) {
+        bool has_tl =
+            !estimator_group
+                 .track_length_estimators_by_species[static_cast<index_t>(
+                     species)]
+                 .empty();
+        bool has_final =
+            !estimator_group
+                 .final_estimators_by_species[static_cast<index_t>(species)]
+                 .empty();
+        if (!has_tl && !has_final) {
+            continue;  // skip species for which we have no estimators
+        }
+
+        std::string species_name = speciestostring(species);
+        H5::Group species_group = output_file.createGroup(species_name);
+
+        if (has_tl) {
+            H5::Group tl_group = species_group.createGroup("track_length");
+
+            for (auto estimator :
+                 estimator_group
+                     .track_length_estimators_by_species[static_cast<index_t>(
+                         species)]) {
+                std::string dataset_name = QOItostring(estimator->qoi);
+
+                hsize_t dim = estimator->tally_vector.size();
+                H5::DataSpace dataspace(1, &dim);  // 1D array
+
+                H5::DataSet dataset = tl_group.createDataSet(
+                    dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+
+                dataset.write(estimator->tally_vector.data(),
+                              H5::PredType::NATIVE_DOUBLE);
+            }
+        }
+
+        if (has_final) {
+            H5::Group final_group = species_group.createGroup("final_time");
+
+            for (auto estimator : estimator_group.final_estimators_by_species
+                                      [static_cast<index_t>(species)]) {
+                std::string dataset_name = QOItostring(estimator->qoi);
+
+                hsize_t dim = estimator->tally_vector.size();
+                H5::DataSpace dataspace(1, &dim);  // 1D array
+
+                H5::DataSet dataset = final_group.createDataSet(
+                    dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+
+                dataset.write(estimator->tally_vector.data(),
+                              H5::PredType::NATIVE_DOUBLE);
+            }
+        }
+    }
 
     return 0;
 }

@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "neptune/collisions/abstract_collisions.hpp"
 #include "neptune/common/utils.hpp"
 #include "neptune/common/vector.hpp"
 #include "neptune/estimation/estimators.hpp"
@@ -16,6 +17,8 @@
 #include "neptune/physics/plasmabackground.hpp"
 #include "neptune/physics/source.hpp"
 #include "neptune/simulator/execution_statistics.hpp"
+#include "neptune/physics/background.hpp"
+#include "neptune/estimation/estimator.hpp"
 
 namespace neptune {
 
@@ -34,14 +37,16 @@ struct SimulationParams {
  * Simulate a number of particles on a given grid.
  *
  */
-void simulate(Mesh& mesh,
-              const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
-              const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
-              vector<std::unique_ptr<Source>>& sources,
-              Estimator_old& estimator,
-              vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
-              SimulationParams params,
-              ExecutionStatistics& stats);
+void simulate(
+    const Mesh& mesh,
+    const Background& background,
+    const vector<std::unique_ptr<ChargeExchangeCollision>>& cx_collisions,
+    const vector<std::unique_ptr<IonisationCollision>>& ion_collisions,
+    vector<std::unique_ptr<Source>>& sources,
+    EstimatorGroup& estimator_group,
+    vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
+    SimulationParams params,
+    ExecutionStatistics& stats);
 
 void simulate_kdmc(
     Mesh& mesh,

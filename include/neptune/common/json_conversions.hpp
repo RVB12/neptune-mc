@@ -165,22 +165,22 @@ struct adl_serializer<neptune::SurfaceSource> {
     }
 };
 
-template <>
-struct adl_serializer<neptune::VolumeSource> {
-    static neptune::VolumeSource from_json(const json& j)
-    {
-        neptune::index_t num_particles = j.at("n_particles");
-        neptune::real_t intensity = j.at("intensity");
-        neptune::Vec3 vel_mean = j.at("vel_mean");
-        neptune::real_t vel_stddev = j.at("vel_stddev");
-        neptune::index_t cell_idx = j.at("cell_idx");
+// template <>
+// struct adl_serializer<neptune::VolumeSource> {
+//     static neptune::VolumeSource from_json(const json& j)
+//     {
+//         neptune::index_t num_particles = j.at("n_particles");
+//         neptune::real_t intensity = j.at("intensity");
+//         neptune::Vec3 vel_mean = j.at("vel_mean");
+//         neptune::real_t vel_stddev = j.at("vel_stddev");
+//         neptune::index_t cell_idx = j.at("cell_idx");
 
-        neptune::VolumeSource s(num_particles, intensity, cell_idx, vel_mean,
-                                vel_stddev);
+//         neptune::VolumeSource s(num_particles, intensity, cell_idx, vel_mean,
+//                                 vel_stddev);
 
-        return s;
-    }
-};
+//         return s;
+//     }
+// };
 
 // template <>
 // struct adl_serializer<neptune::WallReflectionSource> {

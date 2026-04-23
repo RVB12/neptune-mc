@@ -34,6 +34,30 @@ inline QOI stringtoQOI(std::string s)
     throw std::runtime_error("Unknown QOI: " + s);
 }
 
+inline std::string QOItostring(QOI qoi)
+{
+    switch (qoi) {
+        case QOI::Density:
+            return "density";
+        case QOI::Momentum_x:
+            return "momentum_x";
+        case QOI::Momentum_y:
+            return "momentum_y";
+        case QOI::Momentum_z:
+            return "momentum_z";
+        case QOI::Energy:
+            return "energy";
+        case QOI::Energy_x:
+            return "energy_x";
+        case QOI::Energy_y:
+            return "energy_y";
+        case QOI::Energy_z:
+            return "energy_z";
+        default:
+            throw std::runtime_error("Unknown QOI");
+    }
+}
+
 enum class EstimatorType { TrackLength, FinalTime };
 
 inline EstimatorType stringtoEstimatorType(std::string s)
@@ -41,6 +65,18 @@ inline EstimatorType stringtoEstimatorType(std::string s)
     if (s == "track_length") return EstimatorType::TrackLength;
     if (s == "final_time") return EstimatorType::FinalTime;
     throw std::runtime_error("Unknown estimator type: " + s);
+}
+
+inline std::string estimator_type_tostring(EstimatorType estimator_type)
+{
+    switch (estimator_type) {
+        case EstimatorType::TrackLength:
+            return "track_length";
+        case EstimatorType::FinalTime:
+            return "final_time";
+        default:
+            throw std::runtime_error("Unknown estimator type");
+    }
 }
 
 /**
@@ -107,7 +143,6 @@ class EstimatorGroup {
     // reset to zero used for multi-threading
     EstimatorGroup make_new();
 
-   private:
     std::vector<Estimator> estimators;
 
     // An array of pointers to the track-length estimators, indexed by species, used

@@ -52,8 +52,8 @@ Particle RecombinationSource::generate_particle(index_t i_particle,
     real_t temperature = background.temperature(Species::Dplus, cell_idx);
 
     real_t vel_stddev =
-        std::sqrt(temperature / constants::m_p *
-                  SPECIES_MASS[static_cast<int>(Species::Dplus)]);
+        std::sqrt(constants::eV_to_Joules * temperature / (constants::m_p *
+                  SPECIES_MASS[static_cast<int>(Species::Dplus)]));
 
     std::normal_distribution<real_t> dist_vx(vel_mean.x, vel_stddev);
     std::normal_distribution<real_t> dist_vy(vel_mean.y, vel_stddev);

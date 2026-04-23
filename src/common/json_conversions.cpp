@@ -228,11 +228,11 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Source>& s)
 {
     std::string type;
     j.at("type").get_to(type);
-    if (type == "volume") {
-        VolumeSource vs = j;
-        s = std::make_unique<VolumeSource>(vs);
-    }
-    else if (type == "point") {
+    // if (type == "volume") {
+    //     VolumeSource vs = j;
+    //     s = std::make_unique<VolumeSource>(vs);
+    // }
+    if (type == "point") {
         PointSource ps = j;
         s = std::make_unique<PointSource>(ps);
     }

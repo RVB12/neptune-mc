@@ -2,18 +2,19 @@
 
 #include <omp.h>
 
-#include "neptune/estimation/estimators.hpp"
+#include "neptune/estimation/estimator.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
-#include "neptune/physics/collision_processes.hpp"
+#include "neptune/collisions/abstract_collisions.hpp"
 #include "neptune/physics/update_particle.hpp"
 namespace neptune {
 
 void simulate(
-    Mesh& mesh,
-    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
-    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
+    const Mesh& mesh,
+    const Background& background,
+    const vector<std::unique_ptr<ChargeExchangeCollision>>& cx_collisions,
+    const vector<std::unique_ptr<IonisationCollision>>& ion_collisions,
     vector<std::unique_ptr<Source>>& sources,
-    Estimator_old& estimator,
+    EstimatorGroup& estimator_group,
     vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
     SimulationParams params,
     ExecutionStatistics& stats)
@@ -29,11 +30,9 @@ void simulate(
     index_t num_crossings = 0;
     index_t num_collisions = 0;
 
-    Background background;
-
     // History based simulation (because its easy)
 #pragma omp parallel reduction(+ : num_crossings, num_collisions) \
-    reduction(EstimatorReduction : estimator)
+    reduction(EstimatorGroupReduction : estimator_group)
     for (int i_source = 0; i_source < sources.size(); i_source++) {
         #pragma omp for
         for (int i_particle = 0;
@@ -46,14 +45,10 @@ void simulate(
                 Particle particle_old = particle;
                 // Simulate the particle up to the next event
                 EventType event = update_particle(
-                    mesh, bgk_processes, ion_processes, boundary_conditions,
+                    mesh, background, cx_collisions, ion_collisions, boundary_conditions,
                     particle, params.t_final);
 
-                real_t R_i = 0.0;
-                if (ion_processes.size() > 0) {
-                    R_i = ion_processes[0]->rate[particle_old.geometry.cell_id];
-                }
-                estimator.add_track_length(particle, particle_old, mesh, R_i);
+                estimator_group.tally_track_length(particle, particle_old, mesh, background, ion_collisions);
 
                 if (particle.weight < 1.0e-4) {
                     break;
@@ -66,7 +61,7 @@ void simulate(
                     num_collisions++;
                 }
                 else if (event == EventType::FINAL_TIME) {
-                    estimator.add_final(particle, mesh);
+                    estimator_group.tally_final(particle, mesh);
                     particle.weight = 0;
                     break;
                 }

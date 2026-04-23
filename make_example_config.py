@@ -3,7 +3,10 @@ import numpy as np
 
 f = h5py.File("build/input.h5", "w")
 
-n_cells = 10
+nx = 50
+ny = 1
+nz = 1
+n_cells = nx * ny * nz
 
 # Background
 background = f.create_group("background")
@@ -16,7 +19,7 @@ Dplus["velocity_y"] = np.zeros(n_cells, dtype=np.float64)
 Dplus["velocity_y"].attrs["units"] = "u*m/s"
 Dplus["velocity_z"] = np.zeros(n_cells, dtype=np.float64)
 Dplus["velocity_z"].attrs["units"] = "u*m/s"
-Dplus["temperature"] = np.ones(n_cells, dtype=np.float64)
+Dplus["temperature"] = 10*np.ones(n_cells, dtype=np.float64)
 Dplus["temperature"].attrs["units"] = "eV"
 
 # Mesh
@@ -29,9 +32,9 @@ mesh["Ly"] = 1.0
 mesh["Ly"].attrs["units"] = "m"
 mesh["Lz"] = 1.0
 mesh["Lz"].attrs["units"] = "m"
-mesh["nx"] = n_cells
-mesh["ny"] = n_cells
-mesh["nz"] = n_cells
+mesh["nx"] = nx
+mesh["ny"] = ny
+mesh["nz"] = nz
 
 # Collisions
 
@@ -90,4 +93,10 @@ boundary_conditions = f.create_group("boundary_conditions")
 for i in range(6):
     bc = boundary_conditions.create_group(f"bc{i}")
     bc["type"] = "specular"
+
+# Simulation parameters
+params = f.create_group("params")
+params["seed"] = 1302
+params["t_final"] = 1.0e-3
+params["max_steps"] = 100000
 
