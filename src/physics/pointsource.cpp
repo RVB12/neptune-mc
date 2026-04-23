@@ -5,15 +5,9 @@
 
 namespace neptune {
 
-Particle PointSource::generate_particle(index_t i_particle, const Mesh& mesh, const Background& background)
+Particle PointSource::generate_particle(index_t particle_id, const Mesh& mesh, const Background& background)
 {
-    if (i_particle >= num_particles()) {
-        throw std::runtime_error(
-            "PointSource::generate_particle: "
-            "Tried to generate more particles than "
-            "allowed by num_particles");
-    }
-    Particle p(i_particle + particle_id_offset_);
+    Particle p(particle_id);
 
     if(cell_idx == -1){
         cell_idx = mesh.get_cell_index(pos); // Find cell_idx if it was not yet set

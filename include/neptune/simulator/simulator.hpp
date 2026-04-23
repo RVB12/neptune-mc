@@ -30,6 +30,8 @@ struct SimulationParams {
     // The maximum time a particle can take
     // if it is negative, no
     real_t t_final = -1.0;
+    // The number of batches to run (for variance estimation)
+    index_t n_batches = 1;
 };
 
 /**

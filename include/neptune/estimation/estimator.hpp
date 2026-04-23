@@ -106,6 +106,60 @@ class Estimator {
 
     void combine(const Estimator& other);
 
+    vector<real_t>& get_estimate()
+    {
+        if (estimate_variance) {
+            return tally_mean;
+        }
+        else {
+            return tally_vector;
+        }
+    }
+
+    vector<real_t>& get_variance()
+    {
+        if (estimate_variance) {
+            return tally_variance;
+        }
+        else {
+            throw std::runtime_error(
+                "Variance estimation is not enabled for this estimator");
+        }
+    }
+
+    /**
+     * After running a batch, finalize the estimates
+     * For the normal tally, nothing needs to be done
+     * For the variance estimation, we update the mean and variance
+     */
+    void finalize_batch()
+    {
+        n_samples += 1;
+        if (estimate_variance) {
+            for (index_t i = 0; i < tally_vector.size(); i++) {
+                real_t mean = tally_mean[i];
+                real_t M2 = tally_variance[i];
+                real_t new_value = tally_vector[i];
+                real_t delta = new_value - mean;
+                mean += delta / n_samples;
+                M2 += delta * (new_value - mean);
+                tally_mean[i] = mean;
+                tally_variance[i] = M2;
+                tally_vector[i] =
+                    0;  // reset the tally vector for the next batch
+            }
+        }
+    }
+
+    void finalize()
+    {
+        if (!estimate_variance and n_samples > 1) {
+            for (index_t i = 0; i < tally_vector.size(); i++) {
+                tally_vector[i] /= n_samples;
+            }
+        }
+    }
+
     const bool estimate_variance;
     const Species species;
     const QOI qoi;
@@ -113,6 +167,7 @@ class Estimator {
     vector<real_t> tally_vector;
     vector<real_t> tally_mean;
     vector<real_t> tally_variance;
+    index_t n_samples = 0;
 };
 
 /**
@@ -125,7 +180,9 @@ class Estimator {
  */
 class EstimatorGroup {
    public:
-    EstimatorGroup(std::vector<std::tuple<Species, QOI, EstimatorType>> estimators_definitions, index_t n_cells);
+    EstimatorGroup(std::vector<std::tuple<Species, QOI, EstimatorType, bool>>
+                       estimators_definitions,
+                   index_t n_cells);
 
     void tally_track_length(const Particle& p,
                             const Particle& p_old,
@@ -139,20 +196,24 @@ class EstimatorGroup {
     // Combine the estimates of two estimator groups
     void combine(const EstimatorGroup& other);
 
+    void finalize_batch();
+
+    void finalize();
+
     // Make a new estimator group with the same estimators but all estimates
     // reset to zero used for multi-threading
     EstimatorGroup make_new();
 
     std::vector<Estimator> estimators;
 
-    // An array of pointers to the track-length estimators, indexed by species, used
-    // to quickly find the relevant estimators for a given particle
+    // An array of pointers to the track-length estimators, indexed by species,
+    // used to quickly find the relevant estimators for a given particle
     std::vector<Estimator*> track_length_estimators_by_species[NUM_SPECIES];
     std::vector<Estimator*> final_estimators_by_species[NUM_SPECIES];
 };
 
-#pragma omp declare reduction(EstimatorGroupReduction \
-:EstimatorGroup : omp_out.combine(omp_in))            \
+#pragma omp declare reduction(                                            \
+        EstimatorGroupReduction:EstimatorGroup : omp_out.combine(omp_in)) \
     initializer(omp_priv = omp_orig.make_new())
 
 }  // namespace neptune

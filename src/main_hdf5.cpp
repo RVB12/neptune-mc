@@ -417,14 +417,6 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
             n_particles * source->intensity() / total_intensity);
     }
 
-    // Set the particle_id_offset_ for each source to ensure unique particle ids
-    // across sources
-    index_t particle_id_offset = 0;
-    for (auto& source : sources) {
-        source->particle_id_offset_ = particle_id_offset;
-        particle_id_offset += source->num_particles();
-    }
-
     // Convert std::vector to neptune::vector
     vector<std::unique_ptr<Source>> sources_vector(sources.size());
     for (size_t i = 0; i < sources.size(); i++) {
@@ -436,7 +428,7 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
 EstimatorGroup read_estimators(const H5::Group& estimators_group,
                                index_t n_cells)
 {
-    std::vector<std::tuple<Species, QOI, EstimatorType>> estimators_definitions;
+    std::vector<std::tuple<Species, QOI, EstimatorType, bool>> estimators_definitions;
 
     // Go over all the subgroups of the estimators group, each subgroup
     // corresponds to an estimator
@@ -453,7 +445,7 @@ EstimatorGroup read_estimators(const H5::Group& estimators_group,
         bool estimate_variance =
             read_bool(estimator_group.openDataSet("estimate_variance"));
 
-        estimators_definitions.emplace_back(species, qoi, estimator_type);
+        estimators_definitions.emplace_back(species, qoi, estimator_type, estimate_variance);
     }
 
     return EstimatorGroup(estimators_definitions, n_cells);
@@ -592,6 +584,10 @@ int main(int argc, char** argv)
     if (H5Lexists(params_group.getId(), "t_final", H5P_DEFAULT)) {
         params.t_final = read_real_number(params_group.openDataSet("t_final"));
     }
+    if (H5Lexists(params_group.getId(), "n_batches", H5P_DEFAULT)) {
+        params.n_batches =
+            read_index_number(params_group.openDataSet("n_batches"));
+    }
 
     ExecutionStatistics stats;
 
@@ -627,14 +623,28 @@ int main(int argc, char** argv)
                          species)]) {
                 std::string dataset_name = QOItostring(estimator->qoi);
 
-                hsize_t dim = estimator->tally_vector.size();
+                vector<real_t> estimate_vector = estimator->get_estimate();
+
+                hsize_t dim = estimate_vector.size();
                 H5::DataSpace dataspace(1, &dim);  // 1D array
 
                 H5::DataSet dataset = tl_group.createDataSet(
                     dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
 
-                dataset.write(estimator->tally_vector.data(),
+                dataset.write(estimate_vector.data(),
                               H5::PredType::NATIVE_DOUBLE);
+
+                if(estimator->estimate_variance) {
+                    H5::DataSpace dataspace_var(1, &dim);  // 1D array
+                    H5::DataSet variance_dataset = tl_group.createDataSet(
+                        dataset_name + "_variance", H5::PredType::NATIVE_DOUBLE,
+                        dataspace_var);
+                    
+                    vector<real_t> variance_vector = estimator->get_variance();
+
+                    variance_dataset.write(variance_vector.data(),
+                                           H5::PredType::NATIVE_DOUBLE);
+                }
             }
         }
 
@@ -645,14 +655,28 @@ int main(int argc, char** argv)
                                       [static_cast<index_t>(species)]) {
                 std::string dataset_name = QOItostring(estimator->qoi);
 
-                hsize_t dim = estimator->tally_vector.size();
+                vector<real_t> estimate_vector = estimator->get_estimate();
+
+                hsize_t dim = estimate_vector.size();
                 H5::DataSpace dataspace(1, &dim);  // 1D array
 
                 H5::DataSet dataset = final_group.createDataSet(
                     dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
 
-                dataset.write(estimator->tally_vector.data(),
+                dataset.write(estimate_vector.data(),
                               H5::PredType::NATIVE_DOUBLE);
+
+                if(estimator->estimate_variance) {
+                    H5::DataSpace dataspace_var(1, &dim);  // 1D array
+                    H5::DataSet variance_dataset = final_group.createDataSet(
+                        dataset_name + "_variance", H5::PredType::NATIVE_DOUBLE,
+                        dataspace_var);
+                    
+                    vector<real_t> variance_vector = estimator->get_variance();
+
+                    variance_dataset.write(variance_vector.data(),
+                                           H5::PredType::NATIVE_DOUBLE);
+                }
             }
         }
     }

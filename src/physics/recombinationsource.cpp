@@ -23,25 +23,11 @@ RecombinationSource::RecombinationSource(index_t num_particles,
     intensity_ = K_r * n_Dplus * n_e * vol;
 }
 
-Particle RecombinationSource::generate_particle(index_t i_particle,
+Particle RecombinationSource::generate_particle(index_t particle_id,
                                                 const Mesh& mesh,
                                                 const Background& background)
 {
-    if (i_particle >= num_particles()) {
-        throw std::runtime_error(
-            "RecombinationSource::generate_particle: "
-            "Tried to generate more particles than "
-            "allowed by num_particles");
-    }
-    if (particle_id_offset_ == -1) {
-        throw std::runtime_error(
-            "RecombinationSource::generate_particle: "
-            "particle_id_offset_ is not set. This is required to ensure that "
-            "the particle ids are unique, which is important for the random "
-            "number generation. Please set particle_id_offset_ to a value that "
-            "is greater than the maximum particle id of any previous source.");
-    }
-    Particle p(i_particle + particle_id_offset_);
+    Particle p(particle_id);
 
     p.geometry.cell_id = cell_idx;
     p.geometry.boundary_id = -1;
