@@ -4,9 +4,9 @@
 #include "neptune/common/utils.hpp"
 #include "neptune/common/vector.hpp"
 #include "neptune/geometry/vec3.hpp"
+#include "neptune/physics/background.hpp"
 #include "neptune/physics/particle.hpp"
 #include "neptune/physics/species.hpp"
-#include "neptune/physics/background.hpp"
 namespace neptune {
 
 class Collision {

@@ -29,32 +29,32 @@ set(NEPTUNE_VERSION "${PROJECT_VERSION}-${GIT_COMMIT_HASH}")
 # Main library
 #
 list(APPEND neptune_SOURCES
-    src/geometry/vec2.cpp
-    src/geometry/vec3.cpp
-    src/geometry/voxelmesh.cpp
-    src/simulator/simulator.cpp
-    src/geometry/trianglemesh.cpp
-    src/geometry/rotatedtrianglemesh.cpp
-    src/geometry/nonuniformmesh.cpp
-    src/geometry/rotatednonuniformmesh.cpp
-    src/physics/update_particle.cpp
-    src/common/json_conversions.cpp
-    src/geometry/triangle.cpp
-    src/simulator/simulate_kdmc.cpp
-    src/estimation/estimators.cpp
-    src/finitevolume/advectiondiffusionsolver.cpp
-    src/simulator/simulate_arcmc.cpp
-    src/estimation/estimator.cpp
-    src/estimation/estimatorgroup.cpp
-    src/sources/pointsource.cpp
-    src/sources/surfacesource.cpp
-    src/sources/volumesource.cpp
-    src/sources/wallreflectionsource.cpp
-    src/sources/recombinationsource.cpp
+    src/neptune/geometry/vec2.cpp
+    src/neptune/geometry/vec3.cpp
+    src/neptune/geometry/voxelmesh.cpp
+    src/neptune/simulator/simulator.cpp
+    src/neptune/geometry/trianglemesh.cpp
+    src/neptune/geometry/rotatedtrianglemesh.cpp
+    src/neptune/geometry/nonuniformmesh.cpp
+    src/neptune/geometry/rotatednonuniformmesh.cpp
+    src/neptune/physics/update_particle.cpp
+    src/neptune/common/json_conversions.cpp
+    src/neptune/geometry/triangle.cpp
+    src/neptune/simulator/simulate_kdmc.cpp
+    src/neptune/estimation/estimators.cpp
+    src/neptune/finitevolume/advectiondiffusionsolver.cpp
+    src/neptune/simulator/simulate_arcmc.cpp
+    src/neptune/estimation/estimator.cpp
+    src/neptune/estimation/estimatorgroup.cpp
+    src/neptune/sources/pointsource.cpp
+    src/neptune/sources/surfacesource.cpp
+    src/neptune/sources/volumesource.cpp
+    src/neptune/sources/wallreflectionsource.cpp
+    src/neptune/sources/recombinationsource.cpp
 )
 
 add_library(neptune ${neptune_SOURCES})
-target_include_directories(neptune PUBLIC include)
+target_include_directories(neptune PUBLIC src)
 target_compile_options(neptune PRIVATE -O3)
 target_compile_options(neptune PRIVATE -fPIC)
 target_compile_options(neptune PRIVATE -DNDEBUG)
@@ -96,15 +96,15 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 target_link_libraries(neptune PUBLIC Eigen3::Eigen)
 
 # Main runner
-add_executable(neptune-generate-neighborlist src/generate_neighborlist.cpp)
+add_executable(neptune-generate-neighborlist src/neptune/generate_neighborlist.cpp)
 target_link_libraries(neptune-generate-neighborlist PRIVATE neptune)
 
-add_executable(neptune-mc src/main_hdf5.cpp)
+add_executable(neptune-mc src/neptune/main_hdf5.cpp)
 target_link_libraries(neptune-mc PRIVATE neptune)
 find_package(HDF5 REQUIRED COMPONENTS CXX)
 target_link_libraries(neptune-mc PRIVATE HDF5::HDF5)
 
-add_executable(neptune-fv src/fv_json.cpp)
+add_executable(neptune-fv src/neptune/fv_json.cpp)
 target_link_libraries(neptune-fv PRIVATE neptune)
 
 #
