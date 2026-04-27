@@ -35,7 +35,10 @@ class PointSource : public Source {
     /**
      * @brief Generate a particle
      */
-    Particle generate_particle(index_t i_particle, const Mesh& mesh, const Background& background);
+    Particle generate_particle(uint64_t particle_id,
+                               rng_key_t key,
+                               const Mesh& mesh,
+                               const Background& background);
 
     Vec3 pos;           // Initial position of the particles
     Vec3 vel_mean;      // Mean velocity of the particles

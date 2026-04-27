@@ -203,6 +203,7 @@ with h5py.File("output.h5", "r") as output_file:
     plt.xlabel("x (m)")
     plt.ylabel("Temperature (eV)")
     plt.title("Temperature")
+    plt.legend()
     plt.grid()
 
     plt.show()

@@ -39,20 +39,22 @@ void simulate(
             sources[i_source]->num_particles();
     }
 
+    rng_key_t base_key{static_cast<uint32_t>(params.seed >> 32), static_cast<uint32_t>(params.seed)};
+
     // History based simulation (because its easy)
 #pragma omp parallel reduction(+ : num_crossings, num_collisions) \
     reduction(EstimatorGroupReduction : estimator_group)
-    for(size_t i_batch = 0; i_batch < params.n_batches; i_batch++) {
+    for(index_t i_batch = 0; i_batch < params.n_batches; i_batch++) {
 #pragma omp for schedule(guided, 10)
-        for (size_t global_particle_index = 0;
+        for (index_t global_particle_index = 0;
              global_particle_index < total_particles; global_particle_index++) {
             // Find source and local particles index
-            size_t i_source = 0;
+            index_t i_source = 0;
             // binary search to find the source index
-            size_t left = 0;
-            size_t right = sources.size();
+            index_t left = 0;
+            index_t right = sources.size();
             while (left < right) {
-                size_t mid = left + (right - left) / 2;
+                index_t mid = left + (right - left) / 2;
                 if (cumulative_particles_per_source[mid] <=
                     global_particle_index) {
                     left = mid + 1;
@@ -64,7 +66,7 @@ void simulate(
             i_source = left - 1;
 
             Particle particle = sources[i_source]->generate_particle(
-                global_particle_index * (i_batch + 1), mesh, background);
+                global_particle_index * (i_batch + 1), base_key, mesh, background);
 
             for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
                 Particle particle_old = particle;

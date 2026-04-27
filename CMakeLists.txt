@@ -59,8 +59,25 @@ target_compile_options(neptune PRIVATE -fPIC)
 target_compile_options(neptune PRIVATE -DNDEBUG)
 target_compile_definitions(neptune PUBLIC NEPTUNE_VERSION="${NEPTUNE_VERSION}")
 
-# JSON
 include(FetchContent)
+
+# Random123
+FetchContent_Declare(
+    random123
+    GIT_REPOSITORY https://github.com/DEShawResearch/random123.git
+    GIT_TAG main
+)
+
+FetchContent_MakeAvailable(random123)
+
+add_library(Random123 INTERFACE)
+target_include_directories(Random123 INTERFACE
+    ${random123_SOURCE_DIR}/include
+)
+
+target_link_libraries(neptune PRIVATE Random123)
+
+# JSON
 
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)

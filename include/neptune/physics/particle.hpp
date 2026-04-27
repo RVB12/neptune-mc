@@ -7,6 +7,7 @@
 #include "neptune/geometry/particlegeometry.hpp"
 #include "neptune/geometry/vec3.hpp"
 #include "neptune/physics/species.hpp"
+#include "neptune/simulator/simulationparams.hpp"
 namespace neptune {
 
 /**
@@ -19,17 +20,18 @@ class Particle {
      *
      * @param id_ A unique id for the particle
      *            Note: it is super important that this id is unique.
-     *            it is used to seed the random number generator for
-     *            this particle so if two particles have the same id
-     *            it will lead to hard to debug errors!!
+     *            it is used to initialize the counter in the rng,
+     *            if two particles have the same id, they will have the same rng
+     * sequence, which will lead to incorrect results.
      */
-    Particle(index_t id_) : id(id_), rng(id) {}
+    // initialize rng with high and low bits of the id for the first two parts of the counter, and the key for the key
+    Particle(uint64_t id_, rng_key_t key) : id(id_), rng({{static_cast<rng_ctr_t::value_type>(id_ >> 32), static_cast<rng_ctr_t::value_type>(id_), 0, 0}}, key) {}
 
     // Member variables
     ParticleGeometry geometry;
-    index_t id = -1;      // (unique) id of the particle
-    real_t t = 0;         // Time since start of simulation
-    real_t weight = 1.0;  // Weight (used for continuous ionisation)
+    uint64_t id = 0;               // (unique) id of the particle
+    real_t t = 0;                  // Time since start of simulation
+    real_t weight = 1.0;           // Weight (used for continuous ionisation)
     Species species = Species::D;  // Species of the particle (default to D)
     real_t intensity = 1.0;  // How many particles this particle represents
     rng_t rng;               // Random number generator

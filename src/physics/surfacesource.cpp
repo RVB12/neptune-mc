@@ -6,9 +6,12 @@
 
 namespace neptune {
 
-Particle SurfaceSource::generate_particle(index_t particle_id, const Mesh& mesh, const Background& background)
+Particle SurfaceSource::generate_particle(uint64_t particle_id,
+                                          rng_key_t key,
+                                          const Mesh& mesh,
+                                          const Background& background)
 {
-    Particle p(particle_id);
+    Particle p(particle_id, key);
 
     p.geometry.cell_id = cell_idx;
     p.geometry.boundary_id = surface_id;
@@ -43,7 +46,7 @@ Particle SurfaceSource::generate_particle(index_t particle_id, const Mesh& mesh,
                      sin_theta * std::cos(phi) * tangent1 +
                      sin_theta * std::sin(phi) * tangent2;
     direction /= direction.norm();
-    
+
     p.geometry.velocity = direction * v_norm;
 
     std::exponential_distribution<real_t> dist_t(1.0);

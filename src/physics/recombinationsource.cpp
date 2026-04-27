@@ -23,11 +23,12 @@ RecombinationSource::RecombinationSource(index_t num_particles,
     intensity_ = K_r * n_Dplus * n_e * vol;
 }
 
-Particle RecombinationSource::generate_particle(index_t particle_id,
-                                                const Mesh& mesh,
-                                                const Background& background)
+Particle RecombinationSource::generate_particle(uint64_t particle_id,
+                                                 rng_key_t key,
+                                                 const Mesh& mesh,
+                                                 const Background& background)
 {
-    Particle p(particle_id);
+    Particle p(particle_id, key);
 
     p.geometry.cell_id = cell_idx;
     p.geometry.boundary_id = -1;

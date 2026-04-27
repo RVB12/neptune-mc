@@ -2,10 +2,10 @@
 #define NEPTUNE_SOURCE_HPP
 
 #include "neptune/common/utils.hpp"
-#include "neptune/geometry/vec2.hpp"
-#include "neptune/physics/particle.hpp"
 #include "neptune/geometry/mesh.hpp"
+#include "neptune/geometry/vec2.hpp"
 #include "neptune/physics/background.hpp"
+#include "neptune/physics/particle.hpp"
 
 namespace neptune {
 
@@ -15,9 +15,7 @@ namespace neptune {
  */
 class Source {
    public:
-    Source(index_t num_particles)
-        : num_particles_(num_particles)
-    {}
+    Source(index_t num_particles) : num_particles_(num_particles) {}
 
     Source(index_t num_particles, real_t intensity)
         : num_particles_(num_particles), intensity_(intensity)
@@ -41,11 +39,15 @@ class Source {
      *
      * @param i The index of the particle to generate
      */
-    virtual Particle generate_particle(index_t i, const Mesh& mesh, const Background& background) = 0;
+    virtual Particle generate_particle(uint64_t particle_id,
+                                       rng_key_t key,
+                                       const Mesh& mesh,
+                                       const Background& background) = 0;
 
     index_t
         num_particles_;  // the number of particles to generate from this source
-    real_t intensity_ = 0; // the intensity of the source (particles per second)
+    real_t intensity_ =
+        0;  // the intensity of the source (particles per second)
 };
 
 }  // namespace neptune

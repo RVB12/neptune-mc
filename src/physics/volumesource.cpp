@@ -1,13 +1,17 @@
 #include "neptune/physics/volumesource.hpp"
-#include "neptune/physics/physicalconstants.hpp"
 
 #include <iostream>
 
+#include "neptune/physics/physicalconstants.hpp"
+
 namespace neptune {
 
-Particle VolumeSource::generate_particle(index_t particle_id, const Mesh& mesh, const Background& background)
+Particle VolumeSource::generate_particle(uint64_t particle_id,
+                                         rng_key_t key,
+                                         const Mesh& mesh,
+                                         const Background& background)
 {
-    Particle p(particle_id);
+    Particle p(particle_id, key);
 
     p.geometry.cell_id = cell_idx;
     p.geometry.boundary_id = -1;

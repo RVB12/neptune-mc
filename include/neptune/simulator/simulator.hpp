@@ -19,20 +19,9 @@
 #include "neptune/simulator/execution_statistics.hpp"
 #include "neptune/physics/background.hpp"
 #include "neptune/estimation/estimator.hpp"
+#include "neptune/simulator/simulationparams.hpp"
 
 namespace neptune {
-
-struct SimulationParams {
-    // This value is added to the particle id to determine an rng seed
-    int64_t seed = 0;
-    // The maximum number of simulation steps a particle can take
-    index_t max_steps = 100000;
-    // The maximum time a particle can take
-    // if it is negative, no
-    real_t t_final = -1.0;
-    // The number of batches to run (for variance estimation)
-    index_t n_batches = 1;
-};
 
 /**
  * @brief The main function of Neptune,

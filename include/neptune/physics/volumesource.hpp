@@ -35,11 +35,14 @@ class VolumeSource : public Source {
     /**
      * @brief Generate a particle
      */
-    Particle generate_particle(index_t i_particle, const Mesh& mesh, const Background& background);
+    Particle generate_particle(uint64_t particle_id,
+                               rng_key_t key,
+                               const Mesh& mesh,
+                               const Background& background);
 
     Species species;
     Vec3 vel_mean;      // Mean velocity of the particles
-    real_t intensity;  // The intensity of the source (particles per second)
+    real_t intensity;   // The intensity of the source (particles per second)
     real_t vel_stddev;  // Standard deviation of the velocity of the particles
     index_t cell_idx = 0;  // The cell index where the particles are generated
 };

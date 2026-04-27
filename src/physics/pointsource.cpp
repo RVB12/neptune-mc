@@ -1,17 +1,22 @@
 #include "neptune/physics/pointsource.hpp"
-#include "neptune/physics/physicalconstants.hpp"
 
 #include <iostream>
 
+#include "neptune/physics/physicalconstants.hpp"
+
 namespace neptune {
 
-Particle PointSource::generate_particle(index_t particle_id, const Mesh& mesh, const Background& background)
+Particle PointSource::generate_particle(uint64_t particle_id,
+                                        rng_key_t key,
+                                        const Mesh& mesh,
+                                        const Background& background)
 {
-    Particle p(particle_id);
+    Particle p(particle_id, key);
 
-    if(cell_idx == -1){
-        cell_idx = mesh.get_cell_index(pos); // Find cell_idx if it was not yet set
-        if(cell_idx == -1) {
+    if (cell_idx == -1) {
+        cell_idx =
+            mesh.get_cell_index(pos);  // Find cell_idx if it was not yet set
+        if (cell_idx == -1) {
             throw std::runtime_error(
                 "PointSource::generate_particle: "
                 "Could not find cell index for position");

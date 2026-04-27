@@ -15,10 +15,10 @@ namespace neptune {
  * @brief A volume source of particles
  *
  * The particles will be generated somewhere in a specified cell.
- * 
+ *
  * For now, this always models D+ recombining with an electron to form a D atom.
  * Could be extended in the future.
- * 
+ *
  */
 class RecombinationSource : public Source {
    public:
@@ -30,7 +30,8 @@ class RecombinationSource : public Source {
     /**
      * @brief Generate a particle
      */
-    Particle generate_particle(index_t i_particle,
+    Particle generate_particle(uint64_t particle_id,
+                               rng_key_t key,
                                const Mesh& mesh,
                                const Background& background);
 

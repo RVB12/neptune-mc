@@ -10,7 +10,9 @@ TEST_CASE("FET: no drift works", "[FET]") {
     real_t D = 0.5;
     real_t v = 0;
 
-    rng_t rng(42);
+    rng_ctr_t ctr{0, 0};
+    rng_key_t key{42};
+    rng_t rng(ctr, key);
 
     real_t alpha = 1;
 
@@ -57,7 +59,9 @@ TEST_CASE("FET: positive drift works", "[FET]") {
     real_t D = 0.5;
     real_t v = 0.1;
 
-    rng_t rng(42);
+    rng_ctr_t ctr{0, 0};
+    rng_key_t key{42};
+    rng_t rng(ctr, key);
 
     real_t alpha = 1;
 

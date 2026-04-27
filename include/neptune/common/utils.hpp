@@ -5,6 +5,9 @@
 #include <random>
 #include <stdexcept>
 
+#include "Random123/philox.h"
+#include "Random123/MicroURNG.hpp"
+
 namespace neptune {
 
 // The floating point type used throughout the code
@@ -14,7 +17,10 @@ typedef double real_t;
 typedef int64_t index_t;
 
 // The random number generator used throughout the code
-typedef std::mt19937 rng_t;
+typedef r123::Philox4x32 RNG;
+typedef r123::MicroURNG<RNG> rng_t;
+typedef rng_t::ctr_type rng_ctr_t;
+typedef rng_t::key_type rng_key_t;
 
 inline real_t square(real_t x) { return x * x; }
 
@@ -81,7 +87,7 @@ inline real_t sample_first_exit_time(real_t v,
  * @param rng The random number generator
  * @return A sample from the truncated normal distribution
  */
-inline real_t truncated_normal_right_tail(real_t a, std::mt19937& rng)
+inline real_t truncated_normal_right_tail(real_t a, rng_t& rng)
 {
     if (a <= 0.0) {
         // For small a, use rejection from standard normal

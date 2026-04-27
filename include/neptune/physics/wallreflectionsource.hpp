@@ -7,8 +7,8 @@
 #include "neptune/common/utils.hpp"
 #include "neptune/geometry/vec2.hpp"
 #include "neptune/physics/particle.hpp"
-#include "neptune/physics/source.hpp"
 #include "neptune/physics/physicalconstants.hpp"
+#include "neptune/physics/source.hpp"
 
 namespace neptune {
 
@@ -47,7 +47,10 @@ class WallReflectionSource : public Source {
     /**
      * @brief Generate a particle
      */
-    Particle generate_particle(index_t i_particle, const Mesh& mesh, const Background& background);
+    Particle generate_particle(uint64_t particle_id,
+                               rng_key_t key,
+                               const Mesh& mesh,
+                               const Background& background);
 
     index_t cell_idx = 0;    // The cell index where the particles are generated
     index_t surface_id = 0;  // The surface id where the particles are generated
