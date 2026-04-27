@@ -45,7 +45,7 @@ class SurfaceSource : public Source {
                                const Mesh& mesh,
                                const Background& background);
 
-    Species species; // Species of the generated particles
+    Species species;       // Species of the generated particles
     real_t v_norm;         // Velocity magnitude of the particles
     real_t intensity;      // The intensity of the source (particles per second)
     index_t cell_idx = 0;  // The cell index where the particles are generated

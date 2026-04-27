@@ -5,9 +5,9 @@
 namespace neptune {
 
 void Estimator_old::add_track_length(const Particle& particle,
-                                 const Particle& particle_old,
-                                 const Mesh& mesh,
-                                 const real_t R_i)
+                                     const Particle& particle_old,
+                                     const Mesh& mesh,
+                                     const real_t R_i)
 {
     real_t weight_old = particle_old.weight;
     real_t t_old = particle_old.t;
@@ -16,11 +16,13 @@ void Estimator_old::add_track_length(const Particle& particle,
 
     real_t dt = particle.t - t_old;
     real_t s;
-    if(R_i * dt < 1.0e-4) {
+    if (R_i * dt < 1.0e-4) {
         // Avoid division by zero if ionisation rate is very low
         s = weight_old * dt / volume * particle.intensity;
-    } else {
-        s = weight_old * (1 - std::exp(-R_i * dt))/R_i / volume * particle.intensity;
+    }
+    else {
+        s = weight_old * (1 - std::exp(-R_i * dt)) / R_i / volume *
+            particle.intensity;
     }
 
     density[cell_id_old] += s;
@@ -30,20 +32,23 @@ void Estimator_old::add_track_length(const Particle& particle,
     momentum_z[cell_id_old] += particle_old.geometry.velocity.z * s;
 
     energy[cell_id_old] +=
-        s * (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] * particle_old.geometry.velocity.norm2()) *
+        s *
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] *
+         particle_old.geometry.velocity.norm2()) *
         constants::m_p / constants::eV_to_Joules;
 
     energy_x[cell_id_old] +=
         s *
-        (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] * particle_old.geometry.velocity.x *
-         particle_old.geometry.velocity.x) *
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] *
+         particle_old.geometry.velocity.x * particle_old.geometry.velocity.x) *
         constants::m_p / constants::eV_to_Joules;
 
     moment2_x[cell_id_old] +=
-    s * particle_old.geometry.velocity.x * particle_old.geometry.velocity.x;
+        s * particle_old.geometry.velocity.x * particle_old.geometry.velocity.x;
 
-    moment3_x[cell_id_old] +=
-    s * particle_old.geometry.velocity.x * particle_old.geometry.velocity.x * particle_old.geometry.velocity.x;
+    moment3_x[cell_id_old] += s * particle_old.geometry.velocity.x *
+                              particle_old.geometry.velocity.x *
+                              particle_old.geometry.velocity.x;
 }
 
 void Estimator_old::add_final(const Particle& particle, const Mesh& mesh)
@@ -59,12 +64,13 @@ void Estimator_old::add_final(const Particle& particle, const Mesh& mesh)
     momentum_z_final[cell_id] += particle.geometry.velocity.z *
                                  particle.weight / volume * particle.intensity;
     energy_final[cell_id] +=
-        (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] * particle.geometry.velocity.norm2()) *
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] *
+         particle.geometry.velocity.norm2()) *
         particle.weight / volume * particle.intensity;
 
     energy_x_final[cell_id] +=
-        (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] * particle.geometry.velocity.x *
-         particle.geometry.velocity.x) *
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] *
+         particle.geometry.velocity.x * particle.geometry.velocity.x) *
         particle.weight / volume * particle.intensity;
 }
 
@@ -175,8 +181,8 @@ void FluidEstimator::finalize(
 
     advection_diffusion_solver(
         mesh, boundary_conditions, advection_x, advection_y, advection_z,
-        diffusion_rate, diffusion_factor, ionisation_rate, dt, dt_fluid2, initial_density,
-        fluid_density_integral, fluid_momentum_x_integral,
+        diffusion_rate, diffusion_factor, ionisation_rate, dt, dt_fluid2,
+        initial_density, fluid_density_integral, fluid_momentum_x_integral,
         fluid_momentum_y_integral, fluid_momentum_z_integral,
         fluid_energy_integral, fluid_energy_x_integral);
 }
@@ -198,11 +204,13 @@ void ArcmcEstimator::add_track_length(const Particle& particle,
 
     real_t dt = particle.t - t_old;
     real_t s;
-    if(R_i * dt < 1.0e-4) {
+    if (R_i * dt < 1.0e-4) {
         // Avoid division by zero if ionisation rate is very low
         s = weight_old * dt / volume * particle.intensity;
-    } else {
-        s = weight_old * (1 - std::exp(-R_i * dt))/R_i / volume * particle.intensity;
+    }
+    else {
+        s = weight_old * (1 - std::exp(-R_i * dt)) / R_i / volume *
+            particle.intensity;
     }
 
     density[cell_id_old] += s;
@@ -211,11 +219,17 @@ void ArcmcEstimator::add_track_length(const Particle& particle,
     momentum_y[cell_id_old] += particle_old.geometry.velocity.y * s;
     momentum_z[cell_id_old] += particle_old.geometry.velocity.z * s;
 
-    energy[cell_id_old] += s * (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] * V2_eff) *
-                           constants::m_p / constants::eV_to_Joules;
+    energy[cell_id_old] +=
+        s *
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] *
+         V2_eff) *
+        constants::m_p / constants::eV_to_Joules;
 
-    energy_x[cell_id_old] += s * (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] * V2_eff_x) *
-                             constants::m_p / constants::eV_to_Joules;
+    energy_x[cell_id_old] +=
+        s *
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle_old.species)] *
+         V2_eff_x) *
+        constants::m_p / constants::eV_to_Joules;
 }
 
 void ArcmcEstimator::add_final(const Particle& particle,
@@ -233,11 +247,13 @@ void ArcmcEstimator::add_final(const Particle& particle,
                                  particle.weight / volume * particle.intensity;
     momentum_z_final[cell_id] += particle.geometry.velocity.z *
                                  particle.weight / volume * particle.intensity;
-    energy_final[cell_id] += (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] * V2_eff) * particle.weight /
-                             volume * particle.intensity;
+    energy_final[cell_id] +=
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] * V2_eff) *
+        particle.weight / volume * particle.intensity;
 
-    energy_x_final[cell_id] += (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] * V2_eff_x) *
-                               particle.weight / volume * particle.intensity;
+    energy_x_final[cell_id] +=
+        (0.5 * SPECIES_MASS[static_cast<size_t>(particle.species)] * V2_eff_x) *
+        particle.weight / volume * particle.intensity;
 }
 
 void ArcmcEstimator::combine(const ArcmcEstimator& other)

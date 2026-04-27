@@ -38,8 +38,9 @@ class RecombinationSource : public Source {
                                const Background& background);
 
     index_t cell_idx = 0;  // The cell index where the particles are generated
-    Species background_species; // Species of the background the recombines to form a neutral
-    Species species; // Species of the generated particle
+    Species background_species;  // Species of the background the recombines to
+                                 // form a neutral
+    Species species;             // Species of the generated particle
 };
 
 }  // namespace neptune

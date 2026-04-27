@@ -74,13 +74,16 @@ int main(int argc, char** argv)
         }
     }
 
-    if(j.contains("dt") && algorithm != Algorithm::KDMC) {
-        std::cerr << "Warning: 'dt' is only used for KDMC, it will be ignored for other algorithms." << std::endl;
+    if (j.contains("dt") && algorithm != Algorithm::KDMC) {
+        std::cerr << "Warning: 'dt' is only used for KDMC, it will be ignored "
+                     "for other algorithms."
+                  << std::endl;
     }
 
-     if(j.contains("M") && algorithm != Algorithm::ARMC) {
-        std::cerr << "Warning: 'M' is only used for ARMC, it will be ignored for other algorithms." << std::endl;
-
+    if (j.contains("M") && algorithm != Algorithm::ARMC) {
+        std::cerr << "Warning: 'M' is only used for ARMC, it will be ignored "
+                     "for other algorithms."
+                  << std::endl;
     }
 
     ExecutionStatistics stats;
@@ -125,10 +128,10 @@ int main(int argc, char** argv)
 
     Estimator_old estimator(mesh_ptr->n_cells());
 
-
     //
     // Object to write the output to
-    // Will mostly be filled later, but some kdmc stuff will already be added here
+    // Will mostly be filled later, but some kdmc stuff will already be added
+    // here
     //
     nlohmann::json output;
 
@@ -159,7 +162,8 @@ int main(int argc, char** argv)
 
         output["initial_fluid_density"] = fluid_estimator.initial_density;
         output["end_fluid_density"] = fluid_estimator.end_density;
-        output["fluid_estimator_dt"] = fluid_estimator.dt / fluid_estimator.n_particles;
+        output["fluid_estimator_dt"] =
+            fluid_estimator.dt / fluid_estimator.n_particles;
         // Finalize the fluid estimator
         if (j.contains("fluid_boundary_conditions")) {
             vector<std::unique_ptr<FluidBoundaryCondition>>
@@ -173,21 +177,28 @@ int main(int argc, char** argv)
                                       bgk_processes[0]->bgk_stddev[i];
             }
             vector<real_t> ionisation_rate(mesh_ptr->n_cells(), 0.0);
-            if(ion_processes.size() > 0) {
+            if (ion_processes.size() > 0) {
                 ionisation_rate = ion_processes[0]->rate;
             }
 
             fluid_estimator.finalize(
                 *mesh_ptr, fluid_boundary_conditions,
                 bgk_processes[0]->bgk_mean_x, bgk_processes[0]->bgk_mean_y,
-                bgk_processes[0]->bgk_mean_z, diffusion_rate, diffusion_factor, ionisation_rate);
-                
-            output["fluid_density_integral"] = fluid_estimator.fluid_density_integral;
-            output["fluid_momentum_x_integral"] = fluid_estimator.fluid_momentum_x_integral;
-            output["fluid_momentum_y_integral"] = fluid_estimator.fluid_momentum_y_integral;
-            output["fluid_momentum_z_integral"] = fluid_estimator.fluid_momentum_z_integral;
-            output["fluid_energy_integral"] = fluid_estimator.fluid_energy_integral;
-            output["fluid_energy_x_integral"] = fluid_estimator.fluid_energy_x_integral;
+                bgk_processes[0]->bgk_mean_z, diffusion_rate, diffusion_factor,
+                ionisation_rate);
+
+            output["fluid_density_integral"] =
+                fluid_estimator.fluid_density_integral;
+            output["fluid_momentum_x_integral"] =
+                fluid_estimator.fluid_momentum_x_integral;
+            output["fluid_momentum_y_integral"] =
+                fluid_estimator.fluid_momentum_y_integral;
+            output["fluid_momentum_z_integral"] =
+                fluid_estimator.fluid_momentum_z_integral;
+            output["fluid_energy_integral"] =
+                fluid_estimator.fluid_energy_integral;
+            output["fluid_energy_x_integral"] =
+                fluid_estimator.fluid_energy_x_integral;
 
             // Combine the estimators
             // Output the fluid estimator output separately for now
@@ -216,7 +227,6 @@ int main(int argc, char** argv)
     stats.trace_time = std::chrono::duration<double>(end - start).count();
 
     stats.total_time = stats.grid_building_time + stats.trace_time;
-
 
     output["density"] = estimator.density;
     output["momentum_x"] = estimator.momentum_x;

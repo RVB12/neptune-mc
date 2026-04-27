@@ -2,13 +2,13 @@
 #define NEPTUNE_TRIANGLEMESH_HPP
 
 #include "neptune/common/utils.hpp"
-#include "neptune/geometry/vec2.hpp"
 #include "neptune/common/vector.hpp"
 #include "neptune/geometry/cellcrossing.hpp"
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/geometry/particlegeometry.hpp"
 #include "neptune/geometry/spatialindex.hpp"
 #include "neptune/geometry/triangle.hpp"
+#include "neptune/geometry/vec2.hpp"
 
 namespace neptune {
 
@@ -139,7 +139,9 @@ class TriangleMesh : public Mesh {
     /**
      * @brief Return the normal of a given surface
      */
-    Vec3 get_surface_normal(index_t cell_index, index_t surface_id, Vec3 position) const;
+    Vec3 get_surface_normal(index_t cell_index,
+                            index_t surface_id,
+                            Vec3 position) const;
 
     /**
      * @brief Return the index of the neighbour cell that shares a given surface
@@ -167,10 +169,11 @@ class TriangleMesh : public Mesh {
     Vec3 get_surface_center(index_t cell_index, index_t surface_id) const;
 
     /**
-     * @brief Return the first boundary crossing (i.e. an actual boundary, not a cell boundary)
-     * That a particle will cross.
+     * @brief Return the first boundary crossing (i.e. an actual boundary, not a
+     * cell boundary) That a particle will cross.
      */
-    std::pair<index_t, index_t> get_boundary_crossing(Vec3 position, Vec3 direction) const;
+    std::pair<index_t, index_t> get_boundary_crossing(Vec3 position,
+                                                      Vec3 direction) const;
 
     /**
      * @brief Generate a random position within a given cell
@@ -180,7 +183,9 @@ class TriangleMesh : public Mesh {
     /**
      * @brief Generate a random position on a given surface of a cell
      */
-    Vec3 generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const;
+    Vec3 generate_random_surface_position(index_t cell_index,
+                                          index_t surface_id,
+                                          rng_t& rng) const;
 
     /**
      * @brief Return whether the mesh uses toroidal coordinates or carthesian
@@ -188,10 +193,7 @@ class TriangleMesh : public Mesh {
      */
     bool is_toroidal() const { return false; }
 
-    vector<index_t> get_neighbor_list() const
-    {
-        return neighbors;
-    }
+    vector<index_t> get_neighbor_list() const { return neighbors; }
 
    private:
     // Member variables

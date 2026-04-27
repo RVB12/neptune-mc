@@ -179,17 +179,17 @@ Vec3 NonUniformMesh::get_surface_normal(index_t cell_index,
                                         Vec3 position) const
 {
     switch (surface_id) {
-        case 0: // x == 0
+        case 0:  // x == 0
             return Vec3(1, 0, 0);
-        case 1: // y == 0
+        case 1:  // y == 0
             return Vec3(0, 1, 0);
-        case 2: // z == 0
+        case 2:  // z == 0
             return Vec3(0, 0, 1);
-        case 3: // x == Lx
+        case 3:  // x == Lx
             return Vec3(-1, 0, 0);
-        case 4: // y == Ly
+        case 4:  // y == Ly
             return Vec3(0, -1, 0);
-        case 5: // z == Lz
+        case 5:  // z == Lz
             return Vec3(0, 0, -1);
         default:
             throw std::runtime_error("Invalid surface id");

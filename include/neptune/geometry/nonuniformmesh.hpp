@@ -3,11 +3,11 @@
 
 #include "neptune/common/utils.hpp"
 #include "neptune/common/vector.hpp"
-#include "neptune/geometry/vec2.hpp"
 #include "neptune/geometry/cellcrossing.hpp"
+#include "neptune/geometry/index3D.hpp"
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/geometry/particlegeometry.hpp"
-#include "neptune/geometry/index3D.hpp"
+#include "neptune/geometry/vec2.hpp"
 
 namespace neptune {
 
@@ -24,21 +24,32 @@ namespace neptune {
 class NonUniformMesh : public Mesh {
    public:
     NonUniformMesh() = default;
-    NonUniformMesh(vector<real_t>& cb_x, vector<real_t>& cb_y, vector<real_t>& cb_z)
+    NonUniformMesh(vector<real_t>& cb_x,
+                   vector<real_t>& cb_y,
+                   vector<real_t>& cb_z)
         : Mesh(), cb_x(cb_x), cb_y(cb_y), cb_z(cb_z)
     {}
 
-    NonUniformMesh(vector<real_t>&& cb_x, vector<real_t>&& cb_y, vector<real_t>&& cb_z)
-        : Mesh(), cb_x(std::move(cb_x)), cb_y(std::move(cb_y)), cb_z(std::move(cb_z))
+    NonUniformMesh(vector<real_t>&& cb_x,
+                   vector<real_t>&& cb_y,
+                   vector<real_t>&& cb_z)
+        : Mesh(),
+          cb_x(std::move(cb_x)),
+          cb_y(std::move(cb_y)),
+          cb_z(std::move(cb_z))
     {}
 
     NonUniformMesh(NonUniformMesh&& other) noexcept
-        : Mesh(std::move(other)), cb_x(std::move(other.cb_x)), cb_y(std::move(other.cb_y)), cb_z(std::move(other.cb_z))
+        : Mesh(std::move(other)),
+          cb_x(std::move(other.cb_x)),
+          cb_y(std::move(other.cb_y)),
+          cb_z(std::move(other.cb_z))
     {}
 
     NonUniformMesh(const NonUniformMesh& other) = default;
 
-    NonUniformMesh& operator=(NonUniformMesh&& other) noexcept {
+    NonUniformMesh& operator=(NonUniformMesh&& other) noexcept
+    {
         if (this != &other) {
             Mesh::operator=(std::move(other));
             cb_x = std::move(other.cb_x);
@@ -85,7 +96,9 @@ class NonUniformMesh : public Mesh {
     /**
      * @brief Return the normal of a given surface
      */
-    Vec3 get_surface_normal(index_t cell_index, index_t surface_id, Vec3 position) const;
+    Vec3 get_surface_normal(index_t cell_index,
+                            index_t surface_id,
+                            Vec3 position) const;
 
     /**
      * @brief Return the number of surfaces of a given cell
@@ -113,10 +126,11 @@ class NonUniformMesh : public Mesh {
     Vec3 get_surface_center(index_t cell_index, index_t surface_id) const;
 
     /**
-     * @brief Return the first boundary crossing (i.e. an actual boundary, not a cell boundary)
-     * That a particle will cross.
+     * @brief Return the first boundary crossing (i.e. an actual boundary, not a
+     * cell boundary) That a particle will cross.
      */
-    std::pair<index_t, index_t> get_boundary_crossing(Vec3 position, Vec3 direction) const;
+    std::pair<index_t, index_t> get_boundary_crossing(Vec3 position,
+                                                      Vec3 direction) const;
 
     /**
      * @brief Generate a random position within a given cell
@@ -126,7 +140,9 @@ class NonUniformMesh : public Mesh {
     /**
      * @brief Generate a random position on a given surface of a cell
      */
-    Vec3 generate_random_surface_position(index_t cell_index, index_t surface_id, rng_t& rng) const;
+    Vec3 generate_random_surface_position(index_t cell_index,
+                                          index_t surface_id,
+                                          rng_t& rng) const;
 
     /**
      * @brief Return whether the mesh uses toroidal coordinates or carthesian

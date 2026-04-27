@@ -130,7 +130,10 @@ Particle WallReflectionSource::generate_particle(uint64_t particle_id,
         // The particle undergoes Franck-Condon dissociation, draw a new
         // velocity from a maxwellian distribution with the franck-condon
         // temperature
-        real_t bgk_stddev = constants::calculate_BGK_stddev(franck_condon_temp);
+        real_t bgk_stddev =
+            std::sqrt(franck_condon_temp * constants::eV_to_Joules /
+                      (constants::m_p *
+                       SPECIES_MASS[static_cast<int>(particle_species)]));
         std::normal_distribution<real_t> dist_vx(0, bgk_stddev);
         std::normal_distribution<real_t> dist_vy(0, bgk_stddev);
         std::normal_distribution<real_t> dist_vz(0, bgk_stddev);

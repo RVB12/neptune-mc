@@ -12,7 +12,10 @@ RecombinationSource::RecombinationSource(index_t num_particles,
                                          Species species_,
                                          const Mesh& mesh,
                                          const Background& background)
-    : Source(num_particles), cell_idx(cell_idx_), background_species(background_species_), species(species_)
+    : Source(num_particles),
+      cell_idx(cell_idx_),
+      background_species(background_species_),
+      species(species_)
 {
     real_t temperature = background.temperature(background_species, cell_idx);
     real_t K_r =
@@ -26,9 +29,9 @@ RecombinationSource::RecombinationSource(index_t num_particles,
 }
 
 Particle RecombinationSource::generate_particle(uint64_t particle_id,
-                                                 rng_key_t key,
-                                                 const Mesh& mesh,
-                                                 const Background& background)
+                                                rng_key_t key,
+                                                const Mesh& mesh,
+                                                const Background& background)
 {
     Particle p(particle_id, key, species);
 
@@ -40,9 +43,9 @@ Particle RecombinationSource::generate_particle(uint64_t particle_id,
     Vec3 vel_mean = background.velocity(background_species, cell_idx);
     real_t temperature = background.temperature(background_species, cell_idx);
 
-    real_t vel_stddev =
-        std::sqrt(constants::eV_to_Joules * temperature / (constants::m_p *
-                  SPECIES_MASS[static_cast<int>(background_species)]));
+    real_t vel_stddev = std::sqrt(
+        constants::eV_to_Joules * temperature /
+        (constants::m_p * SPECIES_MASS[static_cast<int>(background_species)]));
 
     std::normal_distribution<real_t> dist_vx(vel_mean.x, vel_stddev);
     std::normal_distribution<real_t> dist_vy(vel_mean.y, vel_stddev);

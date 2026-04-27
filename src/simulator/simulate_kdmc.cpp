@@ -32,10 +32,10 @@
 
 //     real_t bgk_stddev = bgk_processes[0]->bgk_stddev[cell_id];
 
-//     // Calculate derivative of the diffusion term and add it to the drift term
-//     Vec3 diffusion_induced_drift(0, 0, 0);
-//     VoxelMesh* voxel_mesh = dynamic_cast<VoxelMesh*>(const_cast<Mesh*>(&mesh));
-//     if (voxel_mesh != nullptr) {
+//     // Calculate derivative of the diffusion term and add it to the drift
+//     term Vec3 diffusion_induced_drift(0, 0, 0); VoxelMesh* voxel_mesh =
+//     dynamic_cast<VoxelMesh*>(const_cast<Mesh*>(&mesh)); if (voxel_mesh !=
+//     nullptr) {
 //         Index3D ij = voxel_mesh->linear_to_tuple(cell_id);
 
 //         if (ij.i > 0 and ij.i < voxel_mesh->nx - 1) {
@@ -211,7 +211,8 @@
 //     Vec3 drift = calculate_drift(mesh, bgk_processes, ion_processes, dt,
 //                                  intermediate_cell_id);
 
-//     real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, ion_processes, dt,
+//     real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, ion_processes,
+//     dt,
 //                                          cell_id);
 //     real_t D = std::sqrt(2 * D0 * dt);
 
@@ -236,7 +237,8 @@
 //         Vec3 temp_min = p.geometry.position + drift * dt - 2 * temp_diff;
 //         Vec3 temp_max = p.geometry.position + drift * dt + 2 * temp_diff;
 
-//         if (temp_min.x < 0 or temp_max.x > voxel_mesh->Lx or temp_min.y < 0 or
+//         if (temp_min.x < 0 or temp_max.x > voxel_mesh->Lx or temp_min.y < 0
+//         or
 //             temp_max.y > voxel_mesh->Ly or temp_min.z < 0 or
 //             temp_max.z > voxel_mesh->Lz) {
 //             return false;
@@ -290,7 +292,8 @@
 //     Vec3 drift = calculate_drift(mesh, bgk_processes, ion_processes, dt,
 //                                  intermediate_cell_id);
 
-//     real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, ion_processes, dt,
+//     real_t D0 = calculate_diffusion_coef(mesh, bgk_processes, ion_processes,
+//     dt,
 //                                          cell_id);
 //     real_t D = std::sqrt(2 * D0 * dt);
 
@@ -302,7 +305,8 @@
 //     Vec3 old_pos = p.geometry.position;
 //     Vec3 new_pos = old_pos + drift * dt + diffusion_term;
 
-//     // Pretend like the particle is moving in a straight line from the old the
+//     // Pretend like the particle is moving in a straight line from the old
+//     the
 //     // the new pos
 //     Vec3 assumed_velocity = (1 / dt) * (new_pos - p.geometry.position);
 //     p.geometry.velocity = assumed_velocity;
@@ -331,7 +335,8 @@
 //                 p.geometry.boundary_id = crossing.surface_id;
 
 //                 Vec3 normal = mesh.get_surface_normal(
-//                     p.geometry.cell_id, crossing.surface_id, crossing.position);
+//                     p.geometry.cell_id, crossing.surface_id,
+//                     crossing.position);
 
 //                 // Make sure the normal points outwards
 //                 if (dot(normal, p.geometry.velocity) < 0) {
@@ -348,7 +353,8 @@
 //                 if (absorbing_bc != nullptr) {
 //                     //
 //                     // Calculate robin BC coefficients based on maxwellian
-//                     // approximation of velocity distribution at the boundary.
+//                     // approximation of velocity distribution at the
+//                     boundary.
 //                     //
 
 //                     real_t boundary_bgk_stddev =
@@ -363,7 +369,8 @@
 //                         boundary_bgk_stddev / std::sqrt(2 * M_PI) *
 //                             std::exp(-0.5 *
 //                                      (boundary_drift / boundary_bgk_stddev) *
-//                                      (boundary_drift / boundary_bgk_stddev)) +
+//                                      (boundary_drift / boundary_bgk_stddev))
+//                                      +
 //                         boundary_drift * 0.5 *
 //                             (1 +
 //                              std::erf(boundary_drift /
@@ -388,7 +395,8 @@
 //                                                         .boundary_condition_id]
 //                                     .get());
 //                         if (partially_reflecting_bc != nullptr) {
-//                             // For a partially reflecting BC, we do something in
+//                             // For a partially reflecting BC, we do something
+//                             in
 //                             // between specular and absorbing
 //                             real_t boundary_bgk_stddev =
 //                                 bgk_processes[0]
@@ -407,7 +415,8 @@
 //                                 boundary_bgk_stddev / std::sqrt(2 * M_PI) *
 //                                     std::exp(
 //                                         -0.5 *
-//                                         (boundary_drift / boundary_bgk_stddev) *
+//                                         (boundary_drift /
+//                                         boundary_bgk_stddev) *
 //                                         (boundary_drift /
 //                                          boundary_bgk_stddev)) +
 //                                 boundary_drift * 0.5 *
@@ -437,7 +446,8 @@
 
 //                 // Coefficient for p2
 //                 real_t A = std::exp(drift_normal / D0 *
-//                                     dot(crossing.position - old_pos, normal));
+//                                     dot(crossing.position - old_pos,
+//                                     normal));
 
 //                 // Coefficient for p3
 //                 real_t A2;
@@ -453,7 +463,8 @@
 //                     -dot(crossing.position - new_center, normal);
 //                 // Sample from p2
 //                 real_t n1 =
-//                     -truncated_normal_right_tail(dist_to_crossing / D, p.rng);
+//                     -truncated_normal_right_tail(dist_to_crossing / D,
+//                     p.rng);
 
 //                 real_t n1d = n1 * D;
 //                 real_t s = new_center.x + n1d * normal.x;
@@ -490,11 +501,14 @@
 //                 real_t dist_to_crossing_p1 =
 //                     -dot(crossing.position - old_center, normal);
 //                 real_t area_p1 =
-//                     0.5 * std::erfc(-dist_to_crossing_p1 / (D * std::sqrt(2)));
+//                     0.5 * std::erfc(-dist_to_crossing_p1 / (D *
+//                     std::sqrt(2)));
 //                 real_t area_p2 = A * (1 - 0.5 * std::erfc(-dist_to_crossing /
-//                                                           (D * std::sqrt(2))));
+//                                                           (D *
+//                                                           std::sqrt(2))));
 //                 p.weight *= (area_p2) / (area_p1);
-//                 // Multiply particle weight by (p2 + p3) / p2 to account for the
+//                 // Multiply particle weight by (p2 + p3) / p2 to account for
+//                 the
 //                 // fact that we are only sampling from p2 for the reflected
 //                 // particles
 //                 p.weight *= (p2 + p3) / p2;
@@ -584,9 +598,10 @@
 //     Background background;
 
 //     // History based simulation (because its easy)
-// #pragma omp parallel reduction(+ : num_crossings, num_collisions,            \
-//                                    num_kd_steps, num_kd_to_kinetic_switches) \
-//     reduction(EstimatorReduction : estimator)                                \
+// #pragma omp parallel reduction(+ : num_crossings, num_collisions, \
+//                                    num_kd_steps, num_kd_to_kinetic_switches)
+//                                    \
+//     reduction(EstimatorReduction : estimator) \
 //     reduction(FluidEstimatorReduction : fluid_estimator)
 //     for (int i_source = 0; i_source < sources.size(); i_source++) {
 // #pragma omp for
@@ -594,7 +609,8 @@
 //              i_particle < sources[i_source]->num_particles(); i_particle++) {
 //             // Generate particle
 //             Particle particle =
-//                 sources[i_source]->generate_particle(i_particle, mesh, background);
+//                 sources[i_source]->generate_particle(i_particle, mesh,
+//                 background);
 
 //             for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
 //                 num_kd_steps++;
@@ -611,8 +627,8 @@
 //                 while (true) {
 //                     particle_old = particle;
 //                     EventType event = update_particle(
-//                         mesh, bgk_processes, ion_processes, boundary_conditions,
-//                         particle, params.t_final);
+//                         mesh, bgk_processes, ion_processes,
+//                         boundary_conditions, particle, params.t_final);
 
 //                     real_t R_i = 0;
 //                     if (ion_processes.size() > 0) {
@@ -657,16 +673,16 @@
 //                         // number of collisions is a poisson
 //                         // distribution
 //                         std::poisson_distribution<index_t> poisson(
-//                             bgk_processes[0]->rate[particle.geometry.cell_id] *
-//                             (t_kdmc_end - particle.t));
+//                             bgk_processes[0]->rate[particle.geometry.cell_id]
+//                             * (t_kdmc_end - particle.t));
 //                         index_t n_collisions = poisson(particle.rng);
 //                         // now that we have the number of collisions,
 //                         // the time of the last event is a beta
 //                         // distribution C++ does not have a beta
 //                         // distribution, so we use the two gamma
 //                         // distribution trick
-//                         std::gamma_distribution<real_t> gamma1(n_collisions, 1);
-//                         std::gamma_distribution<real_t> gamma2(1, 1);
+//                         std::gamma_distribution<real_t> gamma1(n_collisions,
+//                         1); std::gamma_distribution<real_t> gamma2(1, 1);
 //                         real_t X = gamma1(particle.rng);
 //                         real_t Y = gamma2(particle.rng);
 //                         final_free_flight_time =
@@ -685,13 +701,15 @@
 //                     else {
 //                         if (use_new_version) {
 //                             particle_old = particle;
-//                             kdmc_fluid_step(mesh, bgk_processes, ion_processes,
+//                             kdmc_fluid_step(mesh, bgk_processes,
+//                             ion_processes,
 //                                             boundary_conditions, particle,
 //                                             t_kdmc_end - particle.t -
 //                                                 final_free_flight_time);
 
 //                             fluid_estimator.add_fluid_step(particle,
-//                                                            particle_old, mesh);
+//                                                            particle_old,
+//                                                            mesh);
 //                         }
 //                         else {
 //                             particle_old = particle;
@@ -747,10 +765,12 @@
 //                         break;
 //                     }
 
-//                     // This is commented out, because instead of actually taking
+//                     // This is commented out, because instead of actually
+//                     taking
 //                     // the free flight time as fully free flight (which would
 //                     // ignore the heterogeneity of the collision rate)
-//                     // we can just not do anything, not update the time, and the
+//                     // we can just not do anything, not update the time, and
+//                     the
 //                     // next kinetic step will take care of the kinetic part.
 
 //                     // Final free flight time
@@ -771,7 +791,8 @@
 //                             R_i = ion_processes[0]
 //                                       ->rate[particle_old.geometry.cell_id];
 //                         }
-//                         estimator.add_track_length(particle, particle_old, mesh,
+//                         estimator.add_track_length(particle, particle_old,
+//                         mesh,
 //                                                    R_i);
 //                         if (std::abs(particle.weight) < 1.0e-4) {
 //                             break;

@@ -36,10 +36,10 @@ class Particle {
 
     // Member variables
     ParticleGeometry geometry;
-    uint64_t id = 0;               // (unique) id of the particle
-    real_t t = 0;                  // Time since start of simulation
-    real_t weight = 1.0;           // Weight (used for continuous ionisation)
-    Species species;  // Species of the particle
+    uint64_t id = 0;         // (unique) id of the particle
+    real_t t = 0;            // Time since start of simulation
+    real_t weight = 1.0;     // Weight (used for continuous ionisation)
+    Species species;         // Species of the particle
     real_t intensity = 1.0;  // How many particles this particle represents
     rng_t rng;               // Random number generator
     real_t u = 0;  // Scaled time till next background collision, this is

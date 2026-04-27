@@ -15,7 +15,7 @@ class Vec2 {
    public:
     // Contructors
     Vec2() = default;
-    Vec2(real_t x_, real_t y_) : x(x_), y(y_){};
+    Vec2(real_t x_, real_t y_) : x(x_), y(y_) {};
 
     // Member variables
     real_t x = 0.;

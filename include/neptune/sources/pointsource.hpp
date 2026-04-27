@@ -42,7 +42,7 @@ class PointSource : public Source {
                                const Mesh& mesh,
                                const Background& background);
 
-    Species species; // Species of the generated particles
+    Species species;    // Species of the generated particles
     Vec3 pos;           // Initial position of the particles
     Vec3 vel_mean;      // Mean velocity of the particles
     real_t vel_stddev;  // Standard deviation of the velocity of the particles

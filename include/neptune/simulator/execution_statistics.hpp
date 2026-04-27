@@ -22,7 +22,6 @@ struct ExecutionStatistics {
     index_t num_kd_steps = 0;
     // The number of times the kd simulation switched to kinetic
     index_t num_kd_to_kinetic_switches = 0;
-
 };
 
 }  // namespace neptune

@@ -39,12 +39,13 @@ void simulate(
             sources[i_source]->num_particles();
     }
 
-    rng_key_t base_key{static_cast<uint32_t>(params.seed >> 32), static_cast<uint32_t>(params.seed)};
+    rng_key_t base_key{static_cast<uint32_t>(params.seed >> 32),
+                       static_cast<uint32_t>(params.seed)};
 
     // History based simulation (because its easy)
 #pragma omp parallel reduction(+ : num_crossings, num_collisions) \
     reduction(EstimatorGroupReduction : estimator_group)
-    for(index_t i_batch = 0; i_batch < params.n_batches; i_batch++) {
+    for (index_t i_batch = 0; i_batch < params.n_batches; i_batch++) {
 #pragma omp for schedule(guided, 10)
         for (index_t global_particle_index = 0;
              global_particle_index < total_particles; global_particle_index++) {
@@ -66,7 +67,8 @@ void simulate(
             i_source = left - 1;
 
             Particle particle = sources[i_source]->generate_particle(
-                global_particle_index * (i_batch + 1) * 10000, base_key, mesh, background);
+                global_particle_index * (i_batch + 1) * 10000, base_key, mesh,
+                background);
 
             for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
                 Particle particle_old = particle;
@@ -98,7 +100,6 @@ void simulate(
         estimator_group.finalize_batch();
     }
     estimator_group.finalize();
-
 
     stats.num_crossings = num_crossings;
     stats.num_collisions = num_collisions;

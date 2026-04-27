@@ -12,10 +12,8 @@ namespace neptune {
 /**
  * @brief A simple axis-aligned bounding box
  */
-class BoundingBox
-{
-
-public:
+class BoundingBox {
+   public:
     BoundingBox() : min(Vec2(0, 0)), max(Vec2(0, 0)) {}
 
     BoundingBox(Vec2 min_, Vec2 max_) : min(min_), max(max_) {}

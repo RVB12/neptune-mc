@@ -2,8 +2,8 @@
 #define NEPTUNE_GEOMETRY_TRIANGLE_HPP
 
 #include "neptune/common/utils.hpp"
-#include "neptune/geometry/vec2.hpp"
 #include "neptune/geometry/boundingbox.hpp"
+#include "neptune/geometry/vec2.hpp"
 
 namespace neptune {
 
@@ -24,7 +24,9 @@ class TriangleIndices {
  */
 class Triangle {
    public:
-    Triangle(const Vec2& p1, const Vec2& p2, const Vec2& p3) : p1(p1), p2(p2), p3(p3) {}
+    Triangle(const Vec2& p1, const Vec2& p2, const Vec2& p3)
+        : p1(p1), p2(p2), p3(p3)
+    {}
 
     bool contains(const Vec2& pos) const;
 

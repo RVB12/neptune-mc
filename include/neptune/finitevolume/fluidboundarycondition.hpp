@@ -21,13 +21,10 @@ class FluidBoundaryCondition {
  */
 class AbsorbingFluidBoundaryCondition : public FluidBoundaryCondition {
    public:
-    AbsorbingFluidBoundaryCondition()
-        : FluidBoundaryCondition()
-    {}
+    AbsorbingFluidBoundaryCondition() : FluidBoundaryCondition() {}
 
     char get_type() const override { return 'a'; }
 };
-
 
 /**
  * No flux fluid boundary condition.
@@ -35,14 +32,12 @@ class AbsorbingFluidBoundaryCondition : public FluidBoundaryCondition {
  */
 class NoFluxFluidBoundaryCondition : public FluidBoundaryCondition {
    public:
-    NoFluxFluidBoundaryCondition()
-        : FluidBoundaryCondition()
-    {}
+    NoFluxFluidBoundaryCondition() : FluidBoundaryCondition() {}
     char get_type() const override { return 'n'; }
 };
 
 /**
- * 
+ *
  */
 class RobinFluidBoundaryCondition : public FluidBoundaryCondition {
    public:

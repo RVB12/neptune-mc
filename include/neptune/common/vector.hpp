@@ -459,12 +459,13 @@ class vectorview {
 
 /**
  * Search for a value in a sorted vector
- * 
+ *
  * if the value is found, the function returns the index of the value
- * if the value is not found, the function returns the index where the value should be inserted
+ * if the value is not found, the function returns the index where the value
+ * should be inserted
  */
 template <typename T>
-    index_t binary_search(const vectorview<T>& v, T value)
+index_t binary_search(const vectorview<T>& v, T value)
 {
     index_t left = 0;
     index_t right = v.size();
@@ -472,9 +473,11 @@ template <typename T>
         index_t mid = left + (right - left) / 2;
         if (v[mid] == value) {
             return mid;
-        } else if (v[mid] < value) {
+        }
+        else if (v[mid] < value) {
             left = mid + 1;
-        } else {
+        }
+        else {
             right = mid;
         }
     }
@@ -500,11 +503,12 @@ inline index_t binary_search(const vector<real_t>& vec, real_t value)
  * Insert a value into a vector a position i
  * The value at position size - 1 will be lost
  */
-template<typename T>
-void insert_sorted(vector<T>& v, T value, index_t i){
+template <typename T>
+void insert_sorted(vector<T>& v, T value, index_t i)
+{
     assert(i >= 0);
     assert(i <= v.size());
-    for(index_t j = v.size() - 1; j > i; --j){
+    for (index_t j = v.size() - 1; j > i; --j) {
         v[j] = v[j - 1];
     }
     v[i] = value;

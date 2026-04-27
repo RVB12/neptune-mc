@@ -6,18 +6,19 @@ namespace neptune {
 
 /**
  * Determine the side of a line that a point is on.
- * 
- * 
+ *
+ *
  * @param p1 Beginning of the line
  * @param p2 End of the line
  * @param p3 The point to check
- * 
+ *
  * @return real_t If positive, the point is on the left side of the line, if
  * negative, the point is on the right side of the line, if zero, the point is
  * on the line (but not necessarily between p1 and p2)
- * 
+ *
  * @note How it works:
- * 1. Determine a vector orthogonal to the line (p1, p2), this vector is: ( -(p2.y-p1.y) , p2.x-p1.x ) 
+ * 1. Determine a vector orthogonal to the line (p1, p2), this vector is: (
+ * -(p2.y-p1.y) , p2.x-p1.x )
  * 2. Calculate the dot product of point - p1 and the orthogonal vector
  */
 real_t triangle_sign_helper(const Vec2& p1, const Vec2& p2, const Vec2& point)

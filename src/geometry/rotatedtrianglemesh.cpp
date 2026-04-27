@@ -163,21 +163,21 @@ real_t find_cone_intersection(const Vec2& p1,
 CellCrossing RotatedTriangleMesh::get_next_crossing(ParticleGeometry& p) const
 {
     assert(is_in_cell(p.position, p.cell_id));
-    // If the particle is on a boundary, make sure the velocity points inwards
-    #ifndef NDEBUG
-    if(p.boundary_id == 0){
+// If the particle is on a boundary, make sure the velocity points inwards
+#ifndef NDEBUG
+    if (p.boundary_id == 0) {
         Vec3 normal = get_surface_normal(p.cell_id, 0, p.position);
         assert(normal.dot(p.velocity) <= 0);
     }
-    else if(p.boundary_id == 1){
+    else if (p.boundary_id == 1) {
         Vec3 normal = get_surface_normal(p.cell_id, 1, p.position);
         assert(normal.dot(p.velocity) <= 0);
     }
-    else if(p.boundary_id == 2){
+    else if (p.boundary_id == 2) {
         Vec3 normal = get_surface_normal(p.cell_id, 2, p.position);
         assert(normal.dot(p.velocity) <= 0);
-    }   
-    #endif
+    }
+#endif
 
     TriangleIndices t = triangles[p.cell_id];
     Vec2 p1 = vertices[t.ind1];
@@ -388,15 +388,15 @@ Vec3 RotatedTriangleMesh::generate_random_surface_position(index_t cell_index,
 
     if (surface_id == 0) {
         real_t r = p1.x + u * (p2.x - p1.x);
-        return Vec3(c*r, s*r, p1.y + u * (p2.y - p1.y));
+        return Vec3(c * r, s * r, p1.y + u * (p2.y - p1.y));
     }
     else if (surface_id == 1) {
         real_t r = p2.x + u * (p3.x - p2.x);
-        return Vec3(c*r, s*r, p2.y + u * (p3.y - p2.y));
+        return Vec3(c * r, s * r, p2.y + u * (p3.y - p2.y));
     }
     else if (surface_id == 2) {
         real_t r = p3.x + u * (p1.x - p3.x);
-        return Vec3(c*r, s*r, p3.y + u * (p1.y - p3.y));
+        return Vec3(c * r, s * r, p3.y + u * (p1.y - p3.y));
     }
     else {
         throw std::runtime_error("Invalid surface id");

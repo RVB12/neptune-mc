@@ -3,8 +3,8 @@
 
 #include "neptune/common/json_conversions.hpp"
 #include "neptune/common/version.hpp"
-#include "neptune/simulator/simulator.hpp"
 #include "neptune/geometry/trianglemesh.hpp"
+#include "neptune/simulator/simulator.hpp"
 
 using namespace neptune;
 
@@ -20,7 +20,8 @@ int main(int argc, char** argv)
             std::cout << "Neptune version: " << NEPTUNE_VERSION << std::endl;
             return 0;
         }
-    } else {
+    }
+    else {
         std::cout << "No input file specified, using default input.h5"
                   << std::endl;
         input_file_name = "input.h5";
@@ -44,8 +45,7 @@ int main(int argc, char** argv)
     std::unique_ptr<Mesh> mesh_ptr = j["mesh"];
     auto end = std::chrono::high_resolution_clock::now();
 
-    TriangleMesh* triangle_mesh =
-        dynamic_cast<TriangleMesh*>(mesh_ptr.get());
+    TriangleMesh* triangle_mesh = dynamic_cast<TriangleMesh*>(mesh_ptr.get());
 
     if (!triangle_mesh) {
         std::cerr << "Mesh is not a TriangleMesh" << std::endl;
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     // Write output to file
     //
     // nlohmann::json output;
-    
+
     // output["neighbor_list"] = triangle_mesh->get_neighbor_list();
 
     // output_file << output.dump(4);

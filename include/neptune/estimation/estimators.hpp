@@ -264,16 +264,16 @@ class Estimator_old {
     vector<real_t> moment3_x;
 };
 
-#pragma omp declare reduction(EstimatorReduction \
-:Estimator_old : omp_out.combine(omp_in))            \
+#pragma omp declare reduction(                                      \
+        EstimatorReduction:Estimator_old : omp_out.combine(omp_in)) \
     initializer(omp_priv = Estimator_old(omp_orig.size()))
 
-#pragma omp declare reduction(FluidEstimatorReduction \
-:FluidEstimator : omp_out.combine(omp_in))            \
+#pragma omp declare reduction(                                            \
+        FluidEstimatorReduction:FluidEstimator : omp_out.combine(omp_in)) \
     initializer(omp_priv = FluidEstimator(omp_orig.size(), omp_orig.dt_fluid))
 
-#pragma omp declare reduction(ArcmcEstimatorReduction \
-:ArcmcEstimator : omp_out.combine(omp_in))            \
+#pragma omp declare reduction(                                            \
+        ArcmcEstimatorReduction:ArcmcEstimator : omp_out.combine(omp_in)) \
     initializer(omp_priv = ArcmcEstimator(omp_orig.size()))
 
 }  // namespace neptune

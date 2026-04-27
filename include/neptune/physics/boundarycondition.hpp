@@ -19,7 +19,7 @@ class BoundaryCondition {
 
     /**
      * Apply the boundary condition to a particle
-     * 
+     *
      * @param p      The particle to apply the boundary condition to
      *               It is assumed that the particle is on the boundary
      * @param normal The normal vector of the boundary
@@ -80,8 +80,9 @@ class PartiallySpecularBC : public BoundaryCondition {
 /**
  * Mixed reflection. Probability alpha of having diffuse reflection,
  * probability (1-alpha) of having specular reflection.
- * 
- * Also absorbs a fraction of the particle's weight given by absorption_coefficient.
+ *
+ * Also absorbs a fraction of the particle's weight given by
+ * absorption_coefficient.
  */
 class MixedDiffuseReflectiveBC : public BoundaryCondition {
    public:
@@ -96,7 +97,7 @@ class MixedDiffuseReflectiveBC : public BoundaryCondition {
 
         real_t u = dist_u(p.rng);
 
-        if(u < alpha) {
+        if (u < alpha) {
             // Diffuse reflection
             Vec3 tangent1;
             if (std::abs(normal.z) < 0.9) {
@@ -121,7 +122,8 @@ class MixedDiffuseReflectiveBC : public BoundaryCondition {
         }
         else {
             // Specular reflection
-            p.geometry.velocity -= 2 * (p.geometry.velocity.dot(normal)) * normal;
+            p.geometry.velocity -=
+                2 * (p.geometry.velocity.dot(normal)) * normal;
         }
 
         // Absorb a fraction of the particle's weight

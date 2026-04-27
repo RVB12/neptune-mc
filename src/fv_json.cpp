@@ -1,8 +1,8 @@
 #include <chrono>
 #include <fstream>
 
-#include "neptune/common/version.hpp"
 #include "neptune/common/json_conversions.hpp"
+#include "neptune/common/version.hpp"
 #include "neptune/finitevolume/advectiondiffusionsolver.hpp"
 
 using namespace neptune;
@@ -17,8 +17,7 @@ int main(int argc, char** argv)
     if (argc == 2) {
         std::string argument = argv[1];
         if (argument == "-v" || argument == "--version") {
-            std::cout << "Neptune version: " << NEPTUNE_VERSION
-                      << std::endl;
+            std::cout << "Neptune version: " << NEPTUNE_VERSION << std::endl;
             return 0;
         }
     }
@@ -70,9 +69,10 @@ int main(int argc, char** argv)
     vector<real_t> diffusion_factor = j["diffusion_factor"];
     vector<real_t> density = j["density"];
     vector<real_t> ionisation_rate;
-    if(j.contains("ionisation_rate")) {
+    if (j.contains("ionisation_rate")) {
         ionisation_rate = j["ionisation_rate"];
-    } else {
+    }
+    else {
         ionisation_rate = vector<real_t>(density.size(), 0.0);
     }
 
@@ -90,11 +90,11 @@ int main(int argc, char** argv)
         j["boundary_conditions"];
 
     start = std::chrono::high_resolution_clock::now();
-    advection_diffusion_solver(*mesh_ptr, boundary_conditions, advection_x,
-                               advection_y, advection_z, diffusion_rate,
-                               diffusion_factor, ionisation_rate, t_final, dt, density,
-                               density_integral, momentum_x_integral, momentum_y_integral,
-                               momentum_z_integral, energy_integral, energy_x_integral);
+    advection_diffusion_solver(
+        *mesh_ptr, boundary_conditions, advection_x, advection_y, advection_z,
+        diffusion_rate, diffusion_factor, ionisation_rate, t_final, dt, density,
+        density_integral, momentum_x_integral, momentum_y_integral,
+        momentum_z_integral, energy_integral, energy_x_integral);
     end = std::chrono::high_resolution_clock::now();
 
     stats.trace_time = std::chrono::duration<double>(end - start).count();

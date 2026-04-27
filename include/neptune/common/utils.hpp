@@ -5,8 +5,12 @@
 #include <random>
 #include <stdexcept>
 
+// We need to disable the formatter here because the include order is important
+// for the random number generator
+// clang-format off
 #include "Random123/philox.h"
 #include "Random123/MicroURNG.hpp"
+// clang-format on
 
 namespace neptune {
 
@@ -77,12 +81,11 @@ inline real_t sample_first_exit_time(real_t v,
     }
 }
 
-
 /**
  * Generate a sample from N(0, 1) truncated to [a, ∞) using Robert's algorithm
  * Note, this will get more and more expensive for larger a, it may
  * need to be replaced with a fancier algorithm at some point
- * 
+ *
  * @param a The truncation point
  * @param rng The random number generator
  * @return A sample from the truncated normal distribution
@@ -112,9 +115,10 @@ inline real_t truncated_normal_right_tail(real_t a, rng_t& rng)
             return z;
         }
         i++;
-        if(i > 1000000){
-            throw std::runtime_error("truncated_normal_right_tail: "
-                                     "Too many iterations in sampling");
+        if (i > 1000000) {
+            throw std::runtime_error(
+                "truncated_normal_right_tail: "
+                "Too many iterations in sampling");
         }
     }
 }

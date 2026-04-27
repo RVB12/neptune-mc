@@ -39,8 +39,8 @@
 //     // Calculate the next cell crossing
 //     CellCrossing crossing = mesh.get_next_crossing(p.geometry);
 
-//     // Check which one is earlier, charge exchange, cell crossing or final time
-//     if (t_final > 0) {
+//     // Check which one is earlier, charge exchange, cell crossing or final
+//     time if (t_final > 0) {
 //         real_t time_left = t_final - p.t;
 //         if (time_left < tc && time_left < crossing.t) {
 //             // We will not hit the boundary before the time is up
@@ -108,16 +108,23 @@
 //         p.geometry.velocity = drift + std::sqrt(W) * bgk_std * xi;
 
 //         // V2_eff and V2_eff_x are used for the energy estimator,
-//         // since we can't just use v_eff^2 for the energy estimate, we need to calculate
-//         // which is a standin for v_eff^2 that accounts for the fact that the actual velocity varies more
+//         // since we can't just use v_eff^2 for the energy estimate, we need
+//         to calculate
+//         // which is a standin for v_eff^2 that accounts for the fact that the
+//         actual velocity varies more
 
-//         // Very strange behavior here, the following two lines should be better,
-//         // since it corrects the mean while taking the actual velocity into account,
+//         // Very strange behavior here, the following two lines should be
+//         better,
+//         // since it corrects the mean while taking the actual velocity into
+//         account,
 //         // but it seems to lead to worse estimates.
-//         // Just setting V2_eff to its expected value seems to work better, maybe it has to do with some covariance or something?
-//         // V2_eff = p.geometry.velocity.norm2() + 3 * bgk_std * bgk_std * (1.0 - W);
-//         // V2_eff_x = p.geometry.velocity.x * p.geometry.velocity.x + bgk_std * bgk_std * (1.0 - W);
-        
+//         // Just setting V2_eff to its expected value seems to work better,
+//         maybe it has to do with some covariance or something?
+//         // V2_eff = p.geometry.velocity.norm2() + 3 * bgk_std * bgk_std *
+//         (1.0 - W);
+//         // V2_eff_x = p.geometry.velocity.x * p.geometry.velocity.x + bgk_std
+//         * bgk_std * (1.0 - W);
+
 //         // Vec3 V2_temp = drift + bgk_std * xi;
 //         // V2_eff = V2_temp.norm2();
 //         // V2_eff_x = V2_temp.x * V2_temp.x;
@@ -136,7 +143,8 @@
 //         event_type = EventType::CELL_CROSSING;
 //         dt = crossing.t;
 //         p.u -=
-//             collision_rate * dt;  // Update the scaled time till next collision
+//             collision_rate * dt;  // Update the scaled time till next
+//             collision
 //         if (crossing.next_cell_id != -1) {
 //             // Regular grid crossing, move the particle to the next
 //             // cell
@@ -149,7 +157,8 @@
 //             p.geometry.position = crossing.position;
 //             p.geometry.boundary_id = crossing.surface_id;
 
-//             Vec3 normal = mesh.get_surface_normal(cell_id, crossing.surface_id,
+//             Vec3 normal = mesh.get_surface_normal(cell_id,
+//             crossing.surface_id,
 //                                                   crossing.position);
 
 //             boundary_conditions[crossing.boundary_condition_id]->apply(p,
@@ -199,9 +208,11 @@
 //              i_particle < sources[i_source]->num_particles(); i_particle++) {
 //             // Generate particle
 //             Particle particle =
-//                 sources[i_source]->generate_particle(i_particle, mesh, background);
+//                 sources[i_source]->generate_particle(i_particle, mesh,
+//                 background);
 //             real_t V2_eff = particle.geometry.velocity.norm();
-//             real_t V2_eff_x = particle.geometry.velocity.x * particle.geometry.velocity.x;
+//             real_t V2_eff_x = particle.geometry.velocity.x *
+//             particle.geometry.velocity.x;
 
 //             for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
 //                 Particle particle_old = particle;
@@ -212,9 +223,11 @@
 
 //                 real_t R_i = 0;
 //                 if (ion_processes.size() > 0) {
-//                     R_i = ion_processes[0]->rate[particle_old.geometry.cell_id];
+//                     R_i =
+//                     ion_processes[0]->rate[particle_old.geometry.cell_id];
 //                 }
-//                 estimator.add_track_length(particle, particle_old, mesh, R_i, V2_eff, V2_eff_x);
+//                 estimator.add_track_length(particle, particle_old, mesh, R_i,
+//                 V2_eff, V2_eff_x);
 
 //                 if (particle.weight < 1.0e-4) {
 //                     break;
@@ -224,9 +237,10 @@
 //                     num_crossings++;
 //                 }
 //                 else if (event == EventType::CHARGE_EXCHANGE) {
-//                     // TODO: this assume we always do M collisions in ARCMC, but
-//                     // in the first iteration, we usually do just 1 collision.
-//                     num_collisions += M;
+//                     // TODO: this assume we always do M collisions in ARCMC,
+//                     but
+//                     // in the first iteration, we usually do just 1
+//                     collision. num_collisions += M;
 //                 }
 //                 else if (event == EventType::FINAL_TIME) {
 //                     estimator.add_final(particle, mesh, V2_eff, V2_eff_x);

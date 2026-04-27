@@ -3,8 +3,8 @@
 
 #include "neptune/common/utils.hpp"
 #include "neptune/common/vector.hpp"
-#include "neptune/physics/species.hpp"
 #include "neptune/geometry/vec3.hpp"
+#include "neptune/physics/species.hpp"
 
 namespace neptune {
 

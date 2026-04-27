@@ -6,11 +6,10 @@
 #include <set>
 
 #include "neptune/common/utils.hpp"
-#include "neptune/geometry/vec2.hpp"
 #include "neptune/common/vector.hpp"
-#include "neptune/geometry/triangle.hpp"
-
 #include "neptune/geometry/boundingbox.hpp"
+#include "neptune/geometry/triangle.hpp"
+#include "neptune/geometry/vec2.hpp"
 
 namespace neptune {
 
@@ -49,13 +48,12 @@ class SpatialIndex {
      * @param triangles The list of triangles
      *
      */
-    SpatialIndex(vector<Vec2>& vertices,
-                 vector<TriangleIndices>& triangles)
+    SpatialIndex(vector<Vec2>& vertices, vector<TriangleIndices>& triangles)
     {
         auto bbox_func = [&triangles, &vertices](index_t i) {
             TriangleIndices t_ind = triangles[i];
             Triangle t(vertices[t_ind.ind1], vertices[t_ind.ind2],
-                        vertices[t_ind.ind3]);
+                       vertices[t_ind.ind3]);
 
             return t.bounding_box();
         };
@@ -113,8 +111,10 @@ class SpatialIndex {
 
         // Determine nx and ny so that the average object fits in a cell
         // This is just a heuristic, but it should work well in most cases
-        nx = std::max<index_t>(1, std::ceil((bbox.max.x - bbox.min.x) / size_x));
-        ny = std::max<index_t>(1, std::ceil((bbox.max.y - bbox.min.y) / size_y));
+        nx =
+            std::max<index_t>(1, std::ceil((bbox.max.x - bbox.min.x) / size_x));
+        ny =
+            std::max<index_t>(1, std::ceil((bbox.max.y - bbox.min.y) / size_y));
         cell_size = (bbox.max - bbox.min) / Vec2(nx, ny);
 
         // Second pass, count values in each cell

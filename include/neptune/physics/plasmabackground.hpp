@@ -40,6 +40,6 @@ class PlasmaBackground {
     vector<real_t> neutral_vel_z;
 };
 
-}
+}  // namespace neptune
 
 #endif

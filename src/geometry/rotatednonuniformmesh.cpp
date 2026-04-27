@@ -166,17 +166,20 @@ CellCrossing RotatedNonUniformMesh::get_next_crossing(ParticleGeometry& p) const
     Index3D next_ind = ind;
     real_t t = 0;
     index_t surface;
-    if (tr_inner > 0 and (tr_inner <= tr_outer or tr_outer < 0) and (tr_inner <= tz or tz < 0)) {
+    if (tr_inner > 0 and (tr_inner <= tr_outer or tr_outer < 0) and
+        (tr_inner <= tz or tz < 0)) {
         t = tr_inner;
         next_ind.i -= 1;
         surface = 0;
     }
-    else if (tr_outer > 0 and (tr_outer <= tr_inner or tr_inner < 0) and (tr_outer <= tz or tz < 0)) {
+    else if (tr_outer > 0 and (tr_outer <= tr_inner or tr_inner < 0) and
+             (tr_outer <= tz or tz < 0)) {
         t = tr_outer;
         next_ind.i += 1;
         surface = 2;
     }
-    else if (tz > 0 and (tz <= tr_inner or tr_inner < 0) and (tz <= tr_outer or tr_outer < 0)) {
+    else if (tz > 0 and (tz <= tr_inner or tr_inner < 0) and
+             (tz <= tr_outer or tr_outer < 0)) {
         t = tz;
         next_ind.j += (p.velocity.z >= 0) ? 1 : -1;
         surface = (p.velocity.z >= 0) ? 3 : 1;

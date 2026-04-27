@@ -7,16 +7,18 @@ namespace neptune {
 
 /**
  * @brief Convert a vector toroidal coordinates to cartesian coordinates
- * 
+ *
  * This is mostly used for directions, where e.g. the mean velocity
- * is represented in toroidal coordinates, but the particle geometry is represented in cartesian coordinates.
- * 
- * @param position The position of the particle, used to determine the angle for the transformation
+ * is represented in toroidal coordinates, but the particle geometry is
+ * represented in cartesian coordinates.
+ *
+ * @param position The position of the particle, used to determine the angle for
+ * the transformation
  * @param direction The direction in toroidal coordinates
  *                  x: the radial coordinate
  *                  y: the toroidal coordinate
  *                  z: the vertical coordinate
- * 
+ *
  * @return Vec3 The direction in cartesian coordinates
  */
 inline Vec3 transform_tor_dir_to_cart(Vec3 position, Vec3 direction)
@@ -36,16 +38,18 @@ inline Vec3 transform_tor_dir_to_cart(Vec3 position, Vec3 direction)
 
 /**
  * @brief Convert a vector in cartesian coordinates to toroidal coordinates
- * 
+ *
  * This is mostly used for directions, where e.g. the mean velocity
- * is represented in toroidal coordinates, but the particle geometry is represented in cartesian coordinates.
- * 
- * @param position The position of the particle, used to determine the angle for the transformation
+ * is represented in toroidal coordinates, but the particle geometry is
+ * represented in cartesian coordinates.
+ *
+ * @param position The position of the particle, used to determine the angle for
+ * the transformation
  * @param direction The direction in toroidal coordinates
  *                  x: the radial coordinate
  *                  y: the toroidal coordinate
  *                  z: the vertical coordinate
- * 
+ *
  * @return Vec3 The direction in cartesian coordinates
  */
 inline Vec3 transform_cart_to_tor(Vec3 position, Vec3 direction)

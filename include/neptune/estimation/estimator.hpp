@@ -21,7 +21,8 @@ enum class QOI {
     Energy_z,
 };
 
-inline std::string getUnit(QOI qoi){
+inline std::string getUnit(QOI qoi)
+{
     switch (qoi) {
         case QOI::Density:
             return "m^-3";
@@ -119,7 +120,8 @@ class Estimator {
      *               For Track-length, this should be \int_t^t+time_in_cell
      * weight(t) dt * intensity / volume For Final-time, this should be
      * weight(t_final) * intensity / volume
-     * @param is_toroidal Whether the velocity should be transformed from Carthesian to toroidal coordinates
+     * @param is_toroidal Whether the velocity should be transformed from
+     * Carthesian to toroidal coordinates
      */
     void tally(const Particle& p, real_t weighted, bool is_toroidal);
 

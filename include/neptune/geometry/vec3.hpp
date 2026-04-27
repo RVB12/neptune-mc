@@ -15,7 +15,7 @@ class Vec3 {
    public:
     // Contructors
     Vec3() = default;
-    Vec3(real_t x_, real_t y_, real_t z_) : x(x_), y(y_), z(z_){};
+    Vec3(real_t x_, real_t y_, real_t z_) : x(x_), y(y_), z(z_) {};
 
     // Member variables
     real_t x = 0.;
