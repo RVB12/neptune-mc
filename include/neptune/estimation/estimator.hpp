@@ -12,21 +12,39 @@ namespace neptune {
 
 enum class QOI {
     Density,
-    Momentum_x,
-    Momentum_y,
-    Momentum_z,
+    Velocity_x,
+    Velocity_y,
+    Velocity_z,
     Energy,
     Energy_x,
     Energy_y,
     Energy_z,
 };
 
+inline std::string getUnit(QOI qoi){
+    switch (qoi) {
+        case QOI::Density:
+            return "m^-3";
+        case QOI::Velocity_x:
+        case QOI::Velocity_y:
+        case QOI::Velocity_z:
+            return "(m/s)m^-3";
+        case QOI::Energy:
+        case QOI::Energy_x:
+        case QOI::Energy_y:
+        case QOI::Energy_z:
+            return "(m/s)^2m^-3";
+        default:
+            throw std::runtime_error("Unknown QOI");
+    }
+}
+
 inline QOI stringtoQOI(std::string s)
 {
     if (s == "density") return QOI::Density;
-    if (s == "momentum_x") return QOI::Momentum_x;
-    if (s == "momentum_y") return QOI::Momentum_y;
-    if (s == "momentum_z") return QOI::Momentum_z;
+    if (s == "velocity_x") return QOI::Velocity_x;
+    if (s == "velocity_y") return QOI::Velocity_y;
+    if (s == "velocity_z") return QOI::Velocity_z;
     if (s == "energy") return QOI::Energy;
     if (s == "energy_x") return QOI::Energy_x;
     if (s == "energy_y") return QOI::Energy_y;
@@ -39,12 +57,12 @@ inline std::string QOItostring(QOI qoi)
     switch (qoi) {
         case QOI::Density:
             return "density";
-        case QOI::Momentum_x:
-            return "momentum_x";
-        case QOI::Momentum_y:
-            return "momentum_y";
-        case QOI::Momentum_z:
-            return "momentum_z";
+        case QOI::Velocity_x:
+            return "velocity_x";
+        case QOI::Velocity_y:
+            return "velocity_y";
+        case QOI::Velocity_z:
+            return "velocity_z";
         case QOI::Energy:
             return "energy";
         case QOI::Energy_x:
@@ -101,8 +119,9 @@ class Estimator {
      *               For Track-length, this should be \int_t^t+time_in_cell
      * weight(t) dt * intensity / volume For Final-time, this should be
      * weight(t_final) * intensity / volume
+     * @param is_toroidal Whether the velocity should be transformed from Carthesian to toroidal coordinates
      */
-    void tally(const Particle& p, real_t weighted);
+    void tally(const Particle& p, real_t weighted, bool is_toroidal);
 
     void combine(const Estimator& other);
 

@@ -1,5 +1,7 @@
 #include "neptune/estimation/estimator.hpp"
 
+#include "neptune/geometry/cart_to_tor.hpp"
+#include "neptune/physics/physicalconstants.hpp"
 namespace neptune {
 
 Estimator::Estimator(Species species,
@@ -46,44 +48,84 @@ void Estimator::combine(const Estimator& other)
     }
 }
 
-void Estimator::tally(const Particle& p, real_t weight)
+void Estimator::tally(const Particle& p, real_t weight, bool is_toroidal)
 {
     switch (qoi) {
         case QOI::Density:
             tally_vector[p.geometry.cell_id] += weight;
             break;
-        case QOI::Momentum_x:
-            tally_vector[p.geometry.cell_id] += p.geometry.velocity.x * weight;
+        case QOI::Velocity_x:
+            if (is_toroidal) {
+                // Note, this calculation is not perfect,
+                // even if the velocity is constant, the toroidal velocity
+                // can still vary so we should actually integrate
+                Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
+                                                     p.geometry.velocity);
+                tally_vector[p.geometry.cell_id] += vel_tor.x * weight;
+            }
+            else {
+                tally_vector[p.geometry.cell_id] +=
+                    p.geometry.velocity.x * weight;
+            }
             break;
-        case QOI::Momentum_y:
-            tally_vector[p.geometry.cell_id] += p.geometry.velocity.y * weight;
+        case QOI::Velocity_y:
+            if (is_toroidal) {
+                // Note, this calculation is not perfect,
+                // even if the velocity is constant, the toroidal velocity
+                // can still vary so we should actually integrate
+                Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
+                                                     p.geometry.velocity);
+                tally_vector[p.geometry.cell_id] += vel_tor.y * weight;
+            }
+            else {
+                tally_vector[p.geometry.cell_id] +=
+                    p.geometry.velocity.y * weight;
+            }
             break;
-        case QOI::Momentum_z:
+        case QOI::Velocity_z:
             tally_vector[p.geometry.cell_id] += p.geometry.velocity.z * weight;
             break;
         case QOI::Energy:
             tally_vector[p.geometry.cell_id] +=
-                (0.5 * SPECIES_MASS[static_cast<size_t>(p.species)] *
-                 p.geometry.velocity.norm2()) *
-                weight;
+                (0.5 * p.geometry.velocity.norm2()) * weight;
             break;
         case QOI::Energy_x:
-            tally_vector[p.geometry.cell_id] +=
-                (0.5 * SPECIES_MASS[static_cast<size_t>(p.species)] *
-                 p.geometry.velocity.x * p.geometry.velocity.x) *
-                weight;
+            if (is_toroidal) {
+                // Note, this calculation is not perfect,
+                // even if the velocity is constant, the toroidal velocity
+                // can still vary so we should actually integrate
+                Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
+                                                     p.geometry.velocity);
+                tally_vector[p.geometry.cell_id] +=
+                    (0.5 * vel_tor.x * vel_tor.x) *
+                    weight;
+            }
+            else {
+                tally_vector[p.geometry.cell_id] +=
+                    (0.5 * p.geometry.velocity.x * p.geometry.velocity.x) *
+                    weight;
+            }
             break;
         case QOI::Energy_y:
-            tally_vector[p.geometry.cell_id] +=
-                (0.5 * SPECIES_MASS[static_cast<size_t>(p.species)] *
-                 p.geometry.velocity.y * p.geometry.velocity.y) *
-                weight;
+            if (is_toroidal) {
+                // Note, this calculation is not perfect,
+                // even if the velocity is constant, the toroidal velocity
+                // can still vary so we should actually integrate
+                Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
+                                                     p.geometry.velocity);
+                tally_vector[p.geometry.cell_id] +=
+                    (0.5 * vel_tor.y * vel_tor.y) *
+                    weight;
+            }
+            else {
+                tally_vector[p.geometry.cell_id] +=
+                    (0.5 * p.geometry.velocity.y * p.geometry.velocity.y) *
+                    weight;
+            }
             break;
         case QOI::Energy_z:
             tally_vector[p.geometry.cell_id] +=
-                (0.5 * SPECIES_MASS[static_cast<size_t>(p.species)] *
-                 p.geometry.velocity.z * p.geometry.velocity.z) *
-                weight;
+                (0.5 * p.geometry.velocity.z * p.geometry.velocity.z) * weight;
             break;
     }
 }
@@ -160,7 +202,7 @@ void EstimatorGroup::tally_track_length(
     for (auto* estimator :
          track_length_estimators_by_species[static_cast<size_t>(
              p_old.species)]) {
-        estimator->tally(p_old, s);
+        estimator->tally(p_old, s, mesh.is_toroidal());
     }
 }
 
@@ -179,7 +221,7 @@ void EstimatorGroup::tally_final(const Particle& p, const Mesh& mesh)
     // them
     for (auto* estimator :
          final_estimators_by_species[static_cast<size_t>(p.species)]) {
-        estimator->tally(p, weight);
+        estimator->tally(p, weight, mesh.is_toroidal());
     }
 }
 

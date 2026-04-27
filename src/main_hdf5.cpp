@@ -16,6 +16,8 @@
 #include "neptune/physics/volumesource.hpp"
 #include "neptune/physics/wallreflectionsource.hpp"
 #include "neptune/simulator/simulator.hpp"
+#include "neptune/geometry/trianglemesh.hpp"
+#include "neptune/geometry/rotatedtrianglemesh.hpp"
 
 using namespace neptune;
 
@@ -85,6 +87,60 @@ vector<real_t> read_real_vector(const H5::DataSet& dataset)
     dataspace.getSimpleExtentDims(dims, nullptr);
     vector<real_t> data(dims[0]);
     dataset.read(data.data(), H5::PredType::NATIVE_DOUBLE);
+    return data;
+}
+
+vector<Vec2> read_vec2_vector(const H5::DataSet& dataset)
+{
+    H5::DataSpace dataspace = dataset.getSpace();
+    if (dataspace.getSimpleExtentNdims() != 2) {
+        throw std::runtime_error("Dataset: " + get_dataset_path(dataset) +
+                                 " is not 2D");
+    }
+    // check if the dataset is of type double
+    if (dataset.getDataType() != H5::PredType::NATIVE_DOUBLE) {
+        throw std::runtime_error("Dataset: " + get_dataset_path(dataset) +
+                                 " is not of type double");
+    }
+    hsize_t dims[2];
+    dataspace.getSimpleExtentDims(dims, nullptr);
+    if(dims[1] != 2) {
+        throw std::runtime_error("Dataset: " + get_dataset_path(dataset) +
+                                 " does not have 2 columns");
+    }
+    vector<Vec2> data(dims[0]);
+    vector<real_t> raw_data(dims[0] * dims[1]);
+    dataset.read(raw_data.data(), H5::PredType::NATIVE_DOUBLE);
+    for (index_t i = 0; i < dims[0]; ++i) {
+        data[i] = Vec2(raw_data[2 * i], raw_data[2 * i + 1]);
+    }
+    return data;
+}
+
+vector<TriangleIndices> read_triangle_indices_vector(const H5::DataSet& dataset)
+{
+    H5::DataSpace dataspace = dataset.getSpace();
+    if (dataspace.getSimpleExtentNdims() != 2) {
+        throw std::runtime_error("Dataset: " + get_dataset_path(dataset) +
+                                 " is not 2D");
+    }
+    // check if the dataset is of type double
+    if (dataset.getDataType() != H5::PredType::NATIVE_INT64) {
+        throw std::runtime_error("Dataset: " + get_dataset_path(dataset) +
+                                 " is not of type int64_t");
+    }
+    hsize_t dims[2];
+    dataspace.getSimpleExtentDims(dims, nullptr);
+    if(dims[1] != 3) {
+        throw std::runtime_error("Dataset: " + get_dataset_path(dataset) +
+                                 " does not have 3 columns");
+    }
+    vector<TriangleIndices> data(dims[0]);
+    vector<index_t> raw_data(dims[0] * dims[1]);
+    dataset.read(raw_data.data(), H5::PredType::NATIVE_INT64);
+    for (index_t i = 0; i < dims[0]; ++i) {
+        data[i] = TriangleIndices(raw_data[3 * i], raw_data[3 * i + 1], raw_data[3 * i + 2]);
+    }
     return data;
 }
 
@@ -202,11 +258,16 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
         return std::make_unique<VoxelMesh>(mesh);
     }
     else if (mesh_type == "triangle") {
-        throw std::runtime_error("Triangle mesh is not implemented yet");
+        vector<Vec2> vertices = read_vec2_vector(mesh_group.openDataSet("vertices"));
+        vector<TriangleIndices> triangles = read_triangle_indices_vector(mesh_group.openDataSet("triangles"));
+        TriangleMesh mesh(vertices, triangles);
+        return std::make_unique<TriangleMesh>(mesh);
     }
     else if (mesh_type == "rotated_triangle") {
-        throw std::runtime_error(
-            "Rotated triangle mesh is not implemented yet");
+        vector<Vec2> vertices = read_vec2_vector(mesh_group.openDataSet("vertices"));
+        vector<TriangleIndices> triangles = read_triangle_indices_vector(mesh_group.openDataSet("triangles"));
+        RotatedTriangleMesh mesh(vertices, triangles);
+        return std::make_unique<RotatedTriangleMesh>(mesh);
     }
     else if (mesh_type == "non_uniform") {
         throw std::runtime_error("Non-uniform mesh is not implemented yet");
@@ -636,6 +697,12 @@ int main(int argc, char** argv)
                 dataset.write(estimate_vector.data(),
                               H5::PredType::NATIVE_DOUBLE);
 
+                // Add unit attribute to the dataset
+                std::string unit = getUnit(estimator->qoi);
+                H5::StrType strType(H5::PredType::C_S1, unit.size());
+                H5::Attribute unit_attr = dataset.createAttribute("unit", strType, H5::DataSpace());
+                unit_attr.write(strType, unit);
+
                 if(estimator->estimate_variance) {
                     H5::DataSpace dataspace_var(1, &dim);  // 1D array
                     H5::DataSet variance_dataset = tl_group.createDataSet(
@@ -667,6 +734,12 @@ int main(int argc, char** argv)
 
                 dataset.write(estimate_vector.data(),
                               H5::PredType::NATIVE_DOUBLE);
+
+                // Add unit attribute to the dataset
+                std::string unit = getUnit(estimator->qoi);
+                H5::StrType strType(H5::PredType::C_S1, unit.size());
+                H5::Attribute unit_attr = dataset.createAttribute("unit", strType, H5::DataSpace());
+                unit_attr.write(strType, unit);
 
                 if(estimator->estimate_variance) {
                     H5::DataSpace dataspace_var(1, &dim);  // 1D array
