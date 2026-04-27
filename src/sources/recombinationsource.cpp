@@ -1,4 +1,4 @@
-#include "neptune/physics/recombinationsource.hpp"
+#include "neptune/sources/recombinationsource.hpp"
 
 #include <iostream>
 

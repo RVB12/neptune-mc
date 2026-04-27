@@ -1,4 +1,4 @@
-#include "neptune/physics/pointsource.hpp"
+#include "neptune/sources/pointsource.hpp"
 
 #include <iostream>
 

@@ -1,4 +1,4 @@
-#include "neptune/physics/surfacesource.hpp"
+#include "neptune/sources/surfacesource.hpp"
 
 #include <iostream>
 

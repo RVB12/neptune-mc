@@ -1,4 +1,4 @@
-#include "neptune/physics/volumesource.hpp"
+#include "neptune/sources/volumesource.hpp"
 
 #include <iostream>
 

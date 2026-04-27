@@ -15,7 +15,7 @@
 #include "neptune/physics/collision_processes.hpp"
 #include "neptune/physics/particle.hpp"
 #include "neptune/physics/plasmabackground.hpp"
-#include "neptune/physics/source.hpp"
+#include "neptune/sources/source.hpp"
 #include "neptune/simulator/execution_statistics.hpp"
 #include "neptune/physics/background.hpp"
 #include "neptune/estimation/estimator.hpp"

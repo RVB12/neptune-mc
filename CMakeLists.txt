@@ -37,9 +37,6 @@ list(APPEND neptune_SOURCES
     src/geometry/rotatedtrianglemesh.cpp
     src/geometry/nonuniformmesh.cpp
     src/geometry/rotatednonuniformmesh.cpp
-    src/physics/pointsource.cpp
-    src/physics/surfacesource.cpp
-    src/physics/volumesource.cpp
     src/physics/update_particle.cpp
     src/common/json_conversions.cpp
     src/geometry/triangle.cpp
@@ -47,9 +44,12 @@ list(APPEND neptune_SOURCES
     src/estimation/estimators.cpp
     src/finitevolume/advectiondiffusionsolver.cpp
     src/simulator/simulate_arcmc.cpp
-    src/physics/wallreflectionsource.cpp
-    src/physics/recombinationsource.cpp
     src/estimation/estimator.cpp
+    src/sources/pointsource.cpp
+    src/sources/surfacesource.cpp
+    src/sources/volumesource.cpp
+    src/sources/wallreflectionsource.cpp
+    src/sources/recombinationsource.cpp
 )
 
 add_library(neptune ${neptune_SOURCES})

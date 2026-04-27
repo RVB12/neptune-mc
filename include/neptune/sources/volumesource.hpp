@@ -7,7 +7,7 @@
 #include "neptune/common/utils.hpp"
 #include "neptune/geometry/vec2.hpp"
 #include "neptune/physics/particle.hpp"
-#include "neptune/physics/source.hpp"
+#include "neptune/sources/source.hpp"
 
 namespace neptune {
 

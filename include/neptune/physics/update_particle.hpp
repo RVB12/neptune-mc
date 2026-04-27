@@ -6,7 +6,7 @@
 #include "neptune/common/utils.hpp"
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/geometry/vec2.hpp"
-#include "neptune/physics/event.hpp"
+#include "neptune/simulator/event.hpp"
 #include "neptune/physics/particle.hpp"
 #include "neptune/simulator/simulator.hpp"
 
