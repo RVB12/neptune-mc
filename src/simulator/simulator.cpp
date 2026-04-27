@@ -4,6 +4,7 @@
 
 #include "neptune/collisions/abstract_collisions.hpp"
 #include "neptune/estimation/estimator.hpp"
+#include "neptune/estimation/estimatorgroup.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
 #include "neptune/physics/update_particle.hpp"
 namespace neptune {

@@ -9,6 +9,7 @@
 #include "neptune/common/utils.hpp"
 #include "neptune/common/vector.hpp"
 #include "neptune/estimation/estimator.hpp"
+#include "neptune/estimation/estimatorgroup.hpp"
 #include "neptune/estimation/estimators.hpp"
 #include "neptune/geometry/cellcrossing.hpp"
 #include "neptune/geometry/mesh.hpp"

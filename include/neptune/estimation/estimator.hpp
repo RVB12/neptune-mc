@@ -4,78 +4,12 @@
 #include "neptune/collisions/abstract_collisions.hpp"
 #include "neptune/common/utils.hpp"
 #include "neptune/common/vector.hpp"
+#include "neptune/estimation/qoi.hpp"
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/physics/background.hpp"
 #include "neptune/physics/particle.hpp"
 
 namespace neptune {
-
-enum class QOI {
-    Density,
-    Velocity_x,
-    Velocity_y,
-    Velocity_z,
-    Energy,
-    Energy_x,
-    Energy_y,
-    Energy_z,
-};
-
-inline std::string getUnit(QOI qoi)
-{
-    switch (qoi) {
-        case QOI::Density:
-            return "m^-3";
-        case QOI::Velocity_x:
-        case QOI::Velocity_y:
-        case QOI::Velocity_z:
-            return "(m/s)m^-3";
-        case QOI::Energy:
-        case QOI::Energy_x:
-        case QOI::Energy_y:
-        case QOI::Energy_z:
-            return "(m/s)^2m^-3";
-        default:
-            throw std::runtime_error("Unknown QOI");
-    }
-}
-
-inline QOI stringtoQOI(std::string s)
-{
-    if (s == "density") return QOI::Density;
-    if (s == "velocity_x") return QOI::Velocity_x;
-    if (s == "velocity_y") return QOI::Velocity_y;
-    if (s == "velocity_z") return QOI::Velocity_z;
-    if (s == "energy") return QOI::Energy;
-    if (s == "energy_x") return QOI::Energy_x;
-    if (s == "energy_y") return QOI::Energy_y;
-    if (s == "energy_z") return QOI::Energy_z;
-    throw std::runtime_error("Unknown QOI: " + s);
-}
-
-inline std::string QOItostring(QOI qoi)
-{
-    switch (qoi) {
-        case QOI::Density:
-            return "density";
-        case QOI::Velocity_x:
-            return "velocity_x";
-        case QOI::Velocity_y:
-            return "velocity_y";
-        case QOI::Velocity_z:
-            return "velocity_z";
-        case QOI::Energy:
-            return "energy";
-        case QOI::Energy_x:
-            return "energy_x";
-        case QOI::Energy_y:
-            return "energy_y";
-        case QOI::Energy_z:
-            return "energy_z";
-        default:
-            throw std::runtime_error("Unknown QOI");
-    }
-}
 
 enum class EstimatorType { TrackLength, FinalTime };
 
@@ -197,52 +131,6 @@ class Estimator {
     vector<real_t> tally_variance;
     index_t n_samples = 0;
 };
-
-/**
- * A group of estimators for different quantities of interest (QOI) and/or
- * different types of estimators (e.g. track-length and final-time).
- *
- * We specifically use a class for this so that some computations can be shared
- * between the different estimators, e.g. the computation of the weight
- * reduction for ionisation.
- */
-class EstimatorGroup {
-   public:
-    EstimatorGroup(std::vector<std::tuple<Species, QOI, EstimatorType, bool>>
-                       estimators_definitions,
-                   index_t n_cells);
-
-    void tally_track_length(const Particle& p,
-                            const Particle& p_old,
-                            const Mesh& mesh,
-                            const Background& background,
-                            const vector<std::unique_ptr<IonisationCollision>>&
-                                ionisation_collisions);
-
-    void tally_final(const Particle& p, const Mesh& mesh);
-
-    // Combine the estimates of two estimator groups
-    void combine(const EstimatorGroup& other);
-
-    void finalize_batch();
-
-    void finalize();
-
-    // Make a new estimator group with the same estimators but all estimates
-    // reset to zero used for multi-threading
-    EstimatorGroup make_new();
-
-    std::vector<Estimator> estimators;
-
-    // An array of pointers to the track-length estimators, indexed by species,
-    // used to quickly find the relevant estimators for a given particle
-    std::vector<Estimator*> track_length_estimators_by_species[NUM_SPECIES];
-    std::vector<Estimator*> final_estimators_by_species[NUM_SPECIES];
-};
-
-#pragma omp declare reduction(                                            \
-        EstimatorGroupReduction:EstimatorGroup : omp_out.combine(omp_in)) \
-    initializer(omp_priv = omp_orig.make_new())
 
 }  // namespace neptune
 

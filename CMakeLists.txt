@@ -45,6 +45,7 @@ list(APPEND neptune_SOURCES
     src/finitevolume/advectiondiffusionsolver.cpp
     src/simulator/simulate_arcmc.cpp
     src/estimation/estimator.cpp
+    src/estimation/estimatorgroup.cpp
     src/sources/pointsource.cpp
     src/sources/surfacesource.cpp
     src/sources/volumesource.cpp
