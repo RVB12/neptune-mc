@@ -25,14 +25,7 @@ EventType update_particle(
 
     real_t collision_rate = 0;
     for (int i = 0; i < cx_collisions.size(); i++) {
-        real_t b_dens =
-            background.density(cx_collisions[i]->background_species(), cell_id);
-        Vec3 b_vel = background.velocity(cx_collisions[i]->background_species(),
-                                         cell_id);
-        real_t b_temp = background.temperature(
-            cx_collisions[i]->background_species(), cell_id);
-        collision_rate +=
-            cx_collisions[i]->collision_rate(b_dens, b_vel, b_temp, p);
+        collision_rate += cx_collisions[i]->collision_rate(p, background);
     }
     // time till collision
     real_t tc = p.u / collision_rate;
@@ -50,14 +43,9 @@ EventType update_particle(
             p.geometry.boundary_id = -1;
             p.t = t_final;
             for (int i = 0; i < ion_collisions.size(); i++) {
-                real_t b_dens = background.density(
-                    ion_collisions[i]->background_species(), cell_id);
-                Vec3 b_vel = background.velocity(
-                    ion_collisions[i]->background_species(), cell_id);
-                real_t b_temp = background.temperature(
-                    ion_collisions[i]->background_species(), cell_id);
-                real_t R_i =
-                    ion_collisions[i]->collision_rate(b_dens, b_vel, b_temp, p);
+                // TODO: only consider collisions for the current particle
+                // species
+                real_t R_i = ion_collisions[i]->collision_rate(p, background);
                 p.weight *= std::exp(-time_left * R_i);
             }
             return EventType::FINAL_TIME;
@@ -71,15 +59,8 @@ EventType update_particle(
         p.geometry.position += tc * p.geometry.velocity;
 
         if (cx_collisions.size() == 1) {
-            real_t b_dens = background.density(
-                cx_collisions[0]->background_species(), cell_id);
-            Vec3 b_vel = background.velocity(
-                cx_collisions[0]->background_species(), cell_id);
-            real_t b_temp = background.temperature(
-                cx_collisions[0]->background_species(), cell_id);
             Vec3 new_velocity_notransform =
-                cx_collisions[0]->sample_post_collision_velocity(b_dens, b_vel,
-                                                                 b_temp, p);
+                cx_collisions[0]->sample_post_collision_velocity(p, background);
             if (mesh.is_toroidal()) {
                 // If the mesh uses toroidal coordinates, we need to
                 // transform the velocity
@@ -92,37 +73,52 @@ EventType update_particle(
             p.u = r_exp(p.rng);
         }
         else {
-            // A collision has occurred, but we don't know which one
-            // draw a new random number to determine that
-            real_t eps = r_unif(p.rng);
-            real_t cumulative_rate = 0;
-            for (int i = 0; i < cx_collisions.size(); i++) {
-                real_t b_dens = background.density(
-                    cx_collisions[i]->background_species(), cell_id);
-                Vec3 b_vel = background.velocity(
-                    cx_collisions[i]->background_species(), cell_id);
-                real_t b_temp = background.temperature(
-                    cx_collisions[i]->background_species(), cell_id);
-                cumulative_rate +=
-                    cx_collisions[i]->collision_rate(b_dens, b_vel, b_temp, p);
-                if (eps <= cumulative_rate / collision_rate) {
-                    // We have a collision with the background
-                    // Generate new velocity from plasma background (BGK
-                    // operator)
-                    Vec3 new_velocity_notransform =
-                        cx_collisions[i]->sample_post_collision_velocity(
-                            b_dens, b_vel, b_temp, p);
-                    if (mesh.is_toroidal()) {
-                        // If the mesh uses toroidal coordinates, we need to
-                        // transform the velocity
-                        new_velocity_notransform = transform_tor_dir_to_cart(
-                            p.geometry.position, new_velocity_notransform);
+            if (cx_collisions.size() == 1) {
+                // Only one collision type, we can directly sample the
+                // post-collision velocity
+                Vec3 new_velocity_notransform =
+                    cx_collisions[0]->sample_post_collision_velocity(
+                        p, background);
+                if (mesh.is_toroidal()) {
+                    // If the mesh uses toroidal coordinates, we need to
+                    // transform the velocity
+                    new_velocity_notransform = transform_tor_dir_to_cart(
+                        p.geometry.position, new_velocity_notransform);
+                }
+                else {
+                    p.geometry.velocity = new_velocity_notransform;
+                }
+                p.u = r_exp(p.rng);
+            }
+            else {
+                // A collision has occurred, but we don't know which one
+                // draw a new random number to determine that
+                real_t eps = r_unif(p.rng);
+                real_t cumulative_rate = 0;
+                for (int i = 0; i < cx_collisions.size(); i++) {
+                    cumulative_rate +=
+                        cx_collisions[i]->collision_rate(p, background);
+                    if (eps <= cumulative_rate / collision_rate) {
+                        // We have a collision with the background
+                        // Generate new velocity from plasma background (BGK
+                        // operator)
+                        Vec3 new_velocity_notransform =
+                            cx_collisions[i]->sample_post_collision_velocity(
+                                p, background);
+                        if (mesh.is_toroidal()) {
+                            // If the mesh uses toroidal coordinates, we need to
+                            // transform the velocity
+                            new_velocity_notransform =
+                                transform_tor_dir_to_cart(
+                                    p.geometry.position,
+                                    new_velocity_notransform);
+                        }
+                        else {
+                            p.geometry.velocity = new_velocity_notransform;
+                        }
+                        p.u = r_exp(p.rng);
+                        break;
                     }
-                    else {
-                        p.geometry.velocity = new_velocity_notransform;
-                    }
-                    p.u = r_exp(p.rng);
-                    break;
                 }
             }
         }
@@ -159,14 +155,8 @@ EventType update_particle(
 
     // Ionisation
     for (int i = 0; i < ion_collisions.size(); i++) {
-        real_t b_dens = background.density(
-            ion_collisions[i]->background_species(), cell_id);
-        Vec3 b_vel = background.velocity(
-            ion_collisions[i]->background_species(), cell_id);
-        real_t b_temp = background.temperature(
-            ion_collisions[i]->background_species(), cell_id);
-        p.weight *= std::exp(
-            -dt * ion_collisions[i]->collision_rate(b_dens, b_vel, b_temp, p));
+        p.weight *=
+            std::exp(-dt * ion_collisions[i]->collision_rate(p, background));
     }
     p.t += dt;
 

@@ -122,48 +122,48 @@ struct adl_serializer<neptune::PlasmaBackground> {
     }
 };
 
-template <>
-struct adl_serializer<neptune::PointSource> {
-    static neptune::PointSource from_json(const json& j)
-    {
-        neptune::index_t num_particles = j.at("n_particles");
-        neptune::real_t intensity = j.at("intensity");
-        neptune::Vec3 pos = j.at("pos");
-        neptune::Vec3 vel_mean = j.at("vel_mean");
-        neptune::real_t vel_stddev = j.at("vel_stddev");
+// template <>
+// struct adl_serializer<neptune::PointSource> {
+//     static neptune::PointSource from_json(const json& j)
+//     {
+//         neptune::index_t num_particles = j.at("n_particles");
+//         neptune::real_t intensity = j.at("intensity");
+//         neptune::Vec3 pos = j.at("pos");
+//         neptune::Vec3 vel_mean = j.at("vel_mean");
+//         neptune::real_t vel_stddev = j.at("vel_stddev");
 
-        neptune::PointSource s(num_particles, intensity, pos, vel_mean,
-                               vel_stddev);
+//         neptune::PointSource s(num_particles, intensity, pos, vel_mean,
+//                                vel_stddev);
 
-        return s;
-    }
+//         return s;
+//     }
 
-    static void to_json(json& j, neptune::PointSource t)
-    {
-        j = json{{"type", "point"},
-                 {"pos", t.pos},
-                 {"vel_mean", t.vel_mean},
-                 {"vel_stddev", t.vel_stddev},
-                 {"n_particles", t.num_particles()},
-                 {"intensity", t.intensity}};
-    }
-};
+//     static void to_json(json& j, neptune::PointSource t)
+//     {
+//         j = json{{"type", "point"},
+//                  {"pos", t.pos},
+//                  {"vel_mean", t.vel_mean},
+//                  {"vel_stddev", t.vel_stddev},
+//                  {"n_particles", t.num_particles()},
+//                  {"intensity", t.intensity}};
+//     }
+// };
 
-template <>
-struct adl_serializer<neptune::SurfaceSource> {
-    static neptune::SurfaceSource from_json(const json& j)
-    {
-        neptune::index_t num_particles = j.at("n_particles");
-        neptune::real_t intensity = j.at("intensity");
-        neptune::real_t vel_magnitude = j.at("vel_magnitude");
-        neptune::index_t cell_idx = j.at("cell_idx");
-        neptune::index_t surface_id = j.at("surface_id");
+// template <>
+// struct adl_serializer<neptune::SurfaceSource> {
+//     static neptune::SurfaceSource from_json(const json& j)
+//     {
+//         neptune::index_t num_particles = j.at("n_particles");
+//         neptune::real_t intensity = j.at("intensity");
+//         neptune::real_t vel_magnitude = j.at("vel_magnitude");
+//         neptune::index_t cell_idx = j.at("cell_idx");
+//         neptune::index_t surface_id = j.at("surface_id");
 
-        neptune::SurfaceSource s(num_particles, intensity, cell_idx, surface_id,
-                                 vel_magnitude);
-        return s;
-    }
-};
+//         neptune::SurfaceSource s(num_particles, intensity, cell_idx, surface_id,
+//                                  vel_magnitude);
+//         return s;
+//     }
+// };
 
 // template <>
 // struct adl_serializer<neptune::VolumeSource> {

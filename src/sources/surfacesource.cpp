@@ -11,7 +11,7 @@ Particle SurfaceSource::generate_particle(uint64_t particle_id,
                                           const Mesh& mesh,
                                           const Background& background)
 {
-    Particle p(particle_id, key);
+    Particle p(particle_id, key, species);
 
     p.geometry.cell_id = cell_idx;
     p.geometry.boundary_id = surface_id;

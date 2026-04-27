@@ -24,15 +24,22 @@ class Particle {
      *            if two particles have the same id, they will have the same rng
      * sequence, which will lead to incorrect results.
      */
-    // initialize rng with high and low bits of the id for the first two parts of the counter, and the key for the key
-    Particle(uint64_t id_, rng_key_t key) : id(id_), rng({{static_cast<rng_ctr_t::value_type>(id_ >> 32), static_cast<rng_ctr_t::value_type>(id_), 0, 0}}, key) {}
+    // initialize rng with high and low bits of the id for the first two parts
+    // of the counter, and the key for the key
+    Particle(uint64_t id_, rng_key_t key, Species species_)
+        : id(id_),
+          rng({{static_cast<rng_ctr_t::value_type>(id_ >> 32),
+                static_cast<rng_ctr_t::value_type>(id_), 0, 0}},
+              key),
+          species(species_)
+    {}
 
     // Member variables
     ParticleGeometry geometry;
     uint64_t id = 0;               // (unique) id of the particle
     real_t t = 0;                  // Time since start of simulation
     real_t weight = 1.0;           // Weight (used for continuous ionisation)
-    Species species = Species::D;  // Species of the particle (default to D)
+    Species species;  // Species of the particle
     real_t intensity = 1.0;  // How many particles this particle represents
     rng_t rng;               // Random number generator
     real_t u = 0;  // Scaled time till next background collision, this is

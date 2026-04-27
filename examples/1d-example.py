@@ -19,8 +19,6 @@
 #
 # In this test case, we implement the third test case from the paper "Hilbert expansion based fluid models for kinetic equations describing
 # neutral particles in the plasma edge of a fusion device" V. Maes et al.
-#
-# We note that in that test case, hydrogen atoms are simulated, whereas we simulate deuterium in this test case.
 
 # %%
 import numpy as np
@@ -36,7 +34,7 @@ import os
 # Physics constants
 e = 1.602176634 * 1e-19 # Elementary charge
 Da_to_kg = 1.66053906892 * 1e-27 # Dalton (unified atomic mass unit) to kg
-m = 2.007825031898 * Da_to_kg # Mass of deuterium in kg
+m = 1.00784 * Da_to_kg # Mass of hydrogen atom in kg
 eV_to_J = 1.602176634 * 1e-19 # Electronvolt to Joules
 # Problem parameters
 nx = 200
@@ -66,7 +64,7 @@ n_batches = 1
 with h5py.File(os.path.join("input.h5"), "w") as f:
     # Background
     background = f.create_group("background")
-    Dplus = background.create_group("D+")
+    Dplus = background.create_group("H+")
     Dplus["density"] = ni
     Dplus["density"].attrs["unit"] = "m^-3"
     Dplus["velocity_x"] = mean_vel
@@ -92,13 +90,13 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     # Collisions
     collisions = f.create_group("collisions")
     coll0 = collisions.create_group("0")
-    coll0["background_species"] = "D+"
-    coll0["particle_species"] = "D"
+    coll0["background_species"] = "H+"
+    coll0["particle_species"] = "H"
     coll0["type"] = "charge_exchange"
     coll0["model"] = "simple"
     coll1 = collisions.create_group("1")
-    coll1["background_species"] = "D+"
-    coll1["particle_species"] = "D"
+    coll1["background_species"] = "H+"
+    coll1["particle_species"] = "H"
     coll1["type"] = "ionisation"
     coll1["model"] = "simple"
     # Sources
@@ -108,12 +106,12 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     # Some volume recombination sources
     source = sources.create_group("R_vol")
     source["type"] = "recombination"
-    source["background_species"] = "D+"
-    source["particle_species"] = "D"
+    source["background_species"] = "H+"
+    source["particle_species"] = "H"
     source["cell_indices"] = np.arange(n_cells, dtype=np.int64)
     source2 = sources.create_group("R_puff")
     source2["type"] = "volume"
-    source2["species"] = "D"
+    source2["species"] = "H"
     source2["cell_indices"] = np.arange(n_cells, dtype=np.int64)
     source2["intensities"] = gas_puff_dens * vol
     source2["intensities"].attrs["unit"] = "particles/s"
@@ -128,17 +126,17 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     # Estimators
     estimators = f.create_group("estimators")
     density_estimator = estimators.create_group("density")
-    density_estimator["species"] = "D"
+    density_estimator["species"] = "H"
     density_estimator["qoi"] = "density"
     density_estimator["estimator_type"] = "track_length"
     density_estimator["estimate_variance"] = 1 if estimate_variance else 0
     velocity_estimator = estimators.create_group("velocity")
-    velocity_estimator["species"] = "D"
+    velocity_estimator["species"] = "H"
     velocity_estimator["qoi"] = "velocity_x"
     velocity_estimator["estimator_type"] = "track_length"
     velocity_estimator["estimate_variance"] = 1 if estimate_variance else 0
     energy_estimator = estimators.create_group("energy")
-    energy_estimator["species"] = "D"
+    energy_estimator["species"] = "H"
     energy_estimator["qoi"] = "energy_x"
     energy_estimator["estimator_type"] = "track_length"
     energy_estimator["estimate_variance"] = 1 if estimate_variance else 0
@@ -151,6 +149,7 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     params = f.create_group("params")
     params["max_steps"] = 1000000
     params["n_batches"] = n_batches
+    params["seed"] = 1302
 
 # %%
 # Run the simulation
@@ -164,30 +163,30 @@ print(f"Simulation completed in {end_time - start_time:.2f} seconds")
 # Open the output file
 with h5py.File("output.h5", "r") as output_file:
     # Plot the QOIs
-    D_density = output_file["D"]["track_length"]["density"][:]
-    density_unit = output_file["D"]["track_length"]["density"].attrs["unit"]
+    H_density = output_file["H"]["track_length"]["density"][:]
+    density_unit = output_file["H"]["track_length"]["density"].attrs["unit"]
     density_unit = density_unit.decode("utf-8") if isinstance(density_unit, bytes) else density_unit
-    D_velocity_x = output_file["D"]["track_length"]["velocity_x"][:]
-    velocity_unit = output_file["D"]["track_length"]["velocity_x"].attrs["unit"]
+    H_velocity_x = output_file["H"]["track_length"]["velocity_x"][:]
+    velocity_unit = output_file["H"]["track_length"]["velocity_x"].attrs["unit"]
     velocity_unit = velocity_unit.decode("utf-8") if isinstance(velocity_unit, bytes) else velocity_unit
-    D_energy_x = output_file["D"]["track_length"]["energy_x"][:]
-    energy_unit = output_file["D"]["track_length"]["energy_x"].attrs["unit"]
+    H_energy_x = output_file["H"]["track_length"]["energy_x"][:]
+    energy_unit = output_file["H"]["track_length"]["energy_x"].attrs["unit"]
     energy_unit = energy_unit.decode("utf-8") if isinstance(energy_unit, bytes) else energy_unit
     plt.figure(figsize=(12, 5))
     plt.subplot(1,3,1)
-    plt.plot(xc, D_density, label="D")
+    plt.plot(xc, H_density, label="H")
     plt.xlabel("x (m)")
     plt.ylabel("Density" + f" ({density_unit})")
     plt.title("Density")
     plt.grid()
     plt.subplot(1,3,2)
-    plt.plot(xc, D_velocity_x, label="D")
+    plt.plot(xc, H_velocity_x, label="H")
     plt.xlabel("x (m)")
     plt.ylabel("Velocity" + f" ({velocity_unit})")
     plt.title("Velocity density")
     plt.grid()
     plt.subplot(1,3,3)
-    plt.plot(xc, D_energy_x, label="D")
+    plt.plot(xc, H_energy_x, label="H")
     plt.xlabel("x (m)")
     plt.ylabel("Energy" + f" ({energy_unit})")
     plt.title("Energy density")
@@ -196,10 +195,10 @@ with h5py.File("output.h5", "r") as output_file:
 
     # Also calculate the temperature in eV to show that the neutral temperature
     # is close to the ion temperature
-    D_temperature = (D_energy_x/D_density * 2.0 - (D_velocity_x/D_density )**2) * m / e
+    H_temperature = (H_energy_x/H_density * 2.0 - (H_velocity_x/H_density )**2) * m / e
     plt.figure()
-    plt.plot(xc, D_temperature, label="D")
-    plt.plot(xc, ti, label="D+")
+    plt.plot(xc, H_temperature, label="H")
+    plt.plot(xc, ti, label="H+")
     plt.xlabel("x (m)")
     plt.ylabel("Temperature (eV)")
     plt.title("Temperature")

@@ -232,21 +232,19 @@ void from_json(const nlohmann::json& j, std::unique_ptr<Source>& s)
     //     VolumeSource vs = j;
     //     s = std::make_unique<VolumeSource>(vs);
     // }
-    if (type == "point") {
-        PointSource ps = j;
-        s = std::make_unique<PointSource>(ps);
-    }
-    else if (type == "surface") {
-        SurfaceSource ss = j;
-        s = std::make_unique<SurfaceSource>(ss);
-    }
+    // if (type == "point") {
+    //     PointSource ps = j;
+    //     s = std::make_unique<PointSource>(ps);
+    // }
+    // else if (type == "surface") {
+    //     SurfaceSource ss = j;
+    //     s = std::make_unique<SurfaceSource>(ss);
+    // }
     // else if (type == "wall_reflection") {
     //     WallReflectionSource wrs = j;
     //     s = std::make_unique<WallReflectionSource>(wrs);
     // }
-    else {
-        throw std::runtime_error("Unknown source type");
-    }
+    throw std::runtime_error("Unknown source type");
 }
 
 void to_json(nlohmann::json& j, const VoxelMesh& m)

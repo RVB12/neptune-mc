@@ -22,11 +22,13 @@ class PointSource : public Source {
    public:
     PointSource(index_t num_particles_,
                 real_t intensity_,
+                Species species_,
                 Vec3 pos_,
                 Vec3 vel_mean_,
                 real_t vel_stddev_)
         : Source(num_particles_),
           intensity(intensity_),
+          species(species_),
           pos(pos_),
           vel_mean(vel_mean_),
           vel_stddev(vel_stddev_)
@@ -40,6 +42,7 @@ class PointSource : public Source {
                                const Mesh& mesh,
                                const Background& background);
 
+    Species species; // Species of the generated particles
     Vec3 pos;           // Initial position of the particles
     Vec3 vel_mean;      // Mean velocity of the particles
     real_t vel_stddev;  // Standard deviation of the velocity of the particles

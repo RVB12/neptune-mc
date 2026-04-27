@@ -11,7 +11,7 @@ Particle PointSource::generate_particle(uint64_t particle_id,
                                         const Mesh& mesh,
                                         const Background& background)
 {
-    Particle p(particle_id, key);
+    Particle p(particle_id, key, species);
 
     if (cell_idx == -1) {
         cell_idx =

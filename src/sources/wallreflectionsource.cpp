@@ -14,6 +14,8 @@ WallReflectionSource::WallReflectionSource(index_t num_particles_,
                                            real_t franck_condon_temp_,
                                            real_t Rt_,
                                            real_t Rr_,
+                                           Species background_species,
+                                           Species particle_species,
                                            const Mesh& mesh,
                                            const Background& background)
     : Source(num_particles_),
@@ -22,19 +24,21 @@ WallReflectionSource::WallReflectionSource(index_t num_particles_,
       sheath_potential(sheath_potential_),
       franck_condon_temp(franck_condon_temp_),
       Rt(Rt_),
-      Rr(Rr_)
+      Rr(Rr_),
+      background_species(background_species),
+      particle_species(particle_species)
 {
     // Do some calculations to determine the intensity
     Vec3 normal = mesh.get_surface_normal(cell_idx, surface_id, Vec3(1, 0, 0));
-    Vec3 boundary_drift_3d = background.velocity(Species::Dplus, cell_idx);
+    Vec3 boundary_drift_3d = background.velocity(background_species, cell_idx);
     real_t boundary_drift = dot(boundary_drift_3d, normal);
 
-    real_t ion_temp = background.temperature(Species::Dplus, cell_idx);
+    real_t ion_temp = background.temperature(background_species, cell_idx);
     real_t boundary_bgk_stddev =
         std::sqrt(ion_temp / constants::m_p *
-                  SPECIES_MASS[static_cast<int>(Species::Dplus)]);
+                  SPECIES_MASS[static_cast<int>(background_species)]);
 
-    real_t ion_density = background.density(Species::Dplus, cell_idx);
+    real_t ion_density = background.density(background_species, cell_idx);
 
     real_t flux = boundary_bgk_stddev / std::sqrt(2 * M_PI) *
                       std::exp(-0.5 * (boundary_drift / boundary_bgk_stddev) *
@@ -54,7 +58,7 @@ Particle WallReflectionSource::generate_particle(uint64_t particle_id,
                                                  const Mesh& mesh,
                                                  const Background& background)
 {
-    Particle p(particle_id, key);
+    Particle p(particle_id, key, particle_species);
 
     p.geometry.cell_id = cell_idx;
     p.geometry.boundary_id = surface_id;
@@ -78,13 +82,13 @@ Particle WallReflectionSource::generate_particle(uint64_t particle_id,
     // so this next line is not needed
     // tangent2 /= tangent2.norm();
 
-    Vec3 boundary_drift_3d = background.velocity(Species::Dplus, cell_idx);
+    Vec3 boundary_drift_3d = background.velocity(background_species, cell_idx);
     real_t boundary_drift = dot(boundary_drift_3d, normal);
 
-    real_t ion_temp = background.temperature(Species::Dplus, cell_idx);
+    real_t ion_temp = background.temperature(background_species, cell_idx);
     real_t boundary_bgk_stddev =
         std::sqrt(ion_temp / constants::m_p *
-                  SPECIES_MASS[static_cast<int>(Species::Dplus)]);
+                  SPECIES_MASS[static_cast<int>(background_species)]);
 
     p.intensity = intensity() / num_particles();
 

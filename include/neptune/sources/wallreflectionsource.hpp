@@ -41,6 +41,8 @@ class WallReflectionSource : public Source {
                          real_t franck_condon_temp_,
                          real_t Rt_,
                          real_t Rr_,
+                         Species background_species,
+                         Species particle_species,
                          const Mesh& mesh,
                          const Background& background);
 
@@ -54,6 +56,8 @@ class WallReflectionSource : public Source {
 
     index_t cell_idx = 0;    // The cell index where the particles are generated
     index_t surface_id = 0;  // The surface id where the particles are generated
+    Species background_species;  // Species of the background particles that hit the wall
+    Species particle_species; // Species of the generated particles
     real_t sheath_potential = 3.1;
     real_t franck_condon_temp =
         2.0;    // temperature of dissociated molecules in eV

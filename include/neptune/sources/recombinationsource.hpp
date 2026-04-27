@@ -24,6 +24,8 @@ class RecombinationSource : public Source {
    public:
     RecombinationSource(index_t num_particles,
                         index_t cell_idx_,
+                        Species background_species_,
+                        Species species_,
                         const Mesh& mesh,
                         const Background& background);
 
@@ -36,6 +38,8 @@ class RecombinationSource : public Source {
                                const Background& background);
 
     index_t cell_idx = 0;  // The cell index where the particles are generated
+    Species background_species; // Species of the background the recombines to form a neutral
+    Species species; // Species of the generated particle
 };
 
 }  // namespace neptune

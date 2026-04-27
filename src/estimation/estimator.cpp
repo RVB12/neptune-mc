@@ -97,8 +97,7 @@ void Estimator::tally(const Particle& p, real_t weight, bool is_toroidal)
                 Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
                                                      p.geometry.velocity);
                 tally_vector[p.geometry.cell_id] +=
-                    (0.5 * vel_tor.x * vel_tor.x) *
-                    weight;
+                    (0.5 * vel_tor.x * vel_tor.x) * weight;
             }
             else {
                 tally_vector[p.geometry.cell_id] +=
@@ -114,8 +113,7 @@ void Estimator::tally(const Particle& p, real_t weight, bool is_toroidal)
                 Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
                                                      p.geometry.velocity);
                 tally_vector[p.geometry.cell_id] +=
-                    (0.5 * vel_tor.y * vel_tor.y) *
-                    weight;
+                    (0.5 * vel_tor.y * vel_tor.y) * weight;
             }
             else {
                 tally_vector[p.geometry.cell_id] +=
@@ -173,15 +171,8 @@ void EstimatorGroup::tally_track_length(
     // Calculate the total ionisation rate for this particle
     real_t R_i = 0;
     for (size_t i = 0; i < ionisation_collisions.size(); ++i) {
-        real_t collision_rate = ionisation_collisions[i]->collision_rate(
-            background.density(ionisation_collisions[i]->background_species(),
-                               p_old.geometry.cell_id),
-            background.velocity(ionisation_collisions[i]->background_species(),
-                                p_old.geometry.cell_id),
-            background.temperature(
-                ionisation_collisions[i]->background_species(),
-                p_old.geometry.cell_id),
-            p_old);
+        real_t collision_rate =
+            ionisation_collisions[i]->collision_rate(p_old, background);
         R_i += collision_rate;
     }
 

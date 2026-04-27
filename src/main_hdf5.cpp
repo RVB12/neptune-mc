@@ -7,17 +7,17 @@
 #include "neptune/common/utils.hpp"
 #include "neptune/estimation/estimator.hpp"
 #include "neptune/geometry/mesh.hpp"
+#include "neptune/geometry/rotatedtrianglemesh.hpp"
+#include "neptune/geometry/trianglemesh.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
 #include "neptune/physics/background.hpp"
 #include "neptune/physics/boundarycondition.hpp"
+#include "neptune/physics/species.hpp"
+#include "neptune/simulator/simulator.hpp"
 #include "neptune/sources/recombinationsource.hpp"
 #include "neptune/sources/source.hpp"
-#include "neptune/physics/species.hpp"
 #include "neptune/sources/volumesource.hpp"
 #include "neptune/sources/wallreflectionsource.hpp"
-#include "neptune/simulator/simulator.hpp"
-#include "neptune/geometry/trianglemesh.hpp"
-#include "neptune/geometry/rotatedtrianglemesh.hpp"
 
 using namespace neptune;
 
@@ -104,7 +104,7 @@ vector<Vec2> read_vec2_vector(const H5::DataSet& dataset)
     }
     hsize_t dims[2];
     dataspace.getSimpleExtentDims(dims, nullptr);
-    if(dims[1] != 2) {
+    if (dims[1] != 2) {
         throw std::runtime_error("Dataset: " + get_dataset_path(dataset) +
                                  " does not have 2 columns");
     }
@@ -131,7 +131,7 @@ vector<TriangleIndices> read_triangle_indices_vector(const H5::DataSet& dataset)
     }
     hsize_t dims[2];
     dataspace.getSimpleExtentDims(dims, nullptr);
-    if(dims[1] != 3) {
+    if (dims[1] != 3) {
         throw std::runtime_error("Dataset: " + get_dataset_path(dataset) +
                                  " does not have 3 columns");
     }
@@ -139,7 +139,8 @@ vector<TriangleIndices> read_triangle_indices_vector(const H5::DataSet& dataset)
     vector<index_t> raw_data(dims[0] * dims[1]);
     dataset.read(raw_data.data(), H5::PredType::NATIVE_INT64);
     for (index_t i = 0; i < dims[0]; ++i) {
-        data[i] = TriangleIndices(raw_data[3 * i], raw_data[3 * i + 1], raw_data[3 * i + 2]);
+        data[i] = TriangleIndices(raw_data[3 * i], raw_data[3 * i + 1],
+                                  raw_data[3 * i + 2]);
     }
     return data;
 }
@@ -258,14 +259,18 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
         return std::make_unique<VoxelMesh>(mesh);
     }
     else if (mesh_type == "triangle") {
-        vector<Vec2> vertices = read_vec2_vector(mesh_group.openDataSet("vertices"));
-        vector<TriangleIndices> triangles = read_triangle_indices_vector(mesh_group.openDataSet("triangles"));
+        vector<Vec2> vertices =
+            read_vec2_vector(mesh_group.openDataSet("vertices"));
+        vector<TriangleIndices> triangles =
+            read_triangle_indices_vector(mesh_group.openDataSet("triangles"));
         TriangleMesh mesh(vertices, triangles);
         return std::make_unique<TriangleMesh>(mesh);
     }
     else if (mesh_type == "rotated_triangle") {
-        vector<Vec2> vertices = read_vec2_vector(mesh_group.openDataSet("vertices"));
-        vector<TriangleIndices> triangles = read_triangle_indices_vector(mesh_group.openDataSet("triangles"));
+        vector<Vec2> vertices =
+            read_vec2_vector(mesh_group.openDataSet("vertices"));
+        vector<TriangleIndices> triangles =
+            read_triangle_indices_vector(mesh_group.openDataSet("triangles"));
         RotatedTriangleMesh mesh(vertices, triangles);
         return std::make_unique<RotatedTriangleMesh>(mesh);
     }
@@ -302,19 +307,9 @@ vector<std::unique_ptr<Collision>> read_collisions(
                     collision_group.openDataSet("background_species"));
                 Species particle_species = read_species(
                     collision_group.openDataSet("particle_species"));
-                if (background_species == Species::Dplus &&
-                    particle_species == Species::D) {
-                    collisions.push_back(
-                        std::make_unique<SimpleChargeExchangeCollision_D>());
-                }
-                else {
-                    throw std::runtime_error(
-                        "Unsupported species combination for simple charge "
-                        "exchange collision: background species " +
-                        speciestostring(background_species) +
-                        ", particle species " +
-                        speciestostring(particle_species));
-                }
+                collisions.push_back(
+                    std::make_unique<SimpleChargeExchangeCollision>(
+                        background_species, particle_species));
             }
             else {
                 throw std::runtime_error(
@@ -331,19 +326,9 @@ vector<std::unique_ptr<Collision>> read_collisions(
                     collision_group.openDataSet("background_species"));
                 Species particle_species = read_species(
                     collision_group.openDataSet("particle_species"));
-                if (background_species == Species::Dplus &&
-                    particle_species == Species::D) {
-                    collisions.push_back(
-                        std::make_unique<SimpleIonisationCollision_D>());
-                }
-                else {
-                    throw std::runtime_error(
-                        "Unsupported species combination for simple ionisation "
-                        "collision: background species " +
-                        speciestostring(background_species) +
-                        ", particle species " +
-                        speciestostring(particle_species));
-                }
+                collisions.push_back(
+                    std::make_unique<SimpleIonisationCollision>(
+                        background_species, particle_species));
             }
             else {
                 throw std::runtime_error(
@@ -383,21 +368,12 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
                 read_species(source_group.openDataSet("background_species"));
             Species particle_species =
                 read_species(source_group.openDataSet("particle_species"));
-            if (background_species == Species::Dplus &&
-                particle_species == Species::D) {
-                vector<index_t> cell_indices =
-                    read_index_vector(source_group.openDataSet("cell_indices"));
-                for (index_t cell_index : cell_indices) {
-                    sources.push_back(std::make_unique<RecombinationSource>(
-                        0, cell_index, mesh, background));
-                }
-            }
-            else {
-                throw std::runtime_error(
-                    "Unsupported species combination for recombination source: "
-                    "background species " +
-                    speciestostring(background_species) +
-                    ", particle species " + speciestostring(particle_species));
+            vector<index_t> cell_indices =
+                read_index_vector(source_group.openDataSet("cell_indices"));
+            for (index_t cell_index : cell_indices) {
+                sources.push_back(std::make_unique<RecombinationSource>(
+                    0, cell_index, background_species, particle_species, mesh,
+                    background));
             }
         }
         else if (source_type == "wall_recycling") {
@@ -416,22 +392,13 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
                 read_species(source_group.openDataSet("background_species"));
             Species particle_species =
                 read_species(source_group.openDataSet("particle_species"));
-            if (background_species == Species::Dplus &&
-                particle_species == Species::D) {
-                for (size_t j = 0; j < cell_indices.size(); j++) {
-                    index_t cell_index = cell_indices[j];
-                    index_t surface_index = surface_indices[j];
-                    sources.push_back(std::make_unique<WallReflectionSource>(
-                        0, cell_index, surface_index, sheath_potential,
-                        franck_condon_temp, Rt, Rr, mesh, background));
-                }
-            }
-            else {
-                throw std::runtime_error(
-                    "Unsupported species combination for wall recycling "
-                    "source: background species " +
-                    speciestostring(background_species) +
-                    ", particle species " + speciestostring(particle_species));
+            for (size_t j = 0; j < cell_indices.size(); j++) {
+                index_t cell_index = cell_indices[j];
+                index_t surface_index = surface_indices[j];
+                sources.push_back(std::make_unique<WallReflectionSource>(
+                    0, cell_index, surface_index, sheath_potential,
+                    franck_condon_temp, Rt, Rr, background_species,
+                    particle_species, mesh, background));
             }
         }
         else if (source_type == "volume") {
@@ -489,7 +456,8 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
 EstimatorGroup read_estimators(const H5::Group& estimators_group,
                                index_t n_cells)
 {
-    std::vector<std::tuple<Species, QOI, EstimatorType, bool>> estimators_definitions;
+    std::vector<std::tuple<Species, QOI, EstimatorType, bool>>
+        estimators_definitions;
 
     // Go over all the subgroups of the estimators group, each subgroup
     // corresponds to an estimator
@@ -504,11 +472,14 @@ EstimatorGroup read_estimators(const H5::Group& estimators_group,
         EstimatorType estimator_type = stringtoEstimatorType(
             read_string(estimator_group.openDataSet("estimator_type")));
         bool estimate_variance = false;
-        if(H5Lexists(estimator_group.getId(), "estimate_variance", H5P_DEFAULT)) {
-            bool estimate_variance = read_bool(estimator_group.openDataSet("estimate_variance"));
+        if (H5Lexists(estimator_group.getId(), "estimate_variance",
+                      H5P_DEFAULT)) {
+            bool estimate_variance =
+                read_bool(estimator_group.openDataSet("estimate_variance"));
         }
 
-        estimators_definitions.emplace_back(species, qoi, estimator_type, estimate_variance);
+        estimators_definitions.emplace_back(species, qoi, estimator_type,
+                                            estimate_variance);
     }
 
     return EstimatorGroup(estimators_definitions, n_cells);
@@ -700,15 +671,16 @@ int main(int argc, char** argv)
                 // Add unit attribute to the dataset
                 std::string unit = getUnit(estimator->qoi);
                 H5::StrType strType(H5::PredType::C_S1, unit.size());
-                H5::Attribute unit_attr = dataset.createAttribute("unit", strType, H5::DataSpace());
+                H5::Attribute unit_attr =
+                    dataset.createAttribute("unit", strType, H5::DataSpace());
                 unit_attr.write(strType, unit);
 
-                if(estimator->estimate_variance) {
+                if (estimator->estimate_variance) {
                     H5::DataSpace dataspace_var(1, &dim);  // 1D array
                     H5::DataSet variance_dataset = tl_group.createDataSet(
                         dataset_name + "_variance", H5::PredType::NATIVE_DOUBLE,
                         dataspace_var);
-                    
+
                     vector<real_t> variance_vector = estimator->get_variance();
 
                     variance_dataset.write(variance_vector.data(),
@@ -738,15 +710,16 @@ int main(int argc, char** argv)
                 // Add unit attribute to the dataset
                 std::string unit = getUnit(estimator->qoi);
                 H5::StrType strType(H5::PredType::C_S1, unit.size());
-                H5::Attribute unit_attr = dataset.createAttribute("unit", strType, H5::DataSpace());
+                H5::Attribute unit_attr =
+                    dataset.createAttribute("unit", strType, H5::DataSpace());
                 unit_attr.write(strType, unit);
 
-                if(estimator->estimate_variance) {
+                if (estimator->estimate_variance) {
                     H5::DataSpace dataspace_var(1, &dim);  // 1D array
                     H5::DataSet variance_dataset = final_group.createDataSet(
                         dataset_name + "_variance", H5::PredType::NATIVE_DOUBLE,
                         dataspace_var);
-                    
+
                     vector<real_t> variance_vector = estimator->get_variance();
 
                     variance_dataset.write(variance_vector.data(),

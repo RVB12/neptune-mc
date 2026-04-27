@@ -18,35 +18,32 @@
 
 namespace neptune {
 
-class SimpleChargeExchangeCollision_D : public ChargeExchangeCollision {
+class SimpleChargeExchangeCollision : public ChargeExchangeCollision {
    public:
-    SimpleChargeExchangeCollision_D() = default;
+    SimpleChargeExchangeCollision(Species background_species,
+                                  Species particle_species)
+        : background_species_(background_species),
+          particle_species_(particle_species)
+    {}
 
-    Species background_species() const override
-    {
-        return Species::Dplus;
-    }
+    Species background_species() const override { return background_species_; }
 
-    Species particle_species() const override
-    {
-        return Species::D;
-    }
+    Species particle_species() const override { return particle_species_; }
 
-    real_t collision_rate(real_t b_dens,
-                          Vec3 b_vel,
-                          real_t b_temp,
-                          const Particle& p) const override
+    real_t collision_rate(const Particle& p, const Background& b) const override
     {
+        real_t b_dens = b.density(background_species(), p.geometry.cell_id);
+        real_t b_temp = b.temperature(background_species(), p.geometry.cell_id);
         return b_dens * 3.2e-15 * std::sqrt(b_temp / 0.026);
     }
 
-    Vec3 sample_post_collision_velocity(real_t b_dens,
-                                        Vec3 b_vel,
-                                        real_t b_temp,
-                                        Particle& p) const override
+    Vec3 sample_post_collision_velocity(Particle& p,
+                                        const Background& b) const override
     {
-        real_t vel_stddev =
-            std::sqrt(this->post_collision_velocity_var(b_dens, b_vel, b_temp, p));
+        real_t vel_stddev = std::sqrt(this->post_collision_velocity_var(p, b));
+
+        Vec3 b_vel = b.velocity(background_species(), p.geometry.cell_id);
+
         std::normal_distribution<real_t> dist_x(b_vel.x, vel_stddev);
         std::normal_distribution<real_t> dist_y(b_vel.y, vel_stddev);
         std::normal_distribution<real_t> dist_z(b_vel.z, vel_stddev);
@@ -54,47 +51,49 @@ class SimpleChargeExchangeCollision_D : public ChargeExchangeCollision {
         return Vec3(dist_x(p.rng), dist_y(p.rng), dist_z(p.rng));
     }
 
-    Vec3 post_collision_velocity_mean(real_t b_dens,
-                                      Vec3 b_vel,
-                                      real_t b_temp,
-                                      const Particle& p) const override
+    Vec3 post_collision_velocity_mean(const Particle& p,
+                                      const Background& b) const override
     {
-        return b_vel;
+        return b.velocity(background_species(), p.geometry.cell_id);
     }
 
-    real_t post_collision_velocity_var(real_t b_dens,
-                                       Vec3 b_vel,
-                                       real_t b_temp,
-                                       const Particle& p) const override
+    real_t post_collision_velocity_var(const Particle& p,
+                                       const Background& b) const override
     {
+        real_t b_temp = b.temperature(background_species(), p.geometry.cell_id);
         return b_temp * constants::eV_to_Joules /
                (constants::m_p *
-                SPECIES_MASS[static_cast<index_t>(Species::Dplus)]);
+                SPECIES_MASS[static_cast<index_t>(background_species_)]);
     }
+
+   private:
+    Species background_species_;
+    Species particle_species_;
 };
 
-
-class SimpleIonisationCollision_D : public IonisationCollision {
+class SimpleIonisationCollision : public IonisationCollision {
    public:
-    SimpleIonisationCollision_D() = default;
+    SimpleIonisationCollision(Species background_species,
+                              Species particle_species)
+        : background_species_(background_species),
+          particle_species_(particle_species)
+    {}
 
-    Species background_species() const override
+    Species background_species() const override { return background_species_; }
+
+    Species particle_species() const override { return particle_species_; }
+
+    real_t collision_rate(const Particle& p, const Background& b) const override
     {
-        return Species::Dplus;
+        real_t b_dens = b.density(background_species(), p.geometry.cell_id);
+        real_t b_temp = b.temperature(background_species(), p.geometry.cell_id);
+        return b_dens * 2.0e-13 / (6 + b_temp / 13.6) *
+               std::sqrt(b_temp / 13.6) * std::exp(-13.6 / b_temp);
     }
 
-    Species particle_species() const override
-    {
-        return Species::D;
-    }
-
-    real_t collision_rate(real_t b_dens,
-                          Vec3 b_vel,
-                          real_t b_temp,
-                          const Particle& p) const override
-    {
-        return b_dens * 2.0e-13/(6 + b_temp/13.6) * std::sqrt(b_temp / 13.6) * std::exp(-13.6/b_temp);
-    }
+   private:
+    Species background_species_;
+    Species particle_species_;
 };
 
 }  // namespace neptune
