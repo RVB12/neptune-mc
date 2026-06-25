@@ -7,7 +7,7 @@
 
 namespace neptune {
 
-const index_t NUM_SPECIES = 3;
+const index_t NUM_SPECIES = 4;
 
 enum class Species {
     H = 0,

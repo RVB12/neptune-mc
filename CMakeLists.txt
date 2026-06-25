@@ -29,6 +29,7 @@ set(NEPTUNE_VERSION "${PROJECT_VERSION}-${GIT_COMMIT_HASH}")
 # Main library
 #
 list(APPEND neptune_SOURCES
+    src/neptune/boundaryconditions/trim.cpp
     src/neptune/geometry/vec2.cpp
     src/neptune/geometry/vec3.cpp
     src/neptune/geometry/voxelmesh.cpp

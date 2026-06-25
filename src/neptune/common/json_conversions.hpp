@@ -6,6 +6,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
+#include "neptune/boundaryconditions/boundarycondition.hpp"
 #include "neptune/common/vector.hpp"
 #include "neptune/finitevolume/fluidboundarycondition.hpp"
 #include "neptune/geometry/nonuniformmesh.hpp"
@@ -16,7 +17,6 @@
 #include "neptune/geometry/vec2.hpp"
 #include "neptune/geometry/vec3.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
-#include "neptune/physics/boundarycondition.hpp"
 #include "neptune/physics/collision_processes.hpp"
 #include "neptune/simulator/execution_statistics.hpp"
 #include "neptune/simulator/simulator.hpp"

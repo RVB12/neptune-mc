@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "neptune/boundaryconditions/boundarycondition.hpp"
 #include "neptune/collisions/abstract_collisions.hpp"
 #include "neptune/common/utils.hpp"
 #include "neptune/common/vector.hpp"
@@ -14,7 +15,6 @@
 #include "neptune/geometry/cellcrossing.hpp"
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/physics/background.hpp"
-#include "neptune/physics/boundarycondition.hpp"
 #include "neptune/physics/collision_processes.hpp"
 #include "neptune/physics/particle.hpp"
 #include "neptune/physics/plasmabackground.hpp"
