@@ -3,14 +3,15 @@
 
 #include "H5Cpp.h"
 #include "neptune/boundaryconditions/boundarycondition.hpp"
+#include "neptune/boundaryconditions/trim.hpp"
 #include "neptune/collisions/abstract_collisions.hpp"
 #include "neptune/collisions/simple_collisions.hpp"
 #include "neptune/common/utils.hpp"
 #include "neptune/estimation/estimator.hpp"
 #include "neptune/geometry/mesh.hpp"
+#include "neptune/geometry/nonuniformmesh.hpp"
 #include "neptune/geometry/rotatedtrianglemesh.hpp"
 #include "neptune/geometry/trianglemesh.hpp"
-#include "neptune/geometry/nonuniformmesh.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
 #include "neptune/physics/background.hpp"
 #include "neptune/physics/species.hpp"
@@ -19,7 +20,6 @@
 #include "neptune/sources/source.hpp"
 #include "neptune/sources/volumesource.hpp"
 #include "neptune/sources/wallreflectionsource.hpp"
-#include "neptune/boundaryconditions/trim.hpp"
 
 using namespace neptune;
 
@@ -277,12 +277,9 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
         return std::make_unique<RotatedTriangleMesh>(mesh);
     }
     else if (mesh_type == "non_uniform") {
-        vector<real_t> cb_x =
-            read_real_vector(mesh_group.openDataSet("cb_x"));
-        vector<real_t> cb_y =
-            read_real_vector(mesh_group.openDataSet("cb_y"));
-        vector<real_t> cb_z =
-            read_real_vector(mesh_group.openDataSet("cb_z"));
+        vector<real_t> cb_x = read_real_vector(mesh_group.openDataSet("cb_x"));
+        vector<real_t> cb_y = read_real_vector(mesh_group.openDataSet("cb_y"));
+        vector<real_t> cb_z = read_real_vector(mesh_group.openDataSet("cb_z"));
         NonUniformMesh mesh(cb_x, cb_y, cb_z);
         return std::make_unique<NonUniformMesh>(mesh);
     }
@@ -445,17 +442,28 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
     // intensity of the sources
     index_t n_particles =
         read_index_number(sources_group.openDataSet("n_particles"));
-    // real_t total_intensity = 0;
-    // for (const auto& source : sources) {
-    //     total_intensity += source->intensity();
-    // }
-    // for (auto& source : sources) {
-    //     source->num_particles_ = static_cast<index_t>(
-    //         n_particles * source->intensity() / total_intensity);
-    // }
-    for (auto& source : sources) {
-        source->num_particles_ = static_cast<index_t>(
-            n_particles / sources.size());  // equal number of particles for each source
+    std::string stratification_method =
+        read_string(sources_group.openDataSet("stratification"));
+    if (stratification_method == "source_strength") {
+        real_t total_intensity = 0;
+        for (const auto& source : sources) {
+            total_intensity += source->intensity();
+        }
+        for (auto& source : sources) {
+            source->num_particles_ =
+                std::ceil(n_particles * source->intensity() / total_intensity);
+        }
+    }
+    else if (stratification_method == "equal") {
+        for (auto& source : sources) {
+            source->num_particles_ = static_cast<index_t>(
+                n_particles /
+                sources.size());  // equal number of particles for each source
+        }
+    }
+    else {
+        throw std::runtime_error("Unknown stratification method: " +
+                                 stratification_method);
     }
 
     // Convert std::vector to neptune::vector
@@ -616,9 +624,10 @@ int main(int argc, char** argv)
     EstimatorGroup estimator_group =
         read_estimators(input_file.openGroup("/estimators"), mesh->n_cells());
 
-    // Read TRIM database from the databases/TRIM folder in the project directory
-    // This is a hardcoded path until I can figure out a better solution
-    TrimReflectionData trim_data = read_trim_data("/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_W");
+    // Read TRIM database from the databases/TRIM folder in the project
+    // directory This is a hardcoded path until I can figure out a better
+    // solution TrimReflectionData trim_data =
+    // read_trim_data("/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_W");
 
     vector<std::unique_ptr<BoundaryCondition>> boundary_conditions =
         read_boundary_conditions(input_file.openGroup("/boundary_conditions"));
