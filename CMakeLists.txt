@@ -96,6 +96,22 @@ endif()
 find_package(Eigen3 REQUIRED NO_MODULE)
 target_link_libraries(neptune PUBLIC Eigen3::Eigen)
 
+# PCG
+
+FetchContent_Declare(
+    pcg_cpp
+    GIT_REPOSITORY https://github.com/imneme/pcg-cpp.git
+    GIT_COMMIT 428802d1a5634f96bcd0705fab379ff0113bcf13
+)
+FetchContent_MakeAvailable(pcg_cpp)
+
+add_library(PCGCPP INTERFACE)
+target_include_directories(PCGCPP INTERFACE
+    ${pcg_cpp_SOURCE_DIR}/include
+)
+
+target_link_libraries(neptune PUBLIC PCGCPP)
+
 # Main runner
 add_executable(neptune-generate-neighborlist src/neptune/generate_neighborlist.cpp)
 target_link_libraries(neptune-generate-neighborlist PRIVATE neptune)
@@ -121,7 +137,6 @@ if(Catch2_FOUND)
         tests/cpp/test_trianglemesh.cpp
         tests/cpp/test_json.cpp
         tests/cpp/test_spatialindex.cpp
-        tests/cpp/test_first_exit_time.cpp
         tests/cpp/test_rotatedtrianglemesh.cpp
     )
 

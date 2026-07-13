@@ -8,6 +8,7 @@
 #include "neptune/geometry/vec3.hpp"
 #include "neptune/physics/species.hpp"
 #include "neptune/simulator/simulationparams.hpp"
+#include "neptune/rng/rng.hpp"
 namespace neptune {
 
 /**
@@ -26,11 +27,9 @@ class Particle {
      */
     // initialize rng with high and low bits of the id for the first two parts
     // of the counter, and the key for the key
-    Particle(uint64_t id_, rng_key_t key, Species species_)
+    Particle(uint64_t id_, uint64_t seed, Species species_)
         : id(id_),
-          rng({{static_cast<rng_ctr_t::value_type>(id_ >> 32),
-                static_cast<rng_ctr_t::value_type>(id_), 0, 0}},
-              key),
+          rng(generate_rng(seed, id_)),
           species(species_)
     {}
 

@@ -8,6 +8,7 @@
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/geometry/particlegeometry.hpp"
 #include "neptune/geometry/vec2.hpp"
+#include "neptune/rng/rng.hpp"
 
 namespace neptune {
 

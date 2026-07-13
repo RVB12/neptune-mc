@@ -40,7 +40,7 @@ class Source {
      * @param i The index of the particle to generate
      */
     virtual Particle generate_particle(uint64_t particle_id,
-                                       rng_key_t key,
+                                       uint64_t seed,
                                        const Mesh& mesh,
                                        const Background& background) = 0;
 

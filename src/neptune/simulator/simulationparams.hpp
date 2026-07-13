@@ -6,7 +6,7 @@
 namespace neptune {
 struct SimulationParams {
     // This value is used to seed the rng
-    int64_t seed = 1302;
+    uint64_t seed = 1302;
     // The maximum number of simulation steps a particle can take
     index_t max_steps = 100000;
     // The maximum time a particle can take

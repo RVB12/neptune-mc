@@ -7,11 +7,11 @@
 namespace neptune {
 
 Particle SurfaceSource::generate_particle(uint64_t particle_id,
-                                          rng_key_t key,
+                                          uint64_t seed,
                                           const Mesh& mesh,
                                           const Background& background)
 {
-    Particle p(particle_id, key, species);
+    Particle p(particle_id, seed, species);
 
     p.geometry.cell_id = cell_idx;
     p.geometry.boundary_id = surface_id;
