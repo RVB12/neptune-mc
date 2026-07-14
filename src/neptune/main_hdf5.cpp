@@ -424,17 +424,12 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
                 read_species(source_group.openDataSet("background_species"));
             Species particle_species =
                 read_species(source_group.openDataSet("particle_species"));
-            real_t wall_face_background_density = read_real_number(
-                source_group.openDataSet("wall_face_background_density"));
-            real_t wall_face_background_temperature = read_real_number(
-                source_group.openDataSet("wall_face_background_temperature"));
             for (size_t j = 0; j < cell_indices.size(); j++) {
                 index_t cell_index = cell_indices[j];
                 index_t surface_index = surface_indices[j];
                 sources.push_back(std::make_unique<WallReflectionSource>(
                     0, cell_index, surface_index, sheath_potential,
-                    franck_condon_temp, Rt, Rr, wall_face_background_density,
-                    wall_face_background_temperature, background_species,
+                    franck_condon_temp, Rt, Rr, background_species,
                     particle_species, mesh, background));
             }
         }
@@ -817,6 +812,76 @@ int main(int argc, char** argv)
             }
         }
     }
+
+    //
+    // Output collision rates
+    //
+    H5::Group collision_rates_group =
+        output_file.createGroup("collision_info");
+    for(index_t i = 0; i < cx_collisions.size(); ++i) {
+        if(cx_collisions[i]->output_collision_info) {
+            auto cx_group = collision_rates_group.createGroup("charge_exchange_" + std::to_string(i));
+            // Calculate the rates
+            vector<real_t> rates(mesh->n_cells());
+            vector<real_t> vel_mean_x(mesh->n_cells());
+            vector<real_t> vel_mean_y(mesh->n_cells());
+            vector<real_t> vel_mean_z(mesh->n_cells());
+            vector<real_t> vel_var(mesh->n_cells());
+            for(index_t j = 0; j < mesh->n_cells(); ++j) {
+                // Make a particle with the background species and the cell index
+                Particle particle(0, 0, cx_collisions[i]->particle_species());
+                particle.geometry.cell_id = j;
+                real_t rate = cx_collisions[i]->collision_rate(particle, background);
+                Vec3 vel_mean = cx_collisions[i]->post_collision_velocity_mean(particle, background);
+                real_t vel_variance = cx_collisions[i]->post_collision_velocity_var(particle, background);
+                vel_mean_x[j] = vel_mean.x;
+                vel_mean_y[j] = vel_mean.y;
+                vel_mean_z[j] = vel_mean.z;
+                vel_var[j] = vel_variance;
+                rates[j] = rate;
+            }
+            // Write the rates to the dataset
+            hsize_t dim = rates.size();
+            H5::DataSpace dataspace(1, &dim);  // 1D array
+            H5::DataSet dataset = cx_group.createDataSet(
+                "collision_rate", H5::PredType::NATIVE_DOUBLE, dataspace);
+            dataset.write(rates.data(), H5::PredType::NATIVE_DOUBLE);
+            H5::DataSet vel_mean_x_dataset = cx_group.createDataSet(
+                "post_collision_velocity_mean_x", H5::PredType::NATIVE_DOUBLE, dataspace);
+            vel_mean_x_dataset.write(vel_mean_x.data(), H5::PredType::NATIVE_DOUBLE);
+            H5::DataSet vel_mean_y_dataset = cx_group.createDataSet(
+                "post_collision_velocity_mean_y", H5::PredType::NATIVE_DOUBLE, dataspace);
+            vel_mean_y_dataset.write(vel_mean_y.data(), H5::PredType::NATIVE_DOUBLE);
+            H5::DataSet vel_mean_z_dataset = cx_group.createDataSet(
+                "post_collision_velocity_mean_z", H5::PredType::NATIVE_DOUBLE, dataspace);
+            vel_mean_z_dataset.write(vel_mean_z.data(), H5::PredType::NATIVE_DOUBLE);
+            // Write the velocity variance to the dataset
+            H5::DataSet vel_var_dataset = cx_group.createDataSet(
+                "post_collision_velocity_variance", H5::PredType::NATIVE_DOUBLE, dataspace);
+            vel_var_dataset.write(vel_var.data(), H5::PredType::NATIVE_DOUBLE);
+        }
+    }
+    for(index_t i = 0; i < ionisation_collisions.size(); ++i) {
+        if(ionisation_collisions[i]->output_collision_info) {
+            auto ionisation_group = collision_rates_group.createGroup("ionisation_" + std::to_string(i));
+            // Calculate the rates
+            vector<real_t> rates(mesh->n_cells());
+            for(index_t j = 0; j < mesh->n_cells(); ++j) {
+                // Make a particle with the background species and the cell index
+                Particle particle(0, 0, ionisation_collisions[i]->particle_species());
+                particle.geometry.cell_id = j;
+                real_t rate = ionisation_collisions[i]->collision_rate(particle, background);
+                rates[j] = rate;
+            }
+            // Write the rates to the dataset
+            hsize_t dim = rates.size();
+            H5::DataSpace dataspace(1, &dim);  // 1D array
+            H5::DataSet dataset = ionisation_group.createDataSet(
+                "collision_rate", H5::PredType::NATIVE_DOUBLE, dataspace);
+            dataset.write(rates.data(), H5::PredType::NATIVE_DOUBLE);
+        }
+    }
+
 
     return 0;
 }

@@ -134,6 +134,14 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     Dplus["velocity_z"].attrs["units"] = "m/s"
     Dplus["temperature"] = ion_temperature
     Dplus["temperature"].attrs["units"] = "eV"
+    electron = background.create_group("e")
+    electron["density"] = ion_density
+    electron["density"].attrs["units"] = "m^-3"
+    electron["temperature"] = ion_temperature
+    electron["temperature"].attrs["units"] = "eV"
+    electron["velocity_x"] = np.zeros_like(vel_r)
+    electron["velocity_y"] = np.zeros_like(vel_r)
+    electron["velocity_z"] = np.zeros_like(vel_r)
     # Mesh
     mesh = f.create_group("mesh")
     mesh["type"] = "triangle"

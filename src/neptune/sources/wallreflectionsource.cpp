@@ -15,8 +15,6 @@ WallReflectionSource::WallReflectionSource(
     real_t franck_condon_temp_,
     real_t Rt_,
     real_t Rr_,
-    real_t wall_face_background_density_,
-    real_t wall_face_background_temperature_,
     Species background_species,
     Species particle_species,
     const Mesh& mesh,
@@ -28,8 +26,6 @@ WallReflectionSource::WallReflectionSource(
       franck_condon_temp(franck_condon_temp_),
       Rt(Rt_),
       Rr(Rr_),
-      wall_face_background_density(wall_face_background_density_),
-      wall_face_background_temperature(wall_face_background_temperature_),
       background_species(background_species),
       particle_species(particle_species)
 {
@@ -38,12 +34,12 @@ WallReflectionSource::WallReflectionSource(
     Vec3 boundary_drift_3d = background.velocity(background_species, cell_idx);
     real_t boundary_drift = dot(boundary_drift_3d, normal);
 
-    real_t ion_temp = wall_face_background_temperature;
+    real_t ion_temp = background.temperature(background_species, cell_idx);
     real_t boundary_bgk_stddev =
         std::sqrt(ion_temp * constants::eV_to_Joules / (constants::m_p *
                   SPECIES_MASS[static_cast<int>(background_species)]));
 
-    real_t ion_density = wall_face_background_density;
+    real_t ion_density = background.density(background_species, cell_idx);
 
     real_t flux = boundary_bgk_stddev / std::sqrt(2 * M_PI) *
                       std::exp(-0.5 * (boundary_drift / boundary_bgk_stddev) *
@@ -90,7 +86,7 @@ Particle WallReflectionSource::generate_particle(uint64_t particle_id,
     Vec3 boundary_drift_3d = background.velocity(background_species, cell_idx);
     real_t boundary_drift = dot(boundary_drift_3d, normal);
 
-    real_t ion_temp = wall_face_background_temperature;
+    real_t ion_temp = background.temperature(background_species, cell_idx);
     real_t boundary_bgk_stddev = std::sqrt(
         ion_temp * constants::eV_to_Joules /
         (constants::m_p * SPECIES_MASS[static_cast<int>(background_species)]));

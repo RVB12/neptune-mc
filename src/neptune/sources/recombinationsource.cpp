@@ -17,7 +17,7 @@ RecombinationSource::RecombinationSource(index_t num_particles,
       background_species(background_species_),
       species(species_)
 {
-    real_t temperature = background.temperature(background_species, cell_idx);
+    real_t temperature = background.temperature(Species::e, cell_idx);
     real_t K_r =
         0.7e-19 *
         std::sqrt(13.6 / temperature);  // Recombination rate coefficient

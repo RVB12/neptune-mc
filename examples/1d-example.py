@@ -53,7 +53,7 @@ gas_puff_dens = 1e21 * np.exp(- 0.5 * (xc - 0.5)**2 / 0.1**2)
 ni = 1e21 * np.ones_like(xc)
 mean_vel = 0.1 * sigma_p_c
 
-n_particles = 2000
+n_particles = 10000
 estimate_variance = False
 n_batches = 1
 
@@ -75,6 +75,14 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     Dplus["velocity_z"].attrs["unit"] = "m/s"
     Dplus["temperature"] = ti
     Dplus["temperature"].attrs["unit"] = "eV"
+    electron = background.create_group("e")
+    electron["density"] = ni
+    electron["density"].attrs["units"] = "m^-3"
+    electron["temperature"] = ti
+    electron["temperature"].attrs["units"] = "eV"
+    electron["velocity_x"] = np.zeros_like(xc)
+    electron["velocity_y"] = np.zeros_like(xc)
+    electron["velocity_z"] = np.zeros_like(xc)
     # Mesh
     mesh = f.create_group("mesh")
     mesh["type"] = "uniform"

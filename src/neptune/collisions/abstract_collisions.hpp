@@ -26,6 +26,10 @@ class Collision {
      */
     virtual real_t collision_rate(const Particle& p,
                                   const Background& b) const = 0;
+
+    // Whether to output the collision rate and other parameters
+    // for each cell, this is useful for debugging and testing
+    bool output_collision_info = false;
 };
 
 class ChargeExchangeCollision : public Collision {

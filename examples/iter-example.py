@@ -185,20 +185,24 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     coll0["background_species"] = "D+"
     coll0["particle_species"] = "D"
     coll0["type"] = "charge_exchange"
-    # coll0["model"] = "simple"
-    coll0["model"] = "user_defined"
-    coll0["collision_rate"] = R_cx
-    coll0["velocity_mean_x"] = bgk_mean_x
-    coll0["velocity_mean_y"] = np.zeros_like(bgk_mean_x)
-    coll0["velocity_mean_z"] = np.zeros_like(bgk_mean_x)
-    coll0["velocity_var"] = bgk_stddev**2
+    coll0["model"] = "simple"
+    # The commented lines below are an alternative way to specify the cx collisions,
+    # where we calculate the rate ourselves
+    # coll0["model"] = "user_defined"
+    # coll0["collision_rate"] = R_cx
+    # coll0["velocity_mean_x"] = bgk_mean_x
+    # coll0["velocity_mean_y"] = np.zeros_like(bgk_mean_x)
+    # coll0["velocity_mean_z"] = np.zeros_like(bgk_mean_x)
+    # coll0["velocity_var"] = bgk_stddev**2
     coll1 = collisions.create_group("1")
     coll1["background_species"] = "D+"
     coll1["particle_species"] = "D"
     coll1["type"] = "ionisation"
-    # coll1["model"] = "simple"
-    coll1["model"] = "user_defined"
-    coll1["collision_rate"] = R_i
+    coll1["model"] = "simple"
+    # The commented lines below are an alternative way to specify the ionisation collisions,
+    # where we calculate the rate ourselves
+    # coll1["model"] = "user_defined"
+    # coll1["collision_rate"] = R_i
     # 
     # Sources
     # 
@@ -206,22 +210,24 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     sources["n_particles"] = num_particles
     sources["stratification"] = "equal"
     
-    # recombination_source = sources.create_group("R_recomb")
-    # recombination_source["type"] = "recombination"
-    # recombination_source["background_species"] = "D+"
-    # recombination_source["particle_species"] = "D"
-    # recombination_source["cell_indices"] = np.arange(ncells, dtype=np.int64)
+    recombination_source = sources.create_group("R_recomb")
+    recombination_source["type"] = "recombination"
+    recombination_source["background_species"] = "D+"
+    recombination_source["particle_species"] = "D"
+    recombination_source["cell_indices"] = np.arange(ncells, dtype=np.int64)
 
-    vol = Ly * Lz * np.diff(xb)
-    volume_source = sources.create_group("R_vol")
-    volume_source["type"] = "volume"
-    volume_source["species"] = "D"
-    volume_source["cell_indices"] = np.arange(ncells, dtype=np.int64)
-    volume_source["intensities"] = volume_recombination * vol
-    volume_source["velocity_x"] = bgk_mean_x
-    volume_source["velocity_y"] = np.zeros_like(bgk_mean_x)
-    volume_source["velocity_z"] = np.zeros_like(bgk_mean_x)
-    volume_source["velocity_std"] = bgk_stddev
+    # The commented lines below are an alternative way to specify the recombination source,
+    # where we calculate the rate ourselves
+    # vol = Ly * Lz * np.diff(xb)
+    # volume_source = sources.create_group("R_vol")
+    # volume_source["type"] = "volume"
+    # volume_source["species"] = "D"
+    # volume_source["cell_indices"] = np.arange(ncells, dtype=np.int64)
+    # volume_source["intensities"] = volume_recombination * vol
+    # volume_source["velocity_x"] = bgk_mean_x
+    # volume_source["velocity_y"] = np.zeros_like(bgk_mean_x)
+    # volume_source["velocity_z"] = np.zeros_like(bgk_mean_x)
+    # volume_source["velocity_std"] = bgk_stddev
 
 
     wall_source = sources.create_group("R_wall")
@@ -234,8 +240,6 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     wall_source["Rr"] = 0.8
     wall_source["background_species"] = "D+"
     wall_source["particle_species"] = "D"
-    wall_source["wall_face_background_temperature"] = fusion_bg_for_MC_uniform_400["ti_faces"][-1]
-    wall_source["wall_face_background_density"] = fusion_bg_for_MC_uniform_400["ni_faces"][-1]
 
     # 
     # Estimators
