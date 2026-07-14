@@ -40,8 +40,8 @@ WallReflectionSource::WallReflectionSource(
 
     real_t ion_temp = wall_face_background_temperature;
     real_t boundary_bgk_stddev =
-        std::sqrt(ion_temp * constants::eV_to_Joules / constants::m_p *
-                  SPECIES_MASS[static_cast<int>(background_species)]);
+        std::sqrt(ion_temp * constants::eV_to_Joules / (constants::m_p *
+                  SPECIES_MASS[static_cast<int>(background_species)]));
 
     real_t ion_density = wall_face_background_density;
 
@@ -56,8 +56,6 @@ WallReflectionSource::WallReflectionSource(
     real_t surface_area = mesh.get_surface_area(cell_idx, surface_id);
 
     intensity_ = flux * Rt * surface_area;
-
-    std::cout << "WallReflectionSource: intensity = " << intensity_ << std::endl;
 }
 
 Particle WallReflectionSource::generate_particle(uint64_t particle_id,
