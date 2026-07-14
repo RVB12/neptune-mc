@@ -235,7 +235,7 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     wall_source["background_species"] = "D+"
     wall_source["particle_species"] = "D"
     wall_source["wall_face_background_temperature"] = fusion_bg_for_MC_uniform_400["ti_faces"][-1]
-    wall_source["wall_face_background_density"] = 0.1*fusion_bg_for_MC_uniform_400["ni_faces"][-1]
+    wall_source["wall_face_background_density"] = fusion_bg_for_MC_uniform_400["ni_faces"][-1]
 
     # 
     # Estimators
