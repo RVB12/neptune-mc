@@ -27,6 +27,8 @@ Particle VolumeSource::generate_particle(uint64_t particle_id,
     std::exponential_distribution<real_t> dist_t(1.0);
     p.u = dist_t(p.rng);
 
+    p.intensity = intensity / num_particles();
+
     return p;
 }
 

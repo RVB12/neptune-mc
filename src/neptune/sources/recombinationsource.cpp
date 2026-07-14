@@ -22,8 +22,7 @@ RecombinationSource::RecombinationSource(index_t num_particles,
         0.7e-19 *
         std::sqrt(13.6 / temperature);  // Recombination rate coefficient
     real_t n_Dplus = background.density(background_species, cell_idx);
-    real_t n_e = n_Dplus;  // Assuming quasi-neutrality, the electron density is
-                           // equal to the D+ density
+    real_t n_e = background.density(Species::e, cell_idx);
     real_t vol = mesh.get_volume(cell_idx);
     intensity_ = K_r * n_Dplus * n_e * vol;
 }

@@ -41,6 +41,8 @@ class WallReflectionSource : public Source {
                          real_t franck_condon_temp_,
                          real_t Rt_,
                          real_t Rr_,
+                         real_t wall_face_background_density_,
+                         real_t wall_face_background_temperature_,
                          Species background_species,
                          Species particle_species,
                          const Mesh& mesh,
@@ -64,6 +66,8 @@ class WallReflectionSource : public Source {
         2.0;    // temperature of dissociated molecules in eV
     real_t Rt;  // fraction of ions that are reflected
     real_t Rr;  // fraction of reflected particles that are backscattered
+    real_t wall_face_background_density;  // density of the background species at the wall face (can be different from the cell density)
+    real_t wall_face_background_temperature;  // temperature of the background species at the wall face (can be different from the cell temperature)
 };
 
 }  // namespace neptune

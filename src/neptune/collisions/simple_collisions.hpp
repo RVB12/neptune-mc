@@ -85,10 +85,15 @@ class SimpleIonisationCollision : public IonisationCollision {
 
     real_t collision_rate(const Particle& p, const Background& b) const override
     {
-        real_t b_dens = b.density(background_species(), p.geometry.cell_id);
-        real_t b_temp = b.temperature(background_species(), p.geometry.cell_id);
-        return b_dens * 2.0e-13 / (6 + b_temp / 13.6) *
-               std::sqrt(b_temp / 13.6) * std::exp(-13.6 / b_temp);
+        // K_i = 2.0 * 1e-13 / (6.0 + te / (13.6))\
+        //     * np.sqrt(te / (13.6))\
+        //     * np.exp(-13.6 / (te))
+        // R_i = ne * K_i
+
+        real_t e_dens = b.density(Species::e, p.geometry.cell_id);
+        real_t e_temp = b.temperature(Species::e, p.geometry.cell_id);
+        return e_dens * 2.0 * 1e-13 / (6.0 + e_temp / (13.6)) *
+               std::sqrt(e_temp / (13.6)) * std::exp(-13.6 / (e_temp));
     }
 
    private:

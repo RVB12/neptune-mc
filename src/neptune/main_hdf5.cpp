@@ -6,6 +6,7 @@
 #include "neptune/boundaryconditions/trim.hpp"
 #include "neptune/collisions/abstract_collisions.hpp"
 #include "neptune/collisions/simple_collisions.hpp"
+#include "neptune/collisions/user_defined_collisions.hpp"
 #include "neptune/common/utils.hpp"
 #include "neptune/estimation/estimator.hpp"
 #include "neptune/geometry/mesh.hpp"
@@ -316,6 +317,21 @@ vector<std::unique_ptr<Collision>> read_collisions(
                 collisions.push_back(
                     std::make_unique<SimpleChargeExchangeCollision>(
                         background_species, particle_species));
+            } else if(model == "user_defined") {
+                Species background_species = read_species(
+                    collision_group.openDataSet("background_species"));
+                Species particle_species = read_species(
+                    collision_group.openDataSet("particle_species"));
+                vector<real_t> collision_rate = read_real_vector(collision_group.openDataSet("collision_rate"));
+                vector<real_t> velocity_mean_x = read_real_vector(collision_group.openDataSet("velocity_mean_x"));
+                vector<real_t> velocity_mean_y = read_real_vector(collision_group.openDataSet("velocity_mean_y"));
+                vector<real_t> velocity_mean_z = read_real_vector(collision_group.openDataSet("velocity_mean_z"));
+                vector<real_t> velocity_var = read_real_vector(collision_group.openDataSet("velocity_var"));
+                collisions.push_back(
+                    std::make_unique<UserDefinedChargeExchangeCollision>(
+                        background_species, particle_species, collision_rate,
+                        velocity_mean_x, velocity_mean_y, velocity_mean_z, velocity_var));
+
             }
             else {
                 throw std::runtime_error(
@@ -335,6 +351,16 @@ vector<std::unique_ptr<Collision>> read_collisions(
                 collisions.push_back(
                     std::make_unique<SimpleIonisationCollision>(
                         background_species, particle_species));
+            } else if(model == "user_defined") {
+                Species background_species = read_species(
+                    collision_group.openDataSet("background_species"));
+                Species particle_species = read_species(
+                    collision_group.openDataSet("particle_species"));
+                vector<real_t> collision_rate = read_real_vector(collision_group.openDataSet("collision_rate"));
+                collisions.push_back(
+                    std::make_unique<UserDefinedIonisationCollision>(
+                        background_species, particle_species, collision_rate));
+
             }
             else {
                 throw std::runtime_error(
@@ -398,12 +424,17 @@ vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
                 read_species(source_group.openDataSet("background_species"));
             Species particle_species =
                 read_species(source_group.openDataSet("particle_species"));
+            real_t wall_face_background_density = read_real_number(
+                source_group.openDataSet("wall_face_background_density"));
+            real_t wall_face_background_temperature = read_real_number(
+                source_group.openDataSet("wall_face_background_temperature"));
             for (size_t j = 0; j < cell_indices.size(); j++) {
                 index_t cell_index = cell_indices[j];
                 index_t surface_index = surface_indices[j];
                 sources.push_back(std::make_unique<WallReflectionSource>(
                     0, cell_index, surface_index, sheath_potential,
-                    franck_condon_temp, Rt, Rr, background_species,
+                    franck_condon_temp, Rt, Rr, wall_face_background_density,
+                    wall_face_background_temperature, background_species,
                     particle_species, mesh, background));
             }
         }
@@ -657,6 +688,38 @@ int main(int argc, char** argv)
     // Now write the results to the output file
     H5::H5File output_file(output_file_name, H5F_ACC_TRUNC);
 
+    //
+    // Output execution statistics
+    //
+    H5::Group stats_group = output_file.createGroup("execution_statistics");
+    H5::DataSet num_crossings_dataset = stats_group.createDataSet(
+        "num_crossings", H5::PredType::NATIVE_INT64, H5::DataSpace());
+    num_crossings_dataset.write(&stats.num_crossings, H5::PredType::NATIVE_INT64);
+    H5::DataSet num_collisions_dataset = stats_group.createDataSet(
+        "num_collisions", H5::PredType::NATIVE_INT64, H5::DataSpace());
+    num_collisions_dataset.write(&stats.num_collisions, H5::PredType::NATIVE_INT64);
+    H5::DataSet total_particles_dataset = stats_group.createDataSet(
+        "total_particles", H5::PredType::NATIVE_INT64, H5::DataSpace());
+    total_particles_dataset.write(&stats.total_particles, H5::PredType::NATIVE_INT64);
+    H5::DataSet grid_building_time_dataset = stats_group.createDataSet(
+        "grid_building_time", H5::PredType::NATIVE_DOUBLE, H5::DataSpace());
+    grid_building_time_dataset.write(&stats.grid_building_time, H5::PredType::NATIVE_DOUBLE);
+    H5::DataSet trace_time_dataset = stats_group.createDataSet(
+        "trace_time", H5::PredType::NATIVE_DOUBLE, H5::DataSpace());
+    trace_time_dataset.write(&stats.trace_time, H5::PredType::NATIVE_DOUBLE);
+    H5::DataSet total_time_dataset = stats_group.createDataSet(
+        "total_time", H5::PredType::NATIVE_DOUBLE, H5::DataSpace());
+    total_time_dataset.write(&stats.total_time, H5::PredType::NATIVE_DOUBLE);
+    H5::DataSet num_kd_steps_dataset = stats_group.createDataSet(
+        "num_kd_steps", H5::PredType::NATIVE_INT64, H5::DataSpace());
+    num_kd_steps_dataset.write(&stats.num_kd_steps, H5::PredType::NATIVE_INT64);
+    H5::DataSet num_kd_to_kinetic_switches_dataset = stats_group.createDataSet(
+        "num_kd_to_kinetic_switches", H5::PredType::NATIVE_INT64, H5::DataSpace());
+    num_kd_to_kinetic_switches_dataset.write(&stats.num_kd_to_kinetic_switches, H5::PredType::NATIVE_INT64);
+
+    //
+    // Output estimators
+    //
     for (const auto species : {Species::H, Species::D}) {
         bool has_tl =
             !estimator_group

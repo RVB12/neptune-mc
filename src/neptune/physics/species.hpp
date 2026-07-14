@@ -7,17 +7,19 @@
 
 namespace neptune {
 
-const index_t NUM_SPECIES = 4;
+const index_t NUM_SPECIES = 5;
 
 enum class Species {
-    H = 0,
-    Hplus = 1,
-    D = 2,
-    Dplus = 3,
+    e = 0,
+    H = 1,
+    Hplus = 2,
+    D = 3,
+    Dplus = 4,
 };
 
 inline Species stringtospecies(const std::string& s)
 {
+    if (s == "e") return Species::e;
     if (s == "H") return Species::H;
     if (s == "H+") return Species::Hplus;
     if (s == "D") return Species::D;
@@ -28,6 +30,8 @@ inline Species stringtospecies(const std::string& s)
 inline std::string speciestostring(const Species& species)
 {
     switch (species) {
+        case Species::e:
+            return "e";
         case Species::H:
             return "H";
         case Species::Hplus:
@@ -48,6 +52,7 @@ inline index_t get_index(const Species& species)
 
 // Mass of the species in atomic mass units (u)
 const real_t SPECIES_MASS[] = {
+    0.00054858,  // e
     1.00784,  // H
     1.00784,  // H+
     2.01410,  // D

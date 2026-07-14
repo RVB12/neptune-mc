@@ -32,8 +32,6 @@ if(not os.path.exists("fusion_bg_for_MC_uniform_400.npz")):
     raise FileNotFoundError("fusion_bg_for_MC_uniform_400.npz not found. It is not included in the repository. Please request it by email.")
 fusion_bg_for_MC_uniform_400 = np.load("fusion_bg_for_MC_uniform_400.npz")
 
-# Number of particles to use in the simulation
-num_particles = int(1e5)
 
 # Physics constants
 e = 1.602176634 * 1e-19 # Elementary charge
@@ -72,7 +70,7 @@ volume_recombination = ni * ne * K_r
 # Charge exchange
 K_cx = 3.2 * 1e-15 * np.sqrt(ti / (0.026))
 R_cx = ni * K_cx
-bgk_stddev = np.sqrt(ti / m )
+bgk_stddev = np.sqrt(ti * e / m )
 bgk_mean_x = up * pit
 
 # Ionization
@@ -92,14 +90,15 @@ delta_pot_sh = 3.1
 
 
 # Number of particles to use in the simulation
+num_particles = int(1e6)
 estimate_variance = False
 n_batches = 1
 
 # Plot these parameters to check
 plt.figure(figsize=(12, 8))
 plt.subplot(3, 2, 1)
-plt.plot(xc, te / eV, label="Te")
-plt.plot(xc, ti / eV, label="Ti")
+plt.plot(xc, te, label="Te")
+plt.plot(xc, ti, label="Ti")
 plt.xlabel("x (m)")
 plt.ylabel("Temperature (eV)")
 plt.title("Temperature")
@@ -158,6 +157,18 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     Dplus["velocity_z"].attrs["unit"] = "m/s"
     Dplus["temperature"] = ti
     Dplus["temperature"].attrs["unit"] = "eV"
+    electron = background.create_group("e")
+    electron["density"] = ne
+    electron["density"].attrs["unit"] = "m^-3"
+    electron["temperature"] = te
+    electron["temperature"].attrs["unit"] = "eV"
+    # We won't be using electron velocity, just set it to zero for now
+    electron["velocity_x"] = np.zeros_like(xc)
+    electron["velocity_x"].attrs["unit"] = "m/s"
+    electron["velocity_y"] = np.zeros_like(xc)
+    electron["velocity_y"].attrs["unit"] = "m/s"
+    electron["velocity_z"] = np.zeros_like(xc)
+    electron["velocity_z"].attrs["unit"] = "m/s"
     # 
     # Mesh
     # 
@@ -174,12 +185,20 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     coll0["background_species"] = "D+"
     coll0["particle_species"] = "D"
     coll0["type"] = "charge_exchange"
-    coll0["model"] = "simple"
+    # coll0["model"] = "simple"
+    coll0["model"] = "user_defined"
+    coll0["collision_rate"] = R_cx
+    coll0["velocity_mean_x"] = bgk_mean_x
+    coll0["velocity_mean_y"] = np.zeros_like(bgk_mean_x)
+    coll0["velocity_mean_z"] = np.zeros_like(bgk_mean_x)
+    coll0["velocity_var"] = bgk_stddev**2
     coll1 = collisions.create_group("1")
     coll1["background_species"] = "D+"
     coll1["particle_species"] = "D"
     coll1["type"] = "ionisation"
-    coll1["model"] = "simple"
+    # coll1["model"] = "simple"
+    coll1["model"] = "user_defined"
+    coll1["collision_rate"] = R_i
     # 
     # Sources
     # 
@@ -187,11 +206,24 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     sources["n_particles"] = num_particles
     sources["stratification"] = "equal"
     
-    recombination_source = sources.create_group("R_vol")
-    recombination_source["type"] = "recombination"
-    recombination_source["background_species"] = "D+"
-    recombination_source["particle_species"] = "D"
-    recombination_source["cell_indices"] = np.arange(ncells, dtype=np.int64)
+    # recombination_source = sources.create_group("R_recomb")
+    # recombination_source["type"] = "recombination"
+    # recombination_source["background_species"] = "D+"
+    # recombination_source["particle_species"] = "D"
+    # recombination_source["cell_indices"] = np.arange(ncells, dtype=np.int64)
+
+    vol = Ly * Lz * np.diff(xb)
+    volume_source = sources.create_group("R_vol")
+    volume_source["type"] = "volume"
+    volume_source["species"] = "D"
+    volume_source["cell_indices"] = np.arange(ncells, dtype=np.int64)
+    volume_source["intensities"] = volume_recombination * vol
+    volume_source["velocity_x"] = bgk_mean_x
+    volume_source["velocity_y"] = np.zeros_like(bgk_mean_x)
+    volume_source["velocity_z"] = np.zeros_like(bgk_mean_x)
+    volume_source["velocity_std"] = bgk_stddev
+
+
     wall_source = sources.create_group("R_wall")
     wall_source["type"] = "wall_recycling"
     wall_source["cell_indices"] = [nx-1]
@@ -202,6 +234,8 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     wall_source["Rr"] = 0.8
     wall_source["background_species"] = "D+"
     wall_source["particle_species"] = "D"
+    wall_source["wall_face_background_temperature"] = fusion_bg_for_MC_uniform_400["ti_faces"][-1]
+    wall_source["wall_face_background_density"] = 0.1*fusion_bg_for_MC_uniform_400["ni_faces"][-1]
 
     # 
     # Estimators
@@ -244,10 +278,100 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
 # %%
 # Run the simulation
 start_time = time.time()
-output = subprocess.check_output(["neptune-mc"]).decode("utf-8")
+output = subprocess.check_output(["neptune-mc"], stderr=subprocess.STDOUT).decode("utf-8")
 end_time = time.time()
 print(output)
 print(f"Simulation completed in {end_time - start_time:.2f} seconds")
+
+# %%
+#
+# STEP 3: Finite volume fluid simulation
+#
+# This uses a python fluid solver, might be more efficient to use NEPTUNE-FV, not sure
+
+# Diffusion rate bgk_stddev**2/R_cx is split into rate and factor
+# Because they appear separately in the heterogeneous fluid equation
+Dr = 1/R_cx
+Df = bgk_stddev**2
+
+# Define boundary conditions
+
+def calc_flux_bgk(drift_wall, bgk_stddev_wall):
+    # Calculate the flux of particles hitting the boundary using the BGK distribution
+    # This is an integral of the velocity distribution function over the half-space of velocities pointing towards the boundary
+    # Note that this should be multiplied by the density to get the actual flux!
+    # Also note: drift_wall is the drift TOWARDS the wall, so for the right wall, this is v_mean,
+    # for the left wall, this is -v_mean.
+    return (bgk_stddev_wall / np.sqrt(2 * np.pi) * np.exp(-0.5 * (drift_wall / bgk_stddev_wall)**2) + drift_wall * 0.5 * (1 + math.erf(drift_wall / (bgk_stddev_wall * np.sqrt(2)))))
+
+
+# At the left boundary: absorbing bc
+# Calculate the flux of particles hitting the left boundary using the BGK distribution at the first cell
+dDdRcx = - bgk_stddev ** 2 / (R_cx * R_cx)
+dRcxdx = np.gradient(R_cx, xc, edge_order=2)
+bgk_mean_corr = bgk_mean_x + dDdRcx * dRcxdx
+
+neutral_flux_left = calc_flux_bgk(-bgk_mean_corr[0], bgk_stddev[0])
+# At left boundary: v_mean * u - Df*Dr * du/dx - Dr*dDf/dx * u = drift according to fluid equation = absorption flux = neutral_flux_left * u
+# => alpha = -(v_mean - Dr*dDf/dx) - neutral_flux_left
+# => beta = Df*Dr
+# => gamma = 0
+
+alpha_left = -bgk_mean_corr[0] - neutral_flux_left
+beta_left = Df[0] * Dr[0]
+gamma_left = 0.0
+
+bcL = [alpha_left, beta_left, gamma_left]
+
+# At the right boundary: partially specular reflection
+# Calculate the flux of particles hitting the right boundary using the BGK distribution at the last cell
+neutral_flux_right = calc_flux_bgk(bgk_mean_corr[-1], bgk_stddev[-1])
+# Also calculate the ion flux, as these recombine into neutrals
+ion_flux_right = calc_flux_bgk(bgk_mean_corr[-1], bgk_stddev[-1]) * ni[-1] * R_i_t * R_r
+# ion_flux_right = 0
+
+# At right boundary: -v_mean * u + Df*Dr * du = drift according to fluid equation = absorption flux = neutral_flux_right * u * (1-R_n_t)
+# => alpha = -v_mean - neutral_flux_right * (1-R_n_t)
+# => beta = Df*Dr
+# => gamma = 0
+alpha_right = bgk_mean_corr[-1] - neutral_flux_right * (1 - R_n_t)
+beta_right = -Df[-1] * Dr[-1]
+gamma_right = -ion_flux_right
+
+bcR = [alpha_right, beta_right, gamma_right]
+
+# Now solve the fluid equations
+# Even though the equations are linear, the discretization we use (MUSCL) is nonlinear, so we need a nonlinear solver
+
+import advection_diffusion
+from scipy.integrate import solve_ivp
+from scipy.optimize import fsolve
+
+def ode(t, u):
+    return advection_diffusion.advection_diffusion_dudt(u, bgk_mean_x, Dr, Df, R_i, volume_recombination, xb, bcL, bcR)
+
+# The nonlinear solver is very sensitive to the initial guess, so we do a few explicit time steps as an initial guess
+start_time = time.time()
+tf = 5.0e-7
+sol = solve_ivp(ode, [0, tf], np.zeros(len(xc)), method='RK45')
+density_start = sol.y[:, -1]
+end_time = time.time()
+print(f"Initial time stepping took {end_time - start_time:.4f} seconds")
+
+# Now use fsolve to find the steady state solution
+# Note, by not supplying a jacobian, fsolve will use a dense finite difference approximation, which is very expensive for large systems.
+# 1. Fsolve does not support sparse jacobians, so we would need to switch to a custom newton implementation
+# 2. Calculating jacobians is annoying and I didn't want to do it
+start_time = time.time()
+density_fv = fsolve(lambda u: advection_diffusion.advection_diffusion_dudt(u, bgk_mean_x, Dr, Df, R_i, volume_recombination, xb, bcL, bcR), density_start)
+end_time = time.time()
+print(f"fsolve method took {end_time - start_time:.4f} seconds")
+
+# Calculate momentum and energy using Vince's formulas
+momentum_fv = (density_fv * bgk_mean_x - Dr * np.gradient(density_fv*Df, xc, edge_order=2))/density_fv
+energy_fv = 0.5 * density_fv * (bgk_stddev**2 + bgk_mean_x**2) - Dr * np.gradient(bgk_mean_x * density_fv * bgk_stddev**2, xc, edge_order=2)
+energy_fv /= density_fv
+energy_fv *= m / eV # Convert to eV
 
 # %%
 # Open the output file
@@ -264,29 +388,36 @@ with h5py.File("output.h5", "r") as output_file:
     energy_unit = energy_unit.decode("utf-8") if isinstance(energy_unit, bytes) else energy_unit
     plt.figure(figsize=(12, 5))
     plt.subplot(1,3,1)
-    plt.plot(xc, D_density, label="D")
+    plt.plot(xc, D_density, label="D (MC)")
+    plt.plot(xc, density_fv, label="D (FV)")
     plt.xlabel("x (m)")
     plt.ylabel("Density" + f" ({density_unit})")
     plt.title("Density")
     plt.yscale("log")
     plt.grid()
+    plt.legend()
 
     plt.subplot(1,3,2)
-    plt.plot(xc, D_velocity_x/D_density, label="D")
+    plt.plot(xc, D_velocity_x/D_density, label="D (MC)")
+    plt.plot(xc, momentum_fv, label="D (FV)")
     plt.xlabel("x (m)")
     plt.ylabel("Velocity" + f" ({velocity_unit})")
     plt.title("Mean Velocity")
     plt.ylim(-1000,1000)
     plt.grid()
+    plt.legend()
     
     D_temperature = (D_energy_x/D_density * 2.0 - (D_velocity_x/D_density )**2) * m / e
+    D_fv_temperature = energy_fv * 2.0 - momentum_fv**2 * m / eV
     plt.subplot(1,3,3)
-    plt.plot(xc, D_temperature, label="D")
+    plt.plot(xc, D_temperature, label="D (MC)")
+    plt.plot(xc, D_fv_temperature, label="D (FV)")
     plt.plot(xc, ti, label="D+")
     plt.xlabel("x (m)")
     plt.ylabel("eV")
     plt.title("Temperature")
     plt.grid()
+    plt.legend()
     plt.tight_layout()
 
     plt.show()
