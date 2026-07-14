@@ -24,6 +24,35 @@ inline SimulationParams read_simulation_params(const H5::Group& params_group)
         params.n_batches =
             read_index_number(params_group.openDataSet("n_batches"));
     }
+    if (H5Lexists(params_group.getId(), "algorithm", H5P_DEFAULT)) {
+        std::string algorithm_str =
+            read_string(params_group.openDataSet("algorithm"));
+        if (algorithm_str == "MC") {
+            params.algorithm = AlgorithmType::MC;
+        }
+        else if (algorithm_str == "KDMC") {
+            params.algorithm = AlgorithmType::KDMC;
+        }
+        else if (algorithm_str == "KDMC_OLD") {
+            params.algorithm = AlgorithmType::KDMC_OLD;
+        }
+        else if (algorithm_str == "ARCMC") {
+            params.algorithm = AlgorithmType::ARCMC;
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown algorithm type: " + algorithm_str);
+        }
+    }
+    if(params.algorithm == AlgorithmType::KDMC || params.algorithm == AlgorithmType::KDMC_OLD) {
+        if (H5Lexists(params_group.getId(), "kdmc_dt", H5P_DEFAULT)) {
+            params.kdmc_dt = read_real_number(params_group.openDataSet("kdmc_dt"));
+        }
+        else {
+            throw std::runtime_error(
+                "Missing kdmc_dt parameter for KDMC algorithm");
+        }
+    }
     return params;
 }
 

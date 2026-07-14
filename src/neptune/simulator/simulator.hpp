@@ -15,7 +15,6 @@
 #include "neptune/geometry/cellcrossing.hpp"
 #include "neptune/geometry/mesh.hpp"
 #include "neptune/physics/background.hpp"
-#include "neptune/physics/collision_processes.hpp"
 #include "neptune/physics/particle.hpp"
 #include "neptune/physics/plasmabackground.hpp"
 #include "neptune/simulator/execution_statistics.hpp"
@@ -42,27 +41,25 @@ void simulate(
 
 void simulate_kdmc(
     Mesh& mesh,
-    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
-    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
+    const Background& background,
+    const vector<std::unique_ptr<ChargeExchangeCollision>>& cx_collisions,
+    const vector<std::unique_ptr<IonisationCollision>>& ion_collisions,
     vector<std::unique_ptr<Source>>& sources,
-    Estimator_old& estimator,
-    FluidEstimator& fluid_estimator,
+    EstimatorGroup& estimator_group,
     vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
     SimulationParams params,
-    ExecutionStatistics& stats,
-    real_t dt,
-    bool use_new_version = true);
+    ExecutionStatistics& stats);
 
-void simulate_armc(
-    Mesh& mesh,
-    const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
-    const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
-    vector<std::unique_ptr<Source>>& sources,
-    ArcmcEstimator& estimator,
-    vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
-    SimulationParams params,
-    ExecutionStatistics& stats,
-    index_t M);
+// void simulate_armc(
+//     Mesh& mesh,
+//     const vector<std::unique_ptr<BGKScatteringProcess>>& bgk_processes,
+//     const vector<std::unique_ptr<IonisationProcess>>& ion_processes,
+//     vector<std::unique_ptr<Source>>& sources,
+//     ArcmcEstimator& estimator,
+//     vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions,
+//     SimulationParams params,
+//     ExecutionStatistics& stats,
+//     index_t M);
 
 }  // namespace neptune
 

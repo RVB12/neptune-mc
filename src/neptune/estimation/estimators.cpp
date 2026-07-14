@@ -1,6 +1,5 @@
 #include "neptune/estimation/estimators.hpp"
 
-#include "neptune/finitevolume/advectiondiffusionsolver.hpp"
 #include "neptune/physics/physicalconstants.hpp"
 namespace neptune {
 
@@ -179,12 +178,12 @@ void FluidEstimator::finalize(
 
     std::cout << "Running fluid solver with dt = " << dt_fluid2 << std::endl;
 
-    advection_diffusion_solver(
-        mesh, boundary_conditions, advection_x, advection_y, advection_z,
-        diffusion_rate, diffusion_factor, ionisation_rate, dt, dt_fluid2,
-        initial_density, fluid_density_integral, fluid_momentum_x_integral,
-        fluid_momentum_y_integral, fluid_momentum_z_integral,
-        fluid_energy_integral, fluid_energy_x_integral);
+    // advection_diffusion_solver(
+    //     mesh, boundary_conditions, advection_x, advection_y, advection_z,
+    //     diffusion_rate, diffusion_factor, ionisation_rate, dt, dt_fluid2,
+    //     initial_density, fluid_density_integral, fluid_momentum_x_integral,
+    //     fluid_momentum_y_integral, fluid_momentum_z_integral,
+    //     fluid_energy_integral, fluid_energy_x_integral);
 }
 
 // This track length estimator is almost identical to the normal estimator

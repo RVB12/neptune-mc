@@ -39,11 +39,9 @@ list(APPEND neptune_SOURCES
     src/neptune/geometry/nonuniformmesh.cpp
     src/neptune/geometry/rotatednonuniformmesh.cpp
     src/neptune/physics/update_particle.cpp
-    src/neptune/common/json_conversions.cpp
     src/neptune/geometry/triangle.cpp
     src/neptune/simulator/simulate_kdmc.cpp
     src/neptune/estimation/estimators.cpp
-    src/neptune/finitevolume/advectiondiffusionsolver.cpp
     src/neptune/simulator/simulate_arcmc.cpp
     src/neptune/estimation/estimator.cpp
     src/neptune/estimation/estimatorgroup.cpp
@@ -92,10 +90,6 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(neptune PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-# Eigen
-find_package(Eigen3 REQUIRED NO_MODULE)
-target_link_libraries(neptune PUBLIC Eigen3::Eigen)
-
 # PCG
 
 FetchContent_Declare(
@@ -113,16 +107,10 @@ target_include_directories(PCGCPP INTERFACE
 target_link_libraries(neptune PUBLIC PCGCPP)
 
 # Main runner
-add_executable(neptune-generate-neighborlist src/neptune/generate_neighborlist.cpp)
-target_link_libraries(neptune-generate-neighborlist PRIVATE neptune)
-
 add_executable(neptune-mc src/neptune/main_hdf5.cpp)
 target_link_libraries(neptune-mc PRIVATE neptune)
 find_package(HDF5 REQUIRED COMPONENTS CXX)
 target_link_libraries(neptune-mc PRIVATE HDF5::HDF5)
-
-add_executable(neptune-fv src/neptune/fv_json.cpp)
-target_link_libraries(neptune-fv PRIVATE neptune)
 
 #
 # Tests
@@ -135,7 +123,6 @@ if(Catch2_FOUND)
         tests/cpp/test_vec3.cpp
         tests/cpp/test_voxelmesh.cpp
         tests/cpp/test_trianglemesh.cpp
-        tests/cpp/test_json.cpp
         tests/cpp/test_spatialindex.cpp
         tests/cpp/test_rotatedtrianglemesh.cpp
     )

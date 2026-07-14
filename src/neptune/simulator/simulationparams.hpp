@@ -4,6 +4,14 @@
 #include "neptune/common/utils.hpp"
 
 namespace neptune {
+
+enum class AlgorithmType {
+    MC,  // Standard Monte Carlo
+    KDMC,  // Kinetic-Diffusion Monte Carlo with new boundary conditions
+    KDMC_OLD,  // Kinetic-Diffusion Monte Carlo with old boundary conditions
+    ARCMC  // Artifially Reduced Collisionality Monte Carlo
+};
+
 struct SimulationParams {
     // This value is used to seed the rng
     uint64_t seed = 1302;
@@ -14,6 +22,10 @@ struct SimulationParams {
     real_t t_final = -1.0;
     // The number of batches to run (for variance estimation)
     index_t n_batches = 1;
+    // The algorithm to use
+    AlgorithmType algorithm = AlgorithmType::MC;
+    // Time step to use for KDMC
+    real_t kdmc_dt;
 };
 }  // namespace neptune
 

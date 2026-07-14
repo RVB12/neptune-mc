@@ -65,8 +65,8 @@ void simulate(
             i_source = left - 1;
 
             Particle particle = sources[i_source]->generate_particle(
-                global_particle_index + i_batch * total_particles, params.seed, mesh,
-                background);
+                global_particle_index + i_batch * total_particles, params.seed,
+                mesh, background);
 
             for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
                 Particle particle_old = particle;

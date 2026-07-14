@@ -18,9 +18,9 @@
 #include "neptune/io/io_collisions.hpp"
 #include "neptune/io/io_common.hpp"
 #include "neptune/io/io_estimators.hpp"
+#include "neptune/io/io_extra.hpp"
 #include "neptune/io/io_mesh.hpp"
 #include "neptune/io/io_sources.hpp"
-#include "neptune/io/io_extra.hpp"
 #include "neptune/physics/background.hpp"
 #include "neptune/physics/species.hpp"
 #include "neptune/simulator/simulator.hpp"
@@ -85,8 +85,19 @@ int main(int argc, char** argv)
         read_simulation_params(input_file.openGroup("/params"));
 
     ExecutionStatistics stats;
-    simulate(*mesh, background, cx_collisions, ionisation_collisions, sources,
-             estimator_group, boundary_conditions, params, stats);
+    if (params.algorithm == AlgorithmType::MC) {
+        simulate(*mesh, background, cx_collisions, ionisation_collisions,
+                 sources, estimator_group, boundary_conditions, params, stats);
+    }
+    else if (params.algorithm == AlgorithmType::KDMC or
+             params.algorithm == AlgorithmType::KDMC_OLD) {
+        simulate_kdmc(*mesh, background, cx_collisions, ionisation_collisions,
+                      sources, estimator_group, boundary_conditions, params,
+                      stats);
+    }
+    else {
+        throw std::runtime_error("Unknown algorithm type");
+    }
 
     // Now write the results to the output file
     H5::H5File output_file(output_file_name, H5F_ACC_TRUNC);
