@@ -94,8 +94,7 @@ endif()
 
 FetchContent_Declare(
     pcg_cpp
-    GIT_REPOSITORY https://github.com/imneme/pcg-cpp.git
-    GIT_COMMIT 428802d1a5634f96bcd0705fab379ff0113bcf13
+    URL https://github.com/imneme/pcg-cpp/archive/428802d1a5634f96bcd0705fab379ff0113bcf13.tar.gz
 )
 FetchContent_MakeAvailable(pcg_cpp)
 
