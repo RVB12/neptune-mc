@@ -30,6 +30,8 @@ class EstimatorGroup {
 
     void tally_final(const Particle& p, const Mesh& mesh);
 
+    void tally_fluid(const Particle& p, const Particle& p_old, const Mesh& mesh);
+
     // Combine the estimates of two estimator groups
     void combine(const EstimatorGroup& other);
 
@@ -47,6 +49,7 @@ class EstimatorGroup {
     // used to quickly find the relevant estimators for a given particle
     std::vector<Estimator*> track_length_estimators_by_species[NUM_SPECIES];
     std::vector<Estimator*> final_estimators_by_species[NUM_SPECIES];
+    std::vector<Estimator*> kdmc_estimators_by_species[NUM_SPECIES];
 };
 
 #pragma omp declare reduction(                                            \

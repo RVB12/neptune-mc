@@ -769,9 +769,8 @@ void simulate_kdmc(
                                             t_kdmc_end - particle.t -
                                                 final_free_flight_time);
 
-                            // fluid_estimator.add_fluid_step(particle,
-                            //                                particle_old,
-                            //                                mesh);
+                            estimator_group.tally_fluid(particle, particle_old,
+                                                        mesh);
                         }
                         else {
                             particle_old = particle;
@@ -782,8 +781,8 @@ void simulate_kdmc(
                                     final_free_flight_time);
 
                             if (step_succesfull) {
-                                // fluid_estimator.add_fluid_step(
-                                //     particle, particle_old, mesh);
+                                estimator_group.tally_fluid(particle,
+                                                            particle_old, mesh);
                             }
                             else {
                                 num_kd_to_kinetic_switches++;
@@ -846,7 +845,8 @@ void simulate_kdmc(
                     //         R_i = ion_processes[0]
                     //                   ->rate[particle_old.geometry.cell_id];
                     //     }
-                    //     estimator.add_track_length(particle, particle_old, mesh,
+                    //     estimator.add_track_length(particle, particle_old,
+                    //     mesh,
                     //                                R_i);
                     //     if (std::abs(particle.weight) < 1.0e-4) {
                     //         break;

@@ -125,6 +125,12 @@ void Estimator::tally(const Particle& p, real_t weight, bool is_toroidal)
             tally_vector[p.geometry.cell_id] +=
                 (0.5 * p.geometry.velocity.z * p.geometry.velocity.z) * weight;
             break;
+        case QOI::KDMC_Fluid_Start_Density:
+            tally_vector[p.geometry.cell_id] += weight;
+            break;
+        case QOI::KDMC_Fluid_End_Density:
+            tally_vector[p.geometry.cell_id] += weight;
+            break;
     }
 }
 

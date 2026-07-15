@@ -15,12 +15,16 @@ enum class QOI {
     Energy_x,
     Energy_y,
     Energy_z,
+    KDMC_Fluid_Start_Density,
+    KDMC_Fluid_End_Density,
 };
 
 inline std::string getUnit(QOI qoi)
 {
     switch (qoi) {
         case QOI::Density:
+        case QOI::KDMC_Fluid_Start_Density:
+        case QOI::KDMC_Fluid_End_Density:
             return "m^-3";
         case QOI::Velocity_x:
         case QOI::Velocity_y:
@@ -46,6 +50,8 @@ inline QOI stringtoQOI(std::string s)
     if (s == "energy_x") return QOI::Energy_x;
     if (s == "energy_y") return QOI::Energy_y;
     if (s == "energy_z") return QOI::Energy_z;
+    if (s == "kdmc_fluid_start_density") return QOI::KDMC_Fluid_Start_Density;
+    if (s == "kdmc_fluid_end_density") return QOI::KDMC_Fluid_End_Density;
     throw std::runtime_error("Unknown QOI: " + s);
 }
 
@@ -68,6 +74,10 @@ inline std::string QOItostring(QOI qoi)
             return "energy_y";
         case QOI::Energy_z:
             return "energy_z";
+        case QOI::KDMC_Fluid_Start_Density:
+            return "kdmc_fluid_start_density";
+        case QOI::KDMC_Fluid_End_Density:
+            return "kdmc_fluid_end_density";
         default:
             throw std::runtime_error("Unknown QOI");
     }

@@ -25,6 +25,10 @@ EstimatorGroup::EstimatorGroup(
             final_estimators_by_species[static_cast<size_t>(estimator.species)]
                 .push_back(&estimator);
         }
+        else if (estimator.estimator_type == EstimatorType::KDMCEstimator) {
+            kdmc_estimators_by_species[static_cast<size_t>(estimator.species)]
+                .push_back(&estimator);
+        }
     }
 }
 
@@ -87,6 +91,33 @@ void EstimatorGroup::tally_final(const Particle& p, const Mesh& mesh)
     for (auto* estimator :
          final_estimators_by_species[static_cast<size_t>(p.species)]) {
         estimator->tally(p, weight, mesh.is_toroidal());
+    }
+}
+
+void EstimatorGroup::tally_fluid(const Particle& p,
+                                 const Particle& p_old,
+                                 const Mesh& mesh)
+{
+    if (kdmc_estimators_by_species[static_cast<size_t>(p.species)].empty()) {
+        // No fluid estimators for this species, so we can skip the calculations
+        return;
+    }
+
+    real_t volume = mesh.get_volume(p.geometry.cell_id);
+    real_t weight = p.weight / volume * p.intensity;
+
+    real_t volume_old = mesh.get_volume(p_old.geometry.cell_id);
+    real_t weight_old = p_old.weight / volume_old * p_old.intensity;
+
+    // Loop over the relevant fluid estimators for this particle and tally them
+    for (auto* estimator :
+         kdmc_estimators_by_species[static_cast<size_t>(p.species)]) {
+        if (estimator->qoi == QOI::KDMC_Fluid_Start_Density) {
+            estimator->tally(p_old, weight_old, mesh.is_toroidal());
+        }
+        else if (estimator->qoi == QOI::KDMC_Fluid_End_Density) {
+            estimator->tally(p, weight, mesh.is_toroidal());
+        }
     }
 }
 

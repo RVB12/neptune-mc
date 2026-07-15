@@ -11,12 +11,13 @@
 
 namespace neptune {
 
-enum class EstimatorType { TrackLength, FinalTime };
+enum class EstimatorType { TrackLength, FinalTime, KDMCEstimator };
 
 inline EstimatorType stringtoEstimatorType(std::string s)
 {
     if (s == "track_length") return EstimatorType::TrackLength;
     if (s == "final_time") return EstimatorType::FinalTime;
+    if (s == "KDMC") return EstimatorType::KDMCEstimator;
     throw std::runtime_error("Unknown estimator type: " + s);
 }
 
@@ -27,6 +28,8 @@ inline std::string estimator_type_tostring(EstimatorType estimator_type)
             return "track_length";
         case EstimatorType::FinalTime:
             return "final_time";
+        case EstimatorType::KDMCEstimator:
+            return "KDMC";
         default:
             throw std::runtime_error("Unknown estimator type");
     }

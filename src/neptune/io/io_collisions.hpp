@@ -9,7 +9,7 @@
 namespace neptune {
 
 inline std::tuple<vector<std::unique_ptr<ChargeExchangeCollision>>,
-                   vector<std::unique_ptr<IonisationCollision>>>
+                  vector<std::unique_ptr<IonisationCollision>>>
 read_collisions(const H5::Group& collisions_group)
 {
     std::vector<std::unique_ptr<Collision>> collisions;
@@ -89,6 +89,14 @@ read_collisions(const H5::Group& collisions_group)
                 throw std::runtime_error(
                     "Unsupported model for ionisation collision: " + model);
             }
+        }
+
+        if (H5Lexists(collision_group.getId(), "output_collision_info",
+                      H5P_DEFAULT)) {
+            bool output_collision_info =
+                read_bool(collision_group.openDataSet("output_collision_info"));
+            collisions[collisions.size() - 1]->output_collision_info =
+                output_collision_info;
         }
     }
 

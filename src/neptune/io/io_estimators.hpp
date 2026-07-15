@@ -52,7 +52,11 @@ inline void write_estimators(H5::H5File& output_file,
             !estimator_group
                  .final_estimators_by_species[static_cast<index_t>(species)]
                  .empty();
-        if (!has_tl && !has_final) {
+        bool has_kdmc =
+            !estimator_group
+                 .kdmc_estimators_by_species[static_cast<index_t>(species)]
+                 .empty();
+        if (!has_tl && !has_final && !has_kdmc) {
             continue;  // skip species for which we have no estimators
         }
 
@@ -128,6 +132,45 @@ inline void write_estimators(H5::H5File& output_file,
                 if (estimator->estimate_variance) {
                     H5::DataSpace dataspace_var(1, &dim);  // 1D array
                     H5::DataSet variance_dataset = final_group.createDataSet(
+                        dataset_name + "_variance", H5::PredType::NATIVE_DOUBLE,
+                        dataspace_var);
+
+                    vector<real_t> variance_vector = estimator->get_variance();
+
+                    variance_dataset.write(variance_vector.data(),
+                                           H5::PredType::NATIVE_DOUBLE);
+                }
+            }
+        }
+
+        if (has_kdmc) {
+            H5::Group kdmc_group = species_group.createGroup("kdmc_fluid");
+
+            for (auto estimator : estimator_group.kdmc_estimators_by_species
+                                      [static_cast<index_t>(species)]) {
+                std::string dataset_name = QOItostring(estimator->qoi);
+
+                vector<real_t> estimate_vector = estimator->get_estimate();
+
+                hsize_t dim = estimate_vector.size();
+                H5::DataSpace dataspace(1, &dim);  // 1D array
+
+                H5::DataSet dataset = kdmc_group.createDataSet(
+                    dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+
+                dataset.write(estimate_vector.data(),
+                              H5::PredType::NATIVE_DOUBLE);
+
+                // Add unit attribute to the dataset
+                std::string unit = getUnit(estimator->qoi);
+                H5::StrType strType(H5::PredType::C_S1, unit.size());
+                H5::Attribute unit_attr =
+                    dataset.createAttribute("unit", strType, H5::DataSpace());
+                unit_attr.write(strType, unit);
+
+                if (estimator->estimate_variance) {
+                    H5::DataSpace dataspace_var(1, &dim);  // 1D array
+                    H5::DataSet variance_dataset = kdmc_group.createDataSet(
                         dataset_name + "_variance", H5::PredType::NATIVE_DOUBLE,
                         dataspace_var);
 
