@@ -28,7 +28,7 @@ inline EstimatorGroup read_estimators(const H5::Group& estimators_group,
         bool estimate_variance = false;
         if (H5Lexists(estimator_group.getId(), "estimate_variance",
                       H5P_DEFAULT)) {
-            bool estimate_variance =
+            estimate_variance =
                 read_bool(estimator_group.openDataSet("estimate_variance"));
         }
 

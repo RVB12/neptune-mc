@@ -50,129 +50,37 @@ Vec3 calculate_drift_kdmc(
 
     // Calculate derivative of the diffusion term and add it to the drift term
     Vec3 diffusion_induced_drift(0, 0, 0);
-    VoxelMesh* voxel_mesh = dynamic_cast<VoxelMesh*>(const_cast<Mesh*>(&mesh));
-    if (voxel_mesh != nullptr) {
-        Index3D ij = voxel_mesh->linear_to_tuple(cell_id);
 
-        if (ij.i > 0 and ij.i < voxel_mesh->nx - 1) {
-            particle.geometry.cell_id =
-                voxel_mesh->tuple_to_linear(Index3D(ij.i + 1, ij.j, ij.k));
-            real_t R_t_plus = 0;
-            for (index_t i = 0; i < cx_collisions.size(); i++) {
-                R_t_plus +=
-                    cx_collisions[i]->collision_rate(particle, background);
-            }
-            for (index_t i = 0; i < ion_collisions.size(); i++) {
-                R_t_plus +=
-                    ion_collisions[i]->collision_rate(particle, background);
-            }
-            particle.geometry.cell_id =
-                voxel_mesh->tuple_to_linear(Index3D(ij.i - 1, ij.j, ij.k));
-            real_t R_t_minus = 0;
-            for (index_t i = 0; i < cx_collisions.size(); i++) {
-                R_t_minus +=
-                    cx_collisions[i]->collision_rate(particle, background);
-            }
-            for (index_t i = 0; i < ion_collisions.size(); i++) {
-                R_t_minus +=
-                    ion_collisions[i]->collision_rate(particle, background);
-            }
-            diffusion_induced_drift.x =
-                (R_t_plus - R_t_minus) / (2 * voxel_mesh->dx);
+    Vec3 center0 = mesh.get_center(cell_id);
+
+    for (index_t i = 0; i < mesh.get_n_surfaces(cell_id); i++) {
+        index_t neighbour_id = mesh.get_neighbour(cell_id, i);
+        if (neighbour_id < 0) {
+            continue;  // No neighbour, skip
         }
 
-        if (ij.j > 0 and ij.j < voxel_mesh->ny - 1) {
-            particle.geometry.cell_id =
-                voxel_mesh->tuple_to_linear(Index3D(ij.i, ij.j + 1, ij.k));
-            real_t R_t_plus = 0;
-            for (index_t i = 0; i < cx_collisions.size(); i++) {
-                R_t_plus +=
-                    cx_collisions[i]->collision_rate(particle, background);
-            }
-            for (index_t i = 0; i < ion_collisions.size(); i++) {
-                R_t_plus +=
-                    ion_collisions[i]->collision_rate(particle, background);
-            }
-            particle.geometry.cell_id =
-                voxel_mesh->tuple_to_linear(Index3D(ij.i, ij.j - 1, ij.k));
-            real_t R_t_minus = 0;
-            for (index_t i = 0; i < cx_collisions.size(); i++) {
-                R_t_minus +=
-                    cx_collisions[i]->collision_rate(particle, background);
-            }
-            for (index_t i = 0; i < ion_collisions.size(); i++) {
-                R_t_minus +=
-                    ion_collisions[i]->collision_rate(particle, background);
-            }
-            diffusion_induced_drift.y =
-                (R_t_plus - R_t_minus) / (2 * voxel_mesh->dy);
+        particle.geometry.cell_id = neighbour_id;
+        real_t R_t_neighbour = 0;
+        for (index_t i = 0; i < cx_collisions.size(); i++) {
+            R_t_neighbour +=
+                cx_collisions[i]->collision_rate(particle, background);
+        }
+        for (index_t i = 0; i < ion_collisions.size(); i++) {
+            R_t_neighbour +=
+                ion_collisions[i]->collision_rate(particle, background);
         }
 
-        if (ij.k > 0 and ij.k < voxel_mesh->nz - 1) {
-            particle.geometry.cell_id =
-                voxel_mesh->tuple_to_linear(Index3D(ij.i, ij.j, ij.k + 1));
-            real_t R_t_plus = 0;
-            for (index_t i = 0; i < cx_collisions.size(); i++) {
-                R_t_plus +=
-                    cx_collisions[i]->collision_rate(particle, background);
-            }
-            for (index_t i = 0; i < ion_collisions.size(); i++) {
-                R_t_plus +=
-                    ion_collisions[i]->collision_rate(particle, background);
-            }
-            particle.geometry.cell_id =
-                voxel_mesh->tuple_to_linear(Index3D(ij.i, ij.j, ij.k - 1));
-            real_t R_t_minus = 0;
-            for (index_t i = 0; i < cx_collisions.size(); i++) {
-                R_t_minus +=
-                    cx_collisions[i]->collision_rate(particle, background);
-            }
-            for (index_t i = 0; i < ion_collisions.size(); i++) {
-                R_t_minus +=
-                    ion_collisions[i]->collision_rate(particle, background);
-            }
-            diffusion_induced_drift.z =
-                (R_t_plus - R_t_minus) / (2 * voxel_mesh->dz);
-        }
-
-        real_t dDdsigma = (-2 * bgk_stddev * bgk_stddev) /
-                          (R_t * R_t * R_t_theta) *
-                          (std::exp(-R_t_theta) - 1 + R_t_theta);
-        dDdsigma += (bgk_stddev * bgk_stddev) / (R_t * R_t) *
-                    (1 - std::exp(-R_t_theta));
-        diffusion_induced_drift *= dDdsigma;
+        Vec3 normal = mesh.get_surface_normal(cell_id, i, center0);
+        Vec3 neighbour_center = mesh.get_center(neighbour_id);
+        real_t distance = (neighbour_center - center0).norm();
+        diffusion_induced_drift += (R_t_neighbour - R_t) / distance * normal;
     }
-    // TriangleMesh* triangle_mesh =
-    //     dynamic_cast<TriangleMesh*>(const_cast<Mesh*>(&mesh));
-    // if (triangle_mesh != nullptr) {
-    //     Vec3 center0 = triangle_mesh->get_center(cell_id);
 
-    //     for (index_t i = 0; i < 3; i++) {
-    //         index_t neighbour_id = triangle_mesh->get_neighbour(cell_id, i);
-    //         if (neighbour_id == -1) {
-    //             continue;  // No neighbour, skip
-    //         }
-
-    //         real_t R_t_neighbour = bgk_processes[0]->rate[neighbour_id];
-    //         if (ion_processes.size() > 0) {
-    //             R_t_neighbour += ion_processes[0]->rate[neighbour_id];
-    //         }
-
-    //         Vec3 normal =
-    //             triangle_mesh->get_surface_normal(cell_id, i, center0);
-    //         Vec3 neighbour_center = triangle_mesh->get_center(neighbour_id);
-    //         real_t distance = (neighbour_center - center0).norm();
-    //         diffusion_induced_drift +=
-    //             (R_t_neighbour - R_t) / distance * normal;
-    //     }
-
-    //     real_t dDdsigma = (-2 * bgk_stddev * bgk_stddev) /
-    //                       (R_t * R_t * R_t_theta) *
-    //                       (std::exp(-R_t_theta) - 1 + R_t_theta);
-    //     dDdsigma += (bgk_stddev * bgk_stddev) / (R_t * R_t) *
-    //                 (1 - std::exp(-R_t_theta));
-    //     diffusion_induced_drift *= dDdsigma;
-    // }
+    real_t dDdRt = (-2 * bgk_stddev * bgk_stddev) / (R_t * R_t * R_t_theta) *
+                   (std::exp(-R_t_theta) - 1 + R_t_theta);
+    dDdRt +=
+        (bgk_stddev * bgk_stddev) / (R_t * R_t) * (1 - std::exp(-R_t_theta));
+    diffusion_induced_drift *= dDdRt;
 
     return (u + diffusion_induced_drift);
 }
@@ -564,6 +472,9 @@ void kdmc_fluid_step(
                 v2 /= v2.norm();
                 Vec3 v3 = normal.cross(v2);
 
+                // TODO: we resample the two orthogonal components
+                // but (for specular reflection) we should actually just keep
+                // the same orthogonal components as before
                 real_t n2 = r_normal(p.rng);
                 real_t n3 = r_normal(p.rng);
 
@@ -648,7 +559,7 @@ void simulate_kdmc(
 #pragma omp parallel reduction(+ : num_crossings, num_collisions) \
     reduction(EstimatorGroupReduction : estimator_group)
     for (index_t i_batch = 0; i_batch < params.n_batches; i_batch++) {
-#pragma omp for schedule(guided, 10)
+#pragma omp for schedule(guided, 100)
         for (index_t global_particle_index = 0;
              global_particle_index < total_particles; global_particle_index++) {
             // Find source and local particles index
@@ -821,33 +732,25 @@ void simulate_kdmc(
                         break;
                     }
 
-                    // This is commented out, because instead of actually taking
-                    // the free flight time as fully free flight (which
+                    // This can be commented out, because instead of actually
+                    // taking the free flight time as fully free flight (which
                     // would ignore the heterogeneity of the collision rate)
                     // we can just not do anything, not update the time, and the
                     // next kinetic step will take care of the kinetic part.
 
                     // Final free flight time
-                    // while (particle.t < t_kdmc_end) {
-                    //     particle_old = particle;
-                    //     // Create empty collision lists to simulate no
-                    //     // collisions
-                    //     vector<std::unique_ptr<BGKScatteringProcess>>
-                    //         empty_bgk_processes;
-                    //     // vector<std::unique_ptr<IonisationProcess>>
-                    //     //     empty_ion_processes;
-                    //     EventType event = update_particle(
-                    //         mesh, empty_bgk_processes, ion_processes,
-                    //         boundary_conditions, particle, t_kdmc_end);
+                    // vector<std::unique_ptr<ChargeExchangeCollision>>
+                    // cx_collisions_empty; while (particle.t < t_kdmc_end) {
 
-                    //     real_t R_i = 0;
-                    //     if (ion_processes.size() > 0) {
-                    //         R_i = ion_processes[0]
-                    //                   ->rate[particle_old.geometry.cell_id];
-                    //     }
-                    //     estimator.add_track_length(particle, particle_old,
-                    //     mesh,
-                    //                                R_i);
+                    //     particle_old = particle;
+                    //     EventType event = update_particle(
+                    //         mesh, background, cx_collisions_empty,
+                    //         ion_collisions, boundary_conditions, particle,
+                    //         t_kdmc_end);
+
+                    //     estimator_group.tally_track_length(
+                    //         particle, particle_old, mesh, background,
+                    //         ion_collisions);
                     //     if (std::abs(particle.weight) < 1.0e-4) {
                     //         break;
                     //     }

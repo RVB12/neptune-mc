@@ -6,6 +6,7 @@
 #include "neptune/sources/source.hpp"
 #include "neptune/sources/volumesource.hpp"
 #include "neptune/sources/wallreflectionsource.hpp"
+#include "neptune/sources/pointsource.hpp"
 
 namespace neptune {
 
@@ -89,6 +90,21 @@ inline vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_gro
                     0, species, intensity, cell_index,
                     Vec3(velocity_x, velocity_y, velocity_z), velocity_std));
             }
+        } else if(source_type == "point") {
+            Species species = read_species(source_group.openDataSet("species"));
+            Vec3 position;
+            position.x = read_real_number(source_group.openDataSet("pos_x"));
+            position.y = read_real_number(source_group.openDataSet("pos_y"));
+            position.z = read_real_number(source_group.openDataSet("pos_z"));
+            real_t intensity = read_real_number(source_group.openDataSet("intensity"));
+            Vec3 velocity;
+            velocity.x = read_real_number(source_group.openDataSet("vel_mean_x"));
+            velocity.y = read_real_number(source_group.openDataSet("vel_mean_y"));
+            velocity.z = read_real_number(source_group.openDataSet("vel_mean_z"));
+            real_t velocity_std = read_real_number(source_group.openDataSet("vel_std"));
+
+            sources.push_back(std::make_unique<PointSource>(
+                0, intensity, species, position, velocity, velocity_std));
         }
         else {
             throw std::runtime_error("Unknown source type: " + source_type);

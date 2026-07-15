@@ -24,9 +24,8 @@ class VolumeSource : public Source {
                  index_t cell_idx_,
                  Vec3 vel_mean_,
                  real_t vel_stddev_)
-        : Source(num_particles_),
+        : Source(num_particles_, intensity_),
           species(species_),
-          intensity(intensity_),
           cell_idx(cell_idx_),
           vel_mean(vel_mean_),
           vel_stddev(vel_stddev_)
@@ -42,7 +41,6 @@ class VolumeSource : public Source {
 
     Species species;
     Vec3 vel_mean;      // Mean velocity of the particles
-    real_t intensity;   // The intensity of the source (particles per second)
     real_t vel_stddev;  // Standard deviation of the velocity of the particles
     index_t cell_idx = 0;  // The cell index where the particles are generated
 };

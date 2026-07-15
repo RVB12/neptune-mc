@@ -29,8 +29,7 @@ class SurfaceSource : public Source {
                   index_t cell_idx_,
                   index_t surface_id_,
                   real_t v_norm_)
-        : Source(num_particles_),
-          intensity(intensity_),
+        : Source(num_particles_, intensity_),
           species(species_),
           cell_idx(cell_idx_),
           surface_id(surface_id_),
@@ -47,7 +46,6 @@ class SurfaceSource : public Source {
 
     Species species;       // Species of the generated particles
     real_t v_norm;         // Velocity magnitude of the particles
-    real_t intensity;      // The intensity of the source (particles per second)
     index_t cell_idx = 0;  // The cell index where the particles are generated
     index_t surface_id = 0;  // The surface id where the particles are generated
 };

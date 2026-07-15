@@ -26,8 +26,7 @@ class PointSource : public Source {
                 Vec3 pos_,
                 Vec3 vel_mean_,
                 real_t vel_stddev_)
-        : Source(num_particles_),
-          intensity(intensity_),
+        : Source(num_particles_, intensity_),
           species(species_),
           pos(pos_),
           vel_mean(vel_mean_),
@@ -46,7 +45,6 @@ class PointSource : public Source {
     Vec3 pos;           // Initial position of the particles
     Vec3 vel_mean;      // Mean velocity of the particles
     real_t vel_stddev;  // Standard deviation of the velocity of the particles
-    real_t intensity;   // The intensity of the source (particles per second)
     index_t cell_idx = -1;  // The cell index where the particles are generated
                             // initially set to -1 and updated to the true cell
                             // index during the particle generation process
