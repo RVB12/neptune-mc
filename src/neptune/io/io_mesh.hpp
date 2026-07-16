@@ -7,6 +7,7 @@
 #include "neptune/geometry/rotatedtrianglemesh.hpp"
 #include "neptune/geometry/trianglemesh.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
+#include "neptune/geometry/rotatednonuniformmesh.hpp"
 
 namespace neptune {
 
@@ -57,6 +58,13 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
         VoxelMesh mesh(Lx, Ly, Lz, nx, ny, nz);
         return std::make_unique<VoxelMesh>(mesh);
     }
+    else if (mesh_type == "non_uniform") {
+        vector<real_t> cb_x = read_real_vector(mesh_group.openDataSet("cb_x"));
+        vector<real_t> cb_y = read_real_vector(mesh_group.openDataSet("cb_y"));
+        vector<real_t> cb_z = read_real_vector(mesh_group.openDataSet("cb_z"));
+        NonUniformMesh mesh(cb_x, cb_y, cb_z);
+        return std::make_unique<NonUniformMesh>(mesh);
+    }
     else if (mesh_type == "triangle") {
         vector<Vec2> vertices =
             read_vec2_vector(mesh_group.openDataSet("vertices"));
@@ -73,16 +81,11 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
         RotatedTriangleMesh mesh(vertices, triangles);
         return std::make_unique<RotatedTriangleMesh>(mesh);
     }
-    else if (mesh_type == "non_uniform") {
-        vector<real_t> cb_x = read_real_vector(mesh_group.openDataSet("cb_x"));
-        vector<real_t> cb_y = read_real_vector(mesh_group.openDataSet("cb_y"));
-        vector<real_t> cb_z = read_real_vector(mesh_group.openDataSet("cb_z"));
-        NonUniformMesh mesh(cb_x, cb_y, cb_z);
-        return std::make_unique<NonUniformMesh>(mesh);
-    }
     else if (mesh_type == "rotated_non_uniform") {
-        throw std::runtime_error(
-            "Rotated non-uniform mesh is not implemented yet");
+        vector<real_t> cb_r = read_real_vector(mesh_group.openDataSet("cb_r"));
+        vector<real_t> cb_z = read_real_vector(mesh_group.openDataSet("cb_z"));
+        RotatedNonUniformMesh mesh(cb_r, cb_z);
+        return std::make_unique<RotatedNonUniformMesh>(mesh);
     }
     else {
         throw std::runtime_error("Unknown mesh type: " + mesh_type);
