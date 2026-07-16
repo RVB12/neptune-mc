@@ -26,6 +26,8 @@ struct SimulationParams {
     AlgorithmType algorithm = AlgorithmType::MC;
     // Time step to use for KDMC
     real_t kdmc_dt;
+    // Parameter for ARCMC
+    index_t armc_M;
 };
 }  // namespace neptune
 

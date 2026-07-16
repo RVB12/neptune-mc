@@ -53,6 +53,15 @@ inline SimulationParams read_simulation_params(const H5::Group& params_group)
                 "Missing kdmc_dt parameter for KDMC algorithm");
         }
     }
+    if(params.algorithm == AlgorithmType::ARCMC) {
+        if (H5Lexists(params_group.getId(), "armc_M", H5P_DEFAULT)) {
+            params.armc_M = read_index_number(params_group.openDataSet("armc_M"));
+        }
+        else {
+            throw std::runtime_error(
+                "Missing armc_M parameter for ARCMC algorithm");
+        }
+    }
     return params;
 }
 
