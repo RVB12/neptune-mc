@@ -9,7 +9,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.19.1
 #   kernelspec:
-#     display_name: .venv (3.12.3.final.0)
+#     display_name: .venv (3.12.3)
 #     language: python
 #     name: python3
 # ---
@@ -90,7 +90,7 @@ delta_pot_sh = 3.1
 
 
 # Number of particles to use in the simulation
-num_particles = int(1e6)
+num_particles = int(1e7)
 estimate_variance = False
 n_batches = 1
 
@@ -173,10 +173,8 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     # Mesh
     # 
     mesh = f.create_group("mesh")
-    mesh["type"] = "non_uniform"
+    mesh["type"] = "non_uniform_1D"
     mesh["cb_x"] = xb
-    mesh["cb_y"] = [-Ly/2, Ly/2]
-    mesh["cb_z"] = [-Lz/2, Lz/2]
     # 
     # Collisions
     # 
@@ -233,7 +231,7 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     wall_source = sources.create_group("R_wall")
     wall_source["type"] = "wall_recycling"
     wall_source["cell_indices"] = [nx-1]
-    wall_source["surface_indices"] = [3]  # The right wall is surface 3
+    wall_source["surface_indices"] = [1]  # The right wall is surface 1
     wall_source["sheath_potential"] = delta_pot_sh
     wall_source["franck_condon_temp"] = 2.0
     wall_source["Rt"] = 0.9
@@ -262,17 +260,11 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     energy_estimator["estimate_variance"] = 1 if estimate_variance else 0
     # Boundary conditions
     boundary_conditions = f.create_group("boundary_conditions")
-    for i in range(6):
-        if i == 0:
-            bc = boundary_conditions.create_group(f"bc{i}")
-            bc["type"] = "absorbing"
-        elif i == 3:
-            bc = boundary_conditions.create_group(f"bc{i}")
-            bc["type"] = "partially_specular"
-            bc["absorption_coefficient"] = 1.0-R_n_t
-        else:
-            bc = boundary_conditions.create_group(f"bc{i}")
-            bc["type"] = "specular"
+    bcleft = boundary_conditions.create_group(f"bc0")
+    bcleft["type"] = "absorbing"
+    bcright = boundary_conditions.create_group(f"bc1")
+    bcright["type"] = "partially_specular"
+    bcright["absorption_coefficient"] = 1.0-R_n_t
     # Simulation parameters
     params = f.create_group("params")
     params["max_steps"] = 10000

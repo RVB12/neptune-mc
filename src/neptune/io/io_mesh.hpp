@@ -8,6 +8,7 @@
 #include "neptune/geometry/trianglemesh.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
 #include "neptune/geometry/rotatednonuniformmesh.hpp"
+#include "neptune/geometry/nonuniform1Dmesh.hpp"
 
 namespace neptune {
 
@@ -64,6 +65,11 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
         vector<real_t> cb_z = read_real_vector(mesh_group.openDataSet("cb_z"));
         NonUniformMesh mesh(cb_x, cb_y, cb_z);
         return std::make_unique<NonUniformMesh>(mesh);
+    }
+    else if (mesh_type == "non_uniform_1D") {
+        vector<real_t> cb_x = read_real_vector(mesh_group.openDataSet("cb_x"));
+        NonUniform1DMesh mesh(cb_x);
+        return std::make_unique<NonUniform1DMesh>(mesh);
     }
     else if (mesh_type == "triangle") {
         vector<Vec2> vertices =

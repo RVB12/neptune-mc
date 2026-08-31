@@ -1,6 +1,6 @@
 # NEPTUNE user guide
 
-This is a user guide for NEPTUNE-MC, we note that documentation for NEPTUNE-FV is not available yet.
+This is a user guide for NEPTUNE-MC.
 
 ## Installation
 
@@ -11,6 +11,11 @@ You should build using CMake. You'll need:
 - Catch2 (This is only needed if you want to run the test suite)
 - OpenMP (Optional, but highly recommended to run in parallel)
 - HDF5 (Required for the io, easily installed on linux using apt install libhdf5-dev)
+
+The code also depends on a few libraries that will be downloaded automatically by CMake:
+- random123
+- pcg cpp
+- nlohmann json
 
 To build, run:
 - `mkdir build`
@@ -31,8 +36,6 @@ The syntax to use the executable is:
 
 If you don't supply an input and output file, the code will use `input.h5` and `output.h5` as defaults.
 
-
-
 ## The input
 
 You provide input to NEPTUNE in the form of a HDF5 file. HDF5 is a very popular file format (hence, its tools are easily available). The most important advantages over something like JSON/EIRENE input are:
@@ -49,6 +52,8 @@ The code expects all input to be present in a single HDF5 file, split into the f
 - [the boundary conditions](#boundary-conditions)
 - [the estimators](#estimators)
 - [other options, like seed, step limit, algorithm, ...](#extra-parameters)
+
+The rest of this user guide explains the exact form of this input file. Equally important is the `examples/` folder, which contains a few relevant examples.
 
 ## The Mesh
 
@@ -464,9 +469,9 @@ Each estimator type can handle several different quantities of interest:
 - `energy_z`: The energy density in a cell, only taking the z direction into account, divide by the density to get the average energy of the particle (m^2/s^2 m^{-3})
 
 ### Variance
-For each of these estimates, you can also ask to get an estimate of the variance. This is useful to estimate how many particles you should be using. This variance is estimated by running the algorithm in multiple batches. The calculated variance is an estimate of the variance of a single batch. Note that the returned estimate of the QOI will be the mean over all the batches, which will have significantly lower variance that a single batch.
+For each of these estimates, you can also ask to get an estimate of the variance. This is useful to estimate how many particles you should be using. This variance is estimated by running the algorithm in multiple batches. The calculated variance is an estimate of the variance of a single batch. Note that the returned estimate of the QOI will be the mean over all the batches, which will have significantly lower variance than a single batch.
 
-An important note is that this can have a meaningful impact on the runtime of the algorithm. If you split 10000 particles into 100 batches of 100 particles, the code can only parallelise over 100 particles at a time.
+An important note is that this can have a meaningful impact on the runtime of the algorithm. If you split 10000 particles into 100 batches of 100 particles, the code can only parallelise over 100 particles at a time. Storing a vector with all the variances also means more memory is used.
 
 ### The output
 

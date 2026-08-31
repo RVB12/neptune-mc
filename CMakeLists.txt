@@ -37,6 +37,7 @@ list(APPEND neptune_SOURCES
     src/neptune/geometry/trianglemesh.cpp
     src/neptune/geometry/rotatedtrianglemesh.cpp
     src/neptune/geometry/nonuniformmesh.cpp
+    src/neptune/geometry/nonuniform1Dmesh.cpp
     src/neptune/geometry/rotatednonuniformmesh.cpp
     src/neptune/physics/update_particle.cpp
     src/neptune/geometry/triangle.cpp

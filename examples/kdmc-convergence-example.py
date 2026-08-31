@@ -9,7 +9,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.19.1
 #   kernelspec:
-#     display_name: .venv (3.12.3.final.0)
+#     display_name: .venv (3.12.3)
 #     language: python
 #     name: python3
 # ---
@@ -38,8 +38,8 @@ nx = 201
 ny = 1
 nz = 1
 Lx = 60.0
-Ly = 10000
-Lz = 10000.0
+Ly = 1.0
+Lz = 1.0
 n_cells = nx * ny * nz
 vol = Lx * Ly * Lz / n_cells
 
@@ -56,11 +56,11 @@ eps_array_plots = [100, 1, 0.01]
 n_particles = int(1e3)
 estimate_variance = True
 n_batches = 100
-# Note: 1e5 particles is not enough to really see the convergence
-# 1e7 particles should be better, but that takes a while to run (2 hours on my laptop)
+# Note: 1e3*100 = 1e5 particles is not enough to really see the convergence
+# 4e7 particles should be better, but that takes a while to run (2 hours on my laptop)
 # Note that the variance is only a problem for the diffusive limit, in the kinetic limit, because both method use the same random seed,
 # they are actually highly correlated, and the variance is not a problem.
-n_particles = int(1e5)
+# n_particles = int(4e5)
 
 # %%
 #
@@ -81,10 +81,8 @@ for eps in eps_array:
         # The code still need a background group, so we create an empty one
         # Mesh
         mesh = f.create_group("mesh")
-        mesh["type"] = "non_uniform"
+        mesh["type"] = "non_uniform_1D"
         mesh["cb_x"] = xb
-        mesh["cb_y"] = [-Ly/2, Ly/2]
-        mesh["cb_z"] = [-Lz/2, Lz/2]
         # Collisions
         collisions = f.create_group("collisions")
         coll0 = collisions.create_group("0")
@@ -224,13 +222,13 @@ plt.legend()
 
 # %%
 # Clean up the generated files
-# for eps in eps_array:
-#     input_file_mc = f"input-mc-eps{eps}.h5"
-#     output_file_mc = f"output-mc-eps{eps}.h5"
-#     input_file_kdmc = f"input-kdmc-eps{eps}.h5"
-#     output_file_kdmc = f"output-kdmc-eps{eps}.h5"
+for eps in eps_array:
+    input_file_mc = f"input-mc-eps{eps}.h5"
+    output_file_mc = f"output-mc-eps{eps}.h5"
+    input_file_kdmc = f"input-kdmc-eps{eps}.h5"
+    output_file_kdmc = f"output-kdmc-eps{eps}.h5"
 
-#     os.remove(input_file_mc)
-#     os.remove(output_file_mc)
-#     os.remove(input_file_kdmc)
-#     os.remove(output_file_kdmc)
+    os.remove(input_file_mc)
+    os.remove(output_file_mc)
+    os.remove(input_file_kdmc)
+    os.remove(output_file_kdmc)
