@@ -51,6 +51,7 @@ list(APPEND neptune_SOURCES
     src/neptune/sources/volumesource.cpp
     src/neptune/sources/wallreflectionsource.cpp
     src/neptune/sources/recombinationsource.cpp
+    src/neptune/sources/amjuelrecombinationsource.cpp
 )
 
 add_library(neptune ${neptune_SOURCES})

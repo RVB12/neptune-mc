@@ -119,10 +119,11 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     sources["stratification"] = "source_strength"
     # Some volume recombination sources
     source = sources.create_group("R_vol")
-    source["type"] = "recombination"
+    source["type"] = "amjuel_recombination"
     source["background_species"] = "H+"
     source["particle_species"] = "H"
     source["cell_indices"] = np.arange(n_cells, dtype=np.int64)
+    source["coef_matrix"] = np.array(amjuel_data["lookup"]["H.4"]["2.1.8"][0]["data_blocks"][0]["matrix_t_by_e"]).flatten()
     source2 = sources.create_group("R_puff")
     source2["type"] = "volume"
     source2["species"] = "H"

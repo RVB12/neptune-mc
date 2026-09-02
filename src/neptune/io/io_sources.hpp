@@ -7,7 +7,7 @@
 #include "neptune/sources/volumesource.hpp"
 #include "neptune/sources/wallreflectionsource.hpp"
 #include "neptune/sources/pointsource.hpp"
-
+#include "neptune/sources/amjuelrecombinationsource.hpp"
 namespace neptune {
 
 inline vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
@@ -38,6 +38,21 @@ inline vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_gro
                 sources.push_back(std::make_unique<RecombinationSource>(
                     0, cell_index, background_species, particle_species, mesh,
                     background));
+            }
+        } else if (source_type == "amjuel_recombination") {
+            // Read Amjuel recombination source data
+            Species background_species =
+                read_species(source_group.openDataSet("background_species"));
+            Species particle_species =
+                read_species(source_group.openDataSet("particle_species"));
+            vector<index_t> cell_indices =
+                read_index_vector(source_group.openDataSet("cell_indices"));
+            vector<real_t> coef_matrix =
+                read_real_vector(source_group.openDataSet("coef_matrix"));
+            for (index_t cell_index : cell_indices) {
+                sources.push_back(std::make_unique<AmjuelRecombinationSource>(
+                    0, cell_index, background_species, particle_species, mesh,
+                    background, coef_matrix));
             }
         }
         else if (source_type == "wall_recycling") {
