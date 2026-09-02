@@ -4,6 +4,7 @@
 #include "neptune/collisions/abstract_collisions.hpp"
 #include "neptune/collisions/simple_collisions.hpp"
 #include "neptune/collisions/user_defined_collisions.hpp"
+#include "neptune/collisions/amjuel_collisions.hpp"
 #include "neptune/io/io_common.hpp"
 
 namespace neptune {
@@ -55,6 +56,17 @@ read_collisions(const H5::Group& collisions_group)
                         velocity_mean_x, velocity_mean_y, velocity_mean_z,
                         velocity_var));
             }
+            else if (model == "amjuel") {
+                Species background_species = read_species(
+                    collision_group.openDataSet("background_species"));
+                Species particle_species = read_species(
+                    collision_group.openDataSet("particle_species"));
+                vector<real_t> coef_matrix = read_real_vector(
+                    collision_group.openDataSet("coef_matrix"));
+                collisions.push_back(
+                    std::make_unique<AmjuelChargeExchangeCollision>(
+                        background_species, particle_species, coef_matrix));
+            }
             else {
                 throw std::runtime_error(
                     "Unsupported model for charge exchange collision: " +
@@ -84,6 +96,17 @@ read_collisions(const H5::Group& collisions_group)
                 collisions.push_back(
                     std::make_unique<UserDefinedIonisationCollision>(
                         background_species, particle_species, collision_rate));
+            }
+            else if (model == "amjuel") {
+                Species background_species = read_species(
+                    collision_group.openDataSet("background_species"));
+                Species particle_species = read_species(
+                    collision_group.openDataSet("particle_species"));
+                vector<real_t> coef_matrix = read_real_vector(
+                    collision_group.openDataSet("coef_matrix"));
+                collisions.push_back(
+                    std::make_unique<AmjuelIonisationCollision>(
+                        background_species, particle_species, coef_matrix));
             }
             else {
                 throw std::runtime_error(
@@ -178,13 +201,14 @@ inline void write_collision_rates(
                 // index
                 Particle particle(0, 0, cx_collisions[i]->particle_species());
                 particle.geometry.cell_id = j;
-                real_t rate =
-                    cx_collisions[i]->collision_rate(particle, background);
                 Vec3 vel_mean = cx_collisions[i]->post_collision_velocity_mean(
                     particle, background);
                 real_t vel_variance =
                     cx_collisions[i]->post_collision_velocity_var(particle,
                                                                   background);
+                particle.geometry.velocity = vel_mean + Vec3(2*std::sqrt(vel_variance), 0, 0);
+                real_t rate =
+                    cx_collisions[i]->collision_rate(particle, background);
                 vel_mean_x[j] = vel_mean.x;
                 vel_mean_y[j] = vel_mean.y;
                 vel_mean_z[j] = vel_mean.z;
@@ -231,6 +255,12 @@ inline void write_collision_rates(
                 Particle particle(0, 0,
                                   ionisation_collisions[i]->particle_species());
                 particle.geometry.cell_id = j;
+                Vec3 vel_mean = cx_collisions[i]->post_collision_velocity_mean(
+                    particle, background);
+                real_t vel_variance =
+                    cx_collisions[i]->post_collision_velocity_var(particle,
+                                                                  background);
+                particle.geometry.velocity = vel_mean + Vec3(2*std::sqrt(vel_variance), 0, 0);
                 real_t rate = ionisation_collisions[i]->collision_rate(
                     particle, background);
                 rates[j] = rate;
