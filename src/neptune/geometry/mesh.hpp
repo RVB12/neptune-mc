@@ -52,6 +52,7 @@ class Mesh {
 
     /**
      * @brief Return the normal of a given surface
+     * This normal should point into the cell, i.e. in the direction of the cell center.
      *
      * @param cell_index The index of the cell
      * @param surface_id The id of the surface within the cell

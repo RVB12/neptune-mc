@@ -3,3 +3,5 @@
 
 *.npz
 __pycache__/
+CMOD-data/
+Slab_Case_Only_Atoms/

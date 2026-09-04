@@ -309,6 +309,17 @@ Vec3 TriangleMesh::get_surface_normal(index_t cell_index,
             throw std::runtime_error("Invalid surface id");
     }
 
+    // Calculate the signed area
+    // If this is negative, the calculated normal will point inwards
+    // If this is positive, the calculated normal will point outwards, in that
+    // case, we need to flip the normal
+    real_t signed_area =
+        (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
+
+    if (signed_area > 0) {
+        normal = -normal;
+    }
+
     return normal / normal.norm();
 }
 

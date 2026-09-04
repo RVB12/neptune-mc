@@ -99,8 +99,8 @@ TrimReflectionData::TrimReflectionData(
     }
 }
 
-std::pair<real_t, Vec3>TrimReflectionData::sample_reflection(Particle& p,
-                                           Vec3 surface_normal) const
+std::pair<real_t, Vec3> TrimReflectionData::sample_reflection(
+    Particle& p, Vec3 surface_normal) const
 {
     // Calculate the incident energy and polar angle of the particle
     real_t energy = 0.5 * p.geometry.velocity.norm2() *
@@ -160,6 +160,8 @@ std::pair<real_t, Vec3>TrimReflectionData::sample_reflection(Particle& p,
     // TODO: instead of just using the corresponding bin, we should
     // do multilinear interpolation between the bins to get a more accurate
     // result
+    // Also, we should check whether EIRENE actually interpolates between the
+    // bins, or just uses the corresponding bin
     real_t reflected_energy_value =
         reflected_energy[energy_index * n_energy_bins + reflected_energy_index];
     real_t reflected_polar_cos =
@@ -208,7 +210,7 @@ std::pair<real_t, Vec3>TrimReflectionData::sample_reflection(Particle& p,
          normal3 * reflected_polar_sin * reflected_azimuthal_sin);
 
     real_t reflection_probability =
-        reflection_coefficient[energy_index * n_polar_bins + polar_index];
+        reflection_coefficient[energy_index];
 
     return std::make_pair(reflection_probability, reflected_velocity);
 };
