@@ -34,6 +34,12 @@ inline vector<std::unique_ptr<BoundaryCondition>> read_boundary_conditions(
             boundary_conditions.push_back(
                 std::make_unique<PartiallySpecularBC>(absorption_coefficient));
         }
+        else if (bc_type == "trim") {
+            std::string trim_filename =
+                read_string(bc_group.openDataSet("trim_filename"));
+            boundary_conditions.push_back(
+                std::make_unique<TrimReflection>(trim_filename));
+        }
         else {
             throw std::runtime_error("Unknown boundary condition type: " +
                                      bc_type);

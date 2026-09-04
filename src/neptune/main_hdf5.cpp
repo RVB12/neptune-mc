@@ -73,11 +73,6 @@ int main(int argc, char** argv)
     EstimatorGroup estimator_group =
         read_estimators(input_file.openGroup("/estimators"), mesh->n_cells());
 
-    // Read TRIM database from the databases/TRIM folder in the project
-    // directory This is a hardcoded path until I can figure out a better
-    // solution TrimReflectionData trim_data =
-    // read_trim_data("/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_W");
-
     vector<std::unique_ptr<BoundaryCondition>> boundary_conditions =
         read_boundary_conditions(input_file.openGroup("/boundary_conditions"));
 

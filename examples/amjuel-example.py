@@ -159,7 +159,9 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     boundary_conditions = f.create_group("boundary_conditions")
     for i in range(6):
         bc = boundary_conditions.create_group(f"bc{i}")
-        bc["type"] = "specular"
+        # bc["type"] = "specular"
+        bc["type"] = "trim"
+        bc["trim_filename"] = "/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_W"
     # Simulation parameters
     params = f.create_group("params")
     params["max_steps"] = 1000000

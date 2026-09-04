@@ -112,8 +112,27 @@ Vec3 TrimReflectionData::sample_reflection(Particle& p,
     polar_angle = polar_angle * 180 / M_PI;
 
     // Find the index in the incident energy and polar angle arrays
-    index_t energy_index = binary_search(incident_energy, energy);
-    index_t polar_index = binary_search(incident_polar_angle, polar_angle);
+    index_t energy_index;
+    if (energy < incident_energy[0]) {
+        energy_index = 0;
+    }
+    else if (energy > incident_energy[incident_energy.size() - 1]) {
+        energy_index = incident_energy.size() - 1;
+    }
+    else {
+        energy_index = binary_search(incident_energy, energy);
+    }
+    index_t polar_index;
+    if (polar_angle < incident_polar_angle[0]) {
+        polar_index = 0;
+    }
+    else if (polar_angle >
+             incident_polar_angle[incident_polar_angle.size() - 1]) {
+        polar_index = incident_polar_angle.size() - 1;
+    }
+    else {
+        index_t polar_index = binary_search(incident_polar_angle, polar_angle);
+    }
 
     // Now sample three uniformly distributed random numbers to determine
     // which bin of the reflected energy, polar angle and azimuthal angle to
@@ -219,8 +238,8 @@ TrimReflectionData read_trim_data(const std::string& filename)
     vector<real_t> reflected_energy(n_tables * n_energy_bins);
     vector<real_t> reflected_polar_angle(n_tables * n_energy_bins *
                                          n_polar_bins);
-    vector<real_t> reflected_azimuthal_angle(n_tables * n_energy_bins * n_polar_bins *
-                                             n_azimuthal_bins);
+    vector<real_t> reflected_azimuthal_angle(n_tables * n_energy_bins *
+                                             n_polar_bins * n_azimuthal_bins);
 
     for (index_t i = 0; i < n_tables; i++) {
         real_t incident_atomic_number;

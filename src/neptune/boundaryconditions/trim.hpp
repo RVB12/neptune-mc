@@ -59,7 +59,7 @@ TrimReflectionData read_trim_data(const std::string& filename);
 
 class TrimReflection : public BoundaryCondition {
    public:
-    TrimReflection(const TrimReflectionData& data) : data(data) {}
+    TrimReflection(const std::string& filename) : data(read_trim_data(filename)) {}
     ~TrimReflection() = default;
 
     void apply(Particle& p, Vec3 normal) override
@@ -68,7 +68,7 @@ class TrimReflection : public BoundaryCondition {
     }
 
    private:
-    const TrimReflectionData& data;
+    const TrimReflectionData data;
 };
 
 }  // namespace neptune
