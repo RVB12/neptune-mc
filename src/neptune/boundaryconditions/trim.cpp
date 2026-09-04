@@ -99,7 +99,7 @@ TrimReflectionData::TrimReflectionData(
     }
 }
 
-Vec3 TrimReflectionData::sample_reflection(Particle& p,
+std::pair<real_t, Vec3>TrimReflectionData::sample_reflection(Particle& p,
                                            Vec3 surface_normal) const
 {
     // Calculate the incident energy and polar angle of the particle
@@ -207,7 +207,10 @@ Vec3 TrimReflectionData::sample_reflection(Particle& p,
          normal2 * reflected_polar_sin * reflected_azimuthal_cos +
          normal3 * reflected_polar_sin * reflected_azimuthal_sin);
 
-    return reflected_velocity;
+    real_t reflection_probability =
+        reflection_coefficient[energy_index * n_polar_bins + polar_index];
+
+    return std::make_pair(reflection_probability, reflected_velocity);
 };
 
 TrimReflectionData read_trim_data(const std::string& filename)

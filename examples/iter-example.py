@@ -265,6 +265,8 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     bcright = boundary_conditions.create_group(f"bc1")
     bcright["type"] = "partially_specular"
     bcright["absorption_coefficient"] = 1.0-R_n_t
+    # bcright["type"] = "trim"
+    # bcright["trim_filename"] = "/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_W"
     # Simulation parameters
     params = f.create_group("params")
     params["max_steps"] = 10000

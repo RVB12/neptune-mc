@@ -30,7 +30,7 @@ class TrimReflectionData {
                        vector<real_t>&& reflected_polar_angle,
                        vector<real_t>&& reflected_azimuthal_angle);
 
-    Vec3 sample_reflection(Particle& p, Vec3 surface_normal) const;
+    std::pair<real_t, Vec3> sample_reflection(Particle& p, Vec3 surface_normal) const;
 
    private:
     // The species of the incident particle
@@ -64,7 +64,9 @@ class TrimReflection : public BoundaryCondition {
 
     void apply(Particle& p, Vec3 normal) override
     {
-        p.geometry.velocity = data.sample_reflection(p, normal);
+        auto [probability, velocity] = data.sample_reflection(p, normal);
+        p.geometry.velocity = velocity;
+        p.weight *= probability;
     }
 
    private:
