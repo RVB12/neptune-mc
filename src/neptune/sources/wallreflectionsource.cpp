@@ -32,7 +32,7 @@ WallReflectionSource::WallReflectionSource(
     // Do some calculations to determine the intensity
     Vec3 normal = mesh.get_surface_normal(cell_idx, surface_id, Vec3(1, 0, 0));
     Vec3 boundary_drift_3d = background.velocity(background_species, cell_idx);
-    real_t boundary_drift = dot(boundary_drift_3d, normal);
+    real_t boundary_drift = -dot(boundary_drift_3d, normal);
 
     real_t ion_temp = background.temperature(background_species, cell_idx);
     real_t boundary_bgk_stddev =
@@ -84,7 +84,7 @@ Particle WallReflectionSource::generate_particle(uint64_t particle_id,
     // tangent2 /= tangent2.norm();
 
     Vec3 boundary_drift_3d = background.velocity(background_species, cell_idx);
-    real_t boundary_drift = dot(boundary_drift_3d, normal);
+    real_t boundary_drift = -dot(boundary_drift_3d, normal);
 
     real_t ion_temp = background.temperature(background_species, cell_idx);
     real_t boundary_bgk_stddev = std::sqrt(
@@ -121,7 +121,7 @@ Particle WallReflectionSource::generate_particle(uint64_t particle_id,
                                2 * sheath_potential * constants::eV_to_Joules /
                                    constants::m_p));
 
-        p.geometry.velocity = vel_to_wall * normal + vel_tangent_1 * tangent1 +
+        p.geometry.velocity = -vel_to_wall * normal + vel_tangent_1 * tangent1 +
                               vel_tangent_2 * tangent2;
 
         // Now reflect the velocity specularly
@@ -142,7 +142,7 @@ Particle WallReflectionSource::generate_particle(uint64_t particle_id,
             Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
 
         // Make sure the velocity is pointing into the domain
-        if (p.geometry.velocity.dot(normal) > 0) {
+        if (p.geometry.velocity.dot(normal) < 0) {
             p.geometry.velocity -=
                 2 * (p.geometry.velocity.dot(normal)) * normal;
         }

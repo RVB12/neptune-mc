@@ -315,7 +315,40 @@ index_t RotatedTriangleMesh::get_neighbour(index_t cell_index,
 real_t RotatedTriangleMesh::get_surface_area(index_t cell_index,
                                              index_t surface_id) const
 {
-    throw std::runtime_error("get_surface_area is not implemented");
+    TriangleIndices t = triangles[cell_index];
+    Vec2 p1 = vertices[t.ind1];
+    Vec2 p2 = vertices[t.ind2];
+    Vec2 p3 = vertices[t.ind3];
+
+    real_t r1, r2, z1, z2;
+    switch (surface_id) {
+        case 0:
+            r1 = p1.x;
+            r2 = p2.x;
+            z1 = p1.y;
+            z2 = p2.y;
+            break;
+        case 1:
+            r1 = p2.x;
+            r2 = p3.x;
+            z1 = p2.y;
+            z2 = p3.y;
+            break;
+        case 2:
+            r1 = p3.x;
+            r2 = p1.x;
+            z1 = p3.y;
+            z2 = p1.y;
+            break;
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
+
+    // distance between the two points
+    real_t s = std::sqrt((r2 - r1) * (r2 - r1) + (z2 - z1) * (z2 - z1));
+
+    // Surface area of the cone frustum (https://mathworld.wolfram.com/ConicalFrustum.html)
+    return M_PI * (r1 + r2) * s;
 }
 
 Vec3 RotatedTriangleMesh::get_center(index_t cell_index) const

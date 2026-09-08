@@ -8,7 +8,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.19.1
 #   kernelspec:
-#     display_name: .venv (3.12.3.final.0)
+#     display_name: .venv (3.12.3)
 #     language: python
 #     name: python3
 # ---
@@ -25,14 +25,21 @@ import time
 import os
 import matplotlib.tri as tri
 
-from fort_files_io import read_vertices, read_triangles, read_background, convert_background_to_neutral_grid
+from fort_files_io import read_eirene_output, read_vertices, read_triangles, read_background, convert_background_to_neutral_grid, read_magnetic_field, read_boundary_conditions
 
-base_dir = "Slab_Case_Only_Atoms/Kinetic/run_ao"
+base_dir = "Slab_Case_Only_Atoms/Kinetic/baserun"
+run_dir = "Slab_Case_Only_Atoms/Kinetic/run_ao"
 
-vertices = read_vertices(base_dir + "/fort.33")
-triangles = read_triangles(base_dir + "/fort.34")
-background = read_background(base_dir + "/b2fstati")
-background = convert_background_to_neutral_grid(background, base_dir + "/fort.35")
+# base_dir = "CMOD-data"
+# run_dir = "CMOD-data"
+
+vertices = read_vertices(run_dir + "/fort.33")
+triangles = read_triangles(run_dir + "/fort.34")
+background = read_background(run_dir + "/b2fstati")
+magnetic_field = read_magnetic_field(base_dir + "/b2fgmtry")
+background = convert_background_to_neutral_grid(background, magnetic_field, run_dir + "/fort.35")
+boundary_conditions = read_boundary_conditions(run_dir + "/fort.35")
+eirene_output = read_eirene_output(run_dir + "/fort.46", run_dir + "/fort.35")
 
 # Create the triangulation
 x = np.array([v[0] for v in vertices])
@@ -68,6 +75,32 @@ for species, data in background.items():
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.tight_layout()
+
+    if species == "D+":
+        plt.figure()
+        plt.tripcolor(triangulation, data["vel_x"])
+        plt.colorbar(label=f'Velocity X (m/s)')
+        plt.title(f'Velocity X {species}')
+        plt.xlabel('X')
+        plt.ylabel('Y')
+
+        plt.figure()
+        plt.tripcolor(triangulation, data["vel_y"])
+        plt.colorbar(label=f'Velocity Y (m/s)')
+        plt.title(f'Velocity Y {species}')
+        plt.xlabel('X')
+        plt.ylabel('Y')
+
+        plt.figure()
+        plt.tripcolor(triangulation, data["vel_z"])
+        plt.colorbar(label=f'Velocity Z (m/s)')
+        plt.title(f'Velocity Z {species}')
+        plt.xlabel('X')
+        plt.ylabel('Y')
+
+        plt.tight_layout()
+
+        
 
 # %%
 # Make Neptune input file
@@ -127,6 +160,32 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     source["particle_species"] = "D"
     source["cell_indices"] = np.arange(ncells, dtype=np.int64)
     source["coef_matrix"] = np.array(amjuel_data["lookup"]["H.4"]["2.1.8"][0]["data_blocks"][0]["matrix_t_by_e"]).flatten()
+    # Wall recycling source
+    cell_indices_wall = []
+    surface_indices_wall = []
+    for i, bc in enumerate(boundary_conditions):
+        if bc[0] == -2 or bc[0] == -3:
+            cell_indices_wall.append(i)
+            surface_indices_wall.append(0)
+        if bc[1] == -2 or bc[1] == -3:
+            cell_indices_wall.append(i)
+            surface_indices_wall.append(1)
+        if bc[2] == -2 or bc[2] == -3:
+            cell_indices_wall.append(i)
+            surface_indices_wall.append(2)
+    cell_indices_wall = np.array(cell_indices_wall, dtype=np.int64)
+    surface_indices_wall = np.array(surface_indices_wall, dtype=np.int64)
+    wall_source = sources.create_group("R_wall")
+    wall_source["type"] = "wall_recycling"
+    wall_source["background_species"] = "D+"
+    wall_source["particle_species"] = "D"
+    wall_source["cell_indices"] = cell_indices_wall
+    wall_source["surface_indices"] = surface_indices_wall
+    wall_source["sheath_potential"] = 3.1
+    wall_source["franck_condon_temp"] = 2.0
+    wall_source["Rt"] = 0.9
+    wall_source["Rr"] = 0.8
+
     # Estimators
     estimators = f.create_group("estimators")
     density_estimator = estimators.create_group("density")
@@ -203,14 +262,28 @@ with h5py.File("output.h5", "r") as f:
     plt.figure()
     plt.tripcolor(triangulation,D_density, shading='flat', cmap="viridis", norm="log")
     plt.colorbar(label="Density (m^-3)")
-    plt.title("D Density")
+    plt.title("D Density (Neptune)")
     plt.xlabel("r")
     plt.ylabel("z")
 
     plt.figure()
-    plt.tripcolor(triangulation,D_temperature, shading='flat', cmap="viridis")
-    plt.colorbar(label="Temperature (eV)")
-    plt.title("D Temperature")
+    plt.tripcolor(triangulation,eirene_output["density"], shading='flat', cmap="viridis", norm="log")
+    plt.colorbar(label="Density (m^-3)")
+    plt.title("D Density (Eirene)")
+    plt.xlabel("r")
+    plt.ylabel("z")
+
+    plt.figure()
+    plt.tripcolor(triangulation,D_velocity_x/D_density, shading='flat', cmap="viridis")
+    plt.colorbar(label="Velocity X (m/s)")
+    plt.title("D Velocity X (Neptune)")
+    plt.xlabel("r")
+    plt.ylabel("z")
+
+    plt.figure()
+    plt.tripcolor(triangulation,eirene_output["vel_x"]/eirene_output["density"]/(m*1000)*1e2, shading='flat', cmap="viridis")
+    plt.colorbar(label="Velocity X (m/s)")
+    plt.title("D Velocity X (Eirene)")
     plt.xlabel("r")
     plt.ylabel("z")
 

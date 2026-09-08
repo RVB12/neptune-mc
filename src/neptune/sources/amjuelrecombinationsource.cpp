@@ -20,6 +20,12 @@ AmjuelRecombinationSource::AmjuelRecombinationSource(index_t num_particles,
 {
     real_t temperature = background.temperature(Species::e, cell_idx);
     real_t n_e = background.density(Species::e, cell_idx);
+    real_t n_Dplus = background.density(background_species, cell_idx);
+
+    if(n_e <= 0 || n_Dplus <= 0) {
+        intensity_ = 0;
+        return;
+    }
 
 
     real_t logT = std::log(temperature);
@@ -37,7 +43,6 @@ AmjuelRecombinationSource::AmjuelRecombinationSource(index_t num_particles,
 
     // rate is in cm^3/s so also multiply by 1e-6 to convert to m^3/s
     real_t K_r = std::exp(rate) * 1e-6;
-    real_t n_Dplus = background.density(background_species, cell_idx);
     real_t vol = mesh.get_volume(cell_idx);
     intensity_ = K_r * n_Dplus * n_e * vol;
 }

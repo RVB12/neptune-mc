@@ -21,6 +21,10 @@ RecombinationSource::RecombinationSource(index_t num_particles,
     real_t K_r =
         0.7e-19 *
         std::sqrt(13.6 / temperature);  // Recombination rate coefficient
+    if(temperature <= 0) {
+        intensity_ = 0;
+        return;
+    }
     real_t n_Dplus = background.density(background_species, cell_idx);
     real_t n_e = background.density(Species::e, cell_idx);
     real_t vol = mesh.get_volume(cell_idx);

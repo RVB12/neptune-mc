@@ -11,7 +11,11 @@ def read_vertices(filename):
             s = line.split()
             vertices.append([float(x)/100 for x in s[1:]])
 
-    return np.array(vertices)
+    # These vertices are listed in the order: poloidal, radial, however,
+    # the monte carlo code expects them in the order: radial, poloidal. So we need to swap the two columns.
+    vertices = np.array(vertices)
+
+    return vertices
 
 # Read triangles from a fort.34 file
 def read_triangles(filename):
@@ -126,9 +130,50 @@ def read_background(filename):
 
     return background
 
+# Read the magnetic field direction from a b2fgmtry file
+def read_magnetic_field(filename):
+    with open(filename, "r") as f:
+        active = False
+        magnetic_field = []
+        for line in f:
+            line = line.strip()
+            if line.startswith("*cf:"):
+                parts = line.split()
+                tag = parts[-1]
+                if tag == "cvEb":
+                    active = True
+                else:
+                    active = False
+            elif active:
+                numbers = list(map(float, line.split()))
+                magnetic_field.extend(numbers)
+
+    # TODO: verify the order that cvEb is written in the file
+    magnetic_field = np.array(magnetic_field).reshape(-1, 3)  # Reshape to (N, 3) for x, y, z components
+    for i in range(len(magnetic_field)):
+        norm = np.linalg.norm(magnetic_field[i, :])
+        if norm != 0:
+            magnetic_field[i, :] /= norm  # Normalize the vector
+    return magnetic_field
+
+def read_boundary_conditions(filename):
+    with open(filename, "r") as f:
+        # Read the number of points in the neutral grid
+        num_points = int(f.readline().strip())
+        boundary_conditions = np.zeros((num_points, 3))
+        for line in f:
+            s = line.split()
+            index_neutral_grid = int(s[0]) - 1
+            boundary_conditions[index_neutral_grid][0] = float(s[3])
+            boundary_conditions[index_neutral_grid][1] = float(s[6])
+            boundary_conditions[index_neutral_grid][2] = float(s[9])
+
+    return boundary_conditions
+
+
 # Using a fort.35 file, convert the plasma background from the
 # plasma solver grid to the neutral grid used in the Monte Carlo code
-def convert_background_to_neutral_grid(background, filename):
+def convert_background_to_neutral_grid(background, magnetic_field, filename):
 
     with open(filename, "r") as f:
         # Read the number of points in the neutral grid
@@ -160,6 +205,94 @@ def convert_background_to_neutral_grid(background, filename):
             for species in background.keys():
                 converted_background[species]["density"][index_neutral_grid] = background[species]["density"][index_plasma_grid]
                 converted_background[species]["temp"][index_neutral_grid] = background[species]["temp"][index_plasma_grid]
-                # TODO: Convert parallel velocity to x, y, z components.
+                if species != "e":
+                    converted_background[species]["vel_x"][index_neutral_grid] = magnetic_field[index_plasma_grid][0]
+                    converted_background[species]["vel_y"][index_neutral_grid] = magnetic_field[index_plasma_grid][1]
+                    converted_background[species]["vel_z"][index_neutral_grid] = magnetic_field[index_plasma_grid][2]
+                    # converted_background[species]["vel_x"][index_neutral_grid] = background[species]["vel"][index_plasma_grid] * magnetic_field[index_plasma_grid][0]
+                    # converted_background[species]["vel_y"][index_neutral_grid] = background[species]["vel"][index_plasma_grid] * magnetic_field[index_plasma_grid][1]
+                    # converted_background[species]["vel_z"][index_neutral_grid] = background[species]["vel"][index_plasma_grid] * magnetic_field[index_plasma_grid][2]
 
     return converted_background
+
+# Read the eirene output from a fort.46 file
+# This output is given in the plasma solver grid,
+# so we also convert it to the neutral grid using the fort.35 file
+def read_eirene_output(filename_46, filename_35):
+    # Arrays to hold the data
+    atom_density = []
+    atom_vel_x = []
+    atom_vel_y = []
+    atom_vel_z = []
+    atom_energy = []
+
+    current_array = None
+    with open(filename_46, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("*eirene data field"):
+                parts = line.split()
+                tag = parts[3]
+                
+                if tag == "pdena":
+                    current_array = atom_density
+                elif tag == "vxdena":
+                    current_array = atom_vel_x
+                elif tag == "vydena":
+                    current_array = atom_vel_y
+                elif tag == "vzdena":
+                    current_array = atom_vel_z
+                elif tag == "edena":
+                    current_array = atom_energy
+                else:
+                    current_array = None  # Ignore other types
+            
+            elif current_array is not None:  # Read numeric values
+                numbers = list(map(float, line.split()))
+                current_array.extend(numbers)
+
+    # Convert the lists to numpy arrays
+    atom_density = np.array(atom_density)
+    atom_vel_x = np.array(atom_vel_x)
+    atom_vel_y = np.array(atom_vel_y)
+    atom_vel_z = np.array(atom_vel_z)
+    atom_energy = np.array(atom_energy)
+
+    # Convert from cm^-3 to m^-3
+    atom_density *= 1e6
+    atom_vel_x *= 1e6
+    atom_vel_y *= 1e6
+    atom_vel_z *= 1e6
+    atom_energy *= 1e6
+
+    # Now we need to convert the eirene output from the plasma grid to the neutral grid
+    with open(filename_35, "r") as f:
+        # Read the number of points in the neutral grid
+        num_points = int(f.readline().strip())
+        # Create a dictionary to hold the converted eirene output
+        converted_eirene_output = {
+            "density": np.zeros(num_points),
+            "vel_x": np.zeros(num_points),
+            "vel_y": np.zeros(num_points),
+            "vel_z": np.zeros(num_points),
+            "energy": np.zeros(num_points),
+        }
+
+        index_neutral_grid = -1
+        for line in f:
+            index_neutral_grid+=1
+            s = line.split()
+
+            index_plasma_grid = int(s[-4]) - 1
+
+            # If the index is negative, this is a void cell in the neutral grid, so we skip it
+            if index_plasma_grid < 0:
+                continue
+
+            converted_eirene_output["density"][index_neutral_grid] = atom_density[index_plasma_grid]
+            converted_eirene_output["vel_x"][index_neutral_grid] = atom_vel_x[index_plasma_grid]
+            converted_eirene_output["vel_y"][index_neutral_grid] = atom_vel_y[index_plasma_grid]
+            converted_eirene_output["vel_z"][index_neutral_grid] = atom_vel_z[index_plasma_grid]
+            converted_eirene_output["energy"][index_neutral_grid] = atom_energy[index_plasma_grid]
+
+    return converted_eirene_output
