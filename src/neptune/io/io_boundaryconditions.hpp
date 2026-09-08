@@ -34,6 +34,14 @@ inline vector<std::unique_ptr<BoundaryCondition>> read_boundary_conditions(
             boundary_conditions.push_back(
                 std::make_unique<PartiallySpecularBC>(absorption_coefficient));
         }
+        else if( bc_type == "diffuse") {
+            real_t fixed_energy = read_real_number(
+                bc_group.openDataSet("fixed_energy"));
+            real_t absorption_coefficient = read_real_number(
+                bc_group.openDataSet("absorption_coefficient"));
+            boundary_conditions.push_back(
+                std::make_unique<DiffuseBC>(fixed_energy, absorption_coefficient));
+        }
         else if (bc_type == "trim") {
             std::string trim_filename =
                 read_string(bc_group.openDataSet("trim_filename"));

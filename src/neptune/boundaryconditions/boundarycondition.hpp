@@ -6,6 +6,7 @@
 #include "neptune/common/utils.hpp"
 #include "neptune/geometry/vec3.hpp"
 #include "neptune/physics/particle.hpp"
+#include "neptune/physics/physicalconstants.hpp"
 
 namespace neptune {
 
@@ -78,60 +79,60 @@ class PartiallySpecularBC : public BoundaryCondition {
 };
 
 /**
- * Mixed reflection. Probability alpha of having diffuse reflection,
- * probability (1-alpha) of having specular reflection.
- *
- * Also absorbs a fraction of the particle's weight given by
- * absorption_coefficient.
+ * Diffuse boundary condition with fixed energy. The particle is reflected in a
+ * random direction, and its speed is set to a fixed value. A specified fraction
+ * of the particle's weight is absorbed.
  */
-class MixedDiffuseReflectiveBC : public BoundaryCondition {
+class DiffuseBC : public BoundaryCondition {
    public:
-    MixedDiffuseReflectiveBC(real_t alpha, real_t absorption_coefficient)
-        : alpha(alpha), absorption_coefficient(absorption_coefficient)
+    /**
+     * @brief Construct a new DiffuseBC object
+     * 
+     * @param fixed_energy The fixed kinetic energy of the reflected particle in eV
+     * @param absorption_coefficient The fraction of the particle's weight to be absorbed
+     */
+    DiffuseBC(real_t fixed_energy, real_t absorption_coefficient)
+        : fixed_energy(fixed_energy),
+          absorption_coefficient(absorption_coefficient)
     {}
-    ~MixedDiffuseReflectiveBC() = default;
+    ~DiffuseBC() = default;
 
     void apply(Particle& p, Vec3 normal) override
     {
+        // Generate the direction of the reflected particle using a cosine distribution
         std::uniform_real_distribution<real_t> dist_u(0, 1);
-
         real_t u = dist_u(p.rng);
-
-        if (u < alpha) {
-            // Diffuse reflection
-            Vec3 tangent1;
-            if (std::abs(normal.z) < 0.9) {
-                tangent1 = Vec3(0, 0, 1).cross(normal);
-            }
-            else {
-                tangent1 = Vec3(1, 0, 0).cross(normal);
-            }
-            tangent1 /= tangent1.norm();
-            Vec3 tangent2 = normal.cross(tangent1);
-
-            real_t phi = 2 * M_PI * dist_u(p.rng);
-            real_t cos_theta = std::sqrt(dist_u(p.rng));
-            real_t sin_theta = std::sqrt(1 - cos_theta * cos_theta);
-
-            Vec3 direction = -cos_theta * normal +
-                             sin_theta * std::cos(phi) * tangent1 +
-                             sin_theta * std::sin(phi) * tangent2;
-            direction /= direction.norm();
-
-            p.geometry.velocity = direction * p.geometry.velocity.norm();
+        Vec3 tangent1;
+        if (std::abs(normal.z) < 0.9) {
+            tangent1 = Vec3(0, 0, 1).cross(normal);
         }
         else {
-            // Specular reflection
-            p.geometry.velocity -=
-                2 * (p.geometry.velocity.dot(normal)) * normal;
+            tangent1 = Vec3(1, 0, 0).cross(normal);
         }
+        tangent1 /= tangent1.norm();
+        Vec3 tangent2 = normal.cross(tangent1);
+
+        real_t phi = 2 * M_PI * dist_u(p.rng);
+        real_t cos_theta = std::sqrt(dist_u(p.rng));
+        real_t sin_theta = std::sqrt(1 - cos_theta * cos_theta);
+
+        Vec3 direction = cos_theta * normal +
+                         sin_theta * std::cos(phi) * tangent1 +
+                         sin_theta * std::sin(phi) * tangent2;
+        direction /= direction.norm();
+
+        // Set the speed of the particle to the fixed energy
+        real_t mass = constants::m_u * SPECIES_MASS[static_cast<size_t>(p.species)];
+        real_t velocity_magnitude = std::sqrt(2 * fixed_energy * constants::eV_to_Joules / mass);
+
+        p.geometry.velocity = direction * velocity_magnitude;
 
         // Absorb a fraction of the particle's weight
         p.weight *= (1 - absorption_coefficient);
     }
 
    private:
-    real_t alpha;
+    real_t fixed_energy;
     real_t absorption_coefficient;
 };
 
