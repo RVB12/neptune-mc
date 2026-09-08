@@ -27,11 +27,11 @@ import matplotlib.tri as tri
 
 from fort_files_io import read_eirene_output, read_vertices, read_triangles, read_background, convert_background_to_neutral_grid, read_magnetic_field, read_boundary_conditions
 
-base_dir = "Slab_Case_Only_Atoms/Kinetic/baserun"
-run_dir = "Slab_Case_Only_Atoms/Kinetic/run_ao"
+# base_dir = "Slab_Case_Only_Atoms/Kinetic/baserun"
+# run_dir = "Slab_Case_Only_Atoms/Kinetic/run_ao"
 
-# base_dir = "CMOD-data"
-# run_dir = "CMOD-data"
+base_dir = "CMOD-data"
+run_dir = "CMOD-data"
 
 vertices = read_vertices(run_dir + "/fort.33")
 triangles = read_triangles(run_dir + "/fort.34")
@@ -132,7 +132,7 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     electron["velocity_z"] = np.zeros_like(background["D+"]["vel_z"])
     # Mesh
     mesh = f.create_group("mesh")
-    mesh["type"] = "triangle"
+    mesh["type"] = "rotated_triangle"
     mesh["vertices"] = vertices
     mesh["triangles"] = np.array(triangles, dtype=np.int64)
     # Collisions
@@ -260,14 +260,14 @@ with h5py.File("output.h5", "r") as f:
     D_temperature = 2.0/3.0 * m / e * (D_energy/D_density - 0.5 * ((D_velocity_x/D_density )**2 + (D_velocity_y/D_density )**2+ (D_velocity_z/D_density )**2 ))
 
     plt.figure()
-    plt.tripcolor(triangulation,D_density, shading='flat', cmap="viridis", norm="log")
+    plt.tripcolor(triangulation,D_density, shading='flat', cmap="viridis", norm="log", vmin=1e12, vmax=1e21)
     plt.colorbar(label="Density (m^-3)")
     plt.title("D Density (Neptune)")
     plt.xlabel("r")
     plt.ylabel("z")
 
     plt.figure()
-    plt.tripcolor(triangulation,eirene_output["density"], shading='flat', cmap="viridis", norm="log")
+    plt.tripcolor(triangulation,eirene_output["density"], shading='flat', cmap="viridis", norm="log", vmin=1e12, vmax=1e21)
     plt.colorbar(label="Density (m^-3)")
     plt.title("D Density (Eirene)")
     plt.xlabel("r")
@@ -281,7 +281,7 @@ with h5py.File("output.h5", "r") as f:
     plt.ylabel("z")
 
     plt.figure()
-    plt.tripcolor(triangulation,eirene_output["vel_x"]/eirene_output["density"]/(m*1000)*1e2, shading='flat', cmap="viridis")
+    plt.tripcolor(triangulation,eirene_output["vel_x"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
     plt.colorbar(label="Velocity X (m/s)")
     plt.title("D Velocity X (Eirene)")
     plt.xlabel("r")

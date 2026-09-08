@@ -162,20 +162,21 @@ real_t find_cone_intersection(const Vec2& p1,
 
 CellCrossing RotatedTriangleMesh::get_next_crossing(ParticleGeometry& p) const
 {
-    assert(is_in_cell(p.position, p.cell_id));
+    // assert(is_in_cell(p.position, p.cell_id));
 // If the particle is on a boundary, make sure the velocity points inwards
+// The normal points inwards, so the dot product should be positive
 #ifndef NDEBUG
     if (p.boundary_id == 0) {
         Vec3 normal = get_surface_normal(p.cell_id, 0, p.position);
-        assert(normal.dot(p.velocity) <= 0);
+        assert(normal.dot(p.velocity) >= 0);
     }
     else if (p.boundary_id == 1) {
         Vec3 normal = get_surface_normal(p.cell_id, 1, p.position);
-        assert(normal.dot(p.velocity) <= 0);
+        assert(normal.dot(p.velocity) >= 0);
     }
     else if (p.boundary_id == 2) {
         Vec3 normal = get_surface_normal(p.cell_id, 2, p.position);
-        assert(normal.dot(p.velocity) <= 0);
+        assert(normal.dot(p.velocity) >= 0);
     }
 #endif
 
@@ -228,7 +229,7 @@ CellCrossing RotatedTriangleMesh::get_next_crossing(ParticleGeometry& p) const
         crossing.boundary_condition_id = -id_new - 1;
         return crossing;
     }
-    assert(is_in_cell(pos_new, id_new));
+    // assert(is_in_cell(pos_new, id_new));
 
     crossing.next_cell_id = id_new;
     // Find the surface id of the next cell

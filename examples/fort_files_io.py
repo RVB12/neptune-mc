@@ -206,12 +206,9 @@ def convert_background_to_neutral_grid(background, magnetic_field, filename):
                 converted_background[species]["density"][index_neutral_grid] = background[species]["density"][index_plasma_grid]
                 converted_background[species]["temp"][index_neutral_grid] = background[species]["temp"][index_plasma_grid]
                 if species != "e":
-                    converted_background[species]["vel_x"][index_neutral_grid] = magnetic_field[index_plasma_grid][0]
-                    converted_background[species]["vel_y"][index_neutral_grid] = magnetic_field[index_plasma_grid][1]
-                    converted_background[species]["vel_z"][index_neutral_grid] = magnetic_field[index_plasma_grid][2]
-                    # converted_background[species]["vel_x"][index_neutral_grid] = background[species]["vel"][index_plasma_grid] * magnetic_field[index_plasma_grid][0]
-                    # converted_background[species]["vel_y"][index_neutral_grid] = background[species]["vel"][index_plasma_grid] * magnetic_field[index_plasma_grid][1]
-                    # converted_background[species]["vel_z"][index_neutral_grid] = background[species]["vel"][index_plasma_grid] * magnetic_field[index_plasma_grid][2]
+                    converted_background[species]["vel_x"][index_neutral_grid] = background[species]["vel"][index_plasma_grid] * magnetic_field[index_plasma_grid][0]
+                    converted_background[species]["vel_y"][index_neutral_grid] = background[species]["vel"][index_plasma_grid] * magnetic_field[index_plasma_grid][1]
+                    converted_background[species]["vel_z"][index_neutral_grid] = background[species]["vel"][index_plasma_grid] * magnetic_field[index_plasma_grid][2]
 
     return converted_background
 

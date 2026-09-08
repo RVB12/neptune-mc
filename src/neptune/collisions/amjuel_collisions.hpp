@@ -44,6 +44,10 @@ class AmjuelChargeExchangeCollision : public ChargeExchangeCollision {
         real_t b_temp = b.temperature(background_species(), p.geometry.cell_id);
         real_t b_dens = b.density(background_species(), p.geometry.cell_id);
 
+        if(p_energy <= 0.0 or b_temp <= 0.0 or b_dens <= 0.0) {
+            return 0.0;
+        }
+
         real_t logT = std::log(p_energy);
         real_t logE = std::log(b_temp);
 
@@ -128,6 +132,10 @@ class AmjuelIonisationCollision : public IonisationCollision {
     {
         real_t b_temp = b.temperature(Species::e, p.geometry.cell_id);
         real_t b_dens = b.density(Species::e, p.geometry.cell_id);
+
+        if(b_temp <= 0.0 or b_dens <= 0.0) {
+            return 0.0;
+        }
 
         real_t logT = std::log(b_temp);
         real_t logE = std::log(b_dens/1e8/1e6); // convert to cm^-3 and then to 10^8 cm^-3
