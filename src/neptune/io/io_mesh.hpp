@@ -82,6 +82,13 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
                 read_index_vector(mesh_group.openDataSet("neighbors"));
             vector<index_t> boundary_conditions = read_index_vector(
                 mesh_group.openDataSet("boundary_conditions"));
+            // Make sure that all the cells with no neighbors have a boundary
+            // condition assigned
+            for (index_t i = 0; i < neighbors.size(); ++i) {
+                if (neighbors[i] == -1 && boundary_conditions[i] == -1) {
+                    boundary_conditions[i] = 0;  // Assign a default boundary condition
+                }
+            }
             return std::make_unique<TriangleMesh>(TriangleMesh(
                 vertices, triangles, neighbors, boundary_conditions));
         }
@@ -101,6 +108,14 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
                 read_index_vector(mesh_group.openDataSet("neighbors"));
             vector<index_t> boundary_conditions = read_index_vector(
                 mesh_group.openDataSet("boundary_conditions"));
+            // Make sure that all the cells with no neighbors have a boundary
+            // condition assigned
+            for (index_t i = 0; i < neighbors.size(); ++i) {
+                if (neighbors[i] == -1 && boundary_conditions[i] == -1) {
+                    boundary_conditions[i] = 0;  // Assign a default boundary condition
+                }
+            }
+
             return std::make_unique<RotatedTriangleMesh>(RotatedTriangleMesh(
                 vertices, triangles, neighbors, boundary_conditions));
         }

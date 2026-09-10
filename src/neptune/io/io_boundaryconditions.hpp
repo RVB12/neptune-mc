@@ -48,6 +48,12 @@ inline vector<std::unique_ptr<BoundaryCondition>> read_boundary_conditions(
             boundary_conditions.push_back(
                 std::make_unique<TrimReflection>(trim_filename));
         }
+        else if (bc_type == "transparent") {
+            boundary_conditions.push_back(std::make_unique<TransparentBC>());
+        }
+        else if (bc_type == "periodic") {
+            throw std::runtime_error("Periodic boundary conditions are not supported yet");
+        }
         else {
             throw std::runtime_error("Unknown boundary condition type: " +
                                      bc_type);

@@ -62,7 +62,7 @@ class TrimReflection : public BoundaryCondition {
     TrimReflection(const std::string& filename) : data(read_trim_data(filename)) {}
     ~TrimReflection() = default;
 
-    void apply(Particle& p, const Mesh& mesh) override
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
     {
         Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
         auto [probability, velocity] = data.sample_reflection(p, normal);

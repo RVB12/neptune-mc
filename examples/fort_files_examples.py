@@ -41,7 +41,6 @@ magnetic_field = read_magnetic_field(base_dir + "/b2fgmtry")
 background = convert_background_to_neutral_grid(background, magnetic_field, run_dir + "/fort.35")
 eirene_output = read_eirene_output(run_dir + "/fort.46", run_dir + "/fort.35")
 
-
 # Create the triangulation
 x = np.array([v[0] for v in vertices])
 y = np.array([v[1] for v in vertices])
@@ -272,15 +271,15 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     bc3["trim_filename"] = "/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_Mo"
     # bc4, bc5, and bc6, no physical wall, just transfer to void region, model using diffuse reflection for now
     bc4 = boundary_conditions.create_group("bc4")
-    bc4["type"] = "diffuse"
+    bc4["type"] = "transparent"
     bc4["fixed_energy"] = 1.0
     bc4["absorption_coefficient"] = 0.0
     bc5 = boundary_conditions.create_group("bc5")
-    bc5["type"] = "diffuse"
+    bc5["type"] = "transparent"
     bc5["fixed_energy"] = 1.0
     bc5["absorption_coefficient"] = 0.0
     bc6 = boundary_conditions.create_group("bc6")
-    bc6["type"] = "diffuse"
+    bc6["type"] = "transparent"
     bc6["fixed_energy"] = 1.0
     bc6["absorption_coefficient"] = 0.0
 

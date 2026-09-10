@@ -30,7 +30,7 @@ class BoundaryCondition {
      *               For some special boundary conditions, like transparent boundaries,
      *               we also need to get the next cell that the particle will enter
      */
-    virtual void apply(Particle& p, const Mesh& mesh) = 0;
+    virtual void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) = 0;
 };
 
 /**
@@ -41,7 +41,7 @@ class SpecularBC : public BoundaryCondition {
     SpecularBC() = default;
     ~SpecularBC() = default;
 
-    void apply(Particle& p, const Mesh& mesh) override
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
     {
         // Reflect the velocity of the particle
         Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
@@ -57,7 +57,7 @@ class AbsorbingBC : public BoundaryCondition {
     AbsorbingBC() = default;
     ~AbsorbingBC() = default;
 
-    void apply(Particle& p, const Mesh& mesh) override
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
     {
         p.weight = 0;  // Set the weight to zero to absorb the particle
     }
@@ -73,7 +73,7 @@ class PartiallySpecularBC : public BoundaryCondition {
     {}
     ~PartiallySpecularBC() = default;
 
-    void apply(Particle& p, const Mesh& mesh) override
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
     {
         Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
         // Reflect the velocity of the particle
@@ -104,7 +104,7 @@ class DiffuseBC : public BoundaryCondition {
     {}
     ~DiffuseBC() = default;
 
-    void apply(Particle& p, const Mesh& mesh) override
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
     {
         Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
         // Generate the direction of the reflected particle using a cosine distribution
@@ -142,6 +142,42 @@ class DiffuseBC : public BoundaryCondition {
    private:
     real_t fixed_energy;
     real_t absorption_coefficient;
+};
+
+
+/**
+ * Transparent boundary condition
+ */
+class TransparentBC : public BoundaryCondition {
+   public:
+    TransparentBC() = default;
+    ~TransparentBC() = default;
+
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
+    {
+        // Move the particle to the next cell
+        p.geometry.cell_id = crossing.next_cell_id;
+        p.geometry.boundary_id = crossing.next_surface_id;
+    }
+};
+
+/**
+ * Periodic boundary condition
+ */
+class PeriodicBC : public BoundaryCondition {
+   public:
+    PeriodicBC() = default;
+    ~PeriodicBC() = default;
+
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
+    {
+        // Move the particle to the next cell
+        p.geometry.cell_id = crossing.next_cell_id;
+        p.geometry.boundary_id = crossing.next_surface_id;
+
+        // Also update the position and velocity of the particle to account for the periodicity
+        throw std::runtime_error("Periodic boundary condition not implemented yet");
+    }
 };
 
 }  // namespace neptune

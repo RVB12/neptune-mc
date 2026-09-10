@@ -147,7 +147,7 @@ EventType update_particle(
             p.geometry.position = crossing.position;
             p.geometry.boundary_id = crossing.surface_id;
 
-            boundary_conditions[crossing.boundary_condition_id]->apply(p, mesh);
+            boundary_conditions[crossing.boundary_condition_id]->apply(p, mesh, crossing);
         }
     }
 
