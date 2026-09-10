@@ -222,21 +222,17 @@ CellCrossing RotatedTriangleMesh::get_next_crossing(ParticleGeometry& p) const
 
     CellCrossing crossing = CellCrossing(pos_new, t_new, surface_id);
 
-    if (id_new < 0) {
-        // If the id is negative, it is a boundary,
-        // so negate it and subtract 1 (zero based) to get the boundary id
-        assert(is_in_cell(pos_new, p.cell_id));
-        crossing.boundary_condition_id = -id_new - 1;
-        return crossing;
-    }
-    // assert(is_in_cell(pos_new, id_new));
+    crossing.boundary_condition_id =
+        get_boundary_condition(p.cell_id, surface_id);
 
-    crossing.next_cell_id = id_new;
-    // Find the surface id of the next cell
-    for (index_t i = 0; i < 3; i++) {
-        if (neighbors[3 * id_new + i] == p.cell_id) {
-            crossing.next_surface_id = i;
-            break;
+    if (id_new >= 0) {
+        crossing.next_cell_id = id_new;
+        // Find the surface id of the next cell
+        for (index_t i = 0; i < 3; i++) {
+            if (neighbors[3 * id_new + i] == p.cell_id) {
+                crossing.next_surface_id = i;
+                break;
+            }
         }
     }
 
@@ -281,7 +277,7 @@ Vec3 RotatedTriangleMesh::get_surface_normal(index_t cell_index,
         default:
             throw std::runtime_error("Invalid surface id");
     }
-    
+
     // Calculate the signed area
     // If this is negative, the calculated normal will point inwards
     // If this is positive, the calculated normal will point outwards, in that
@@ -311,6 +307,17 @@ index_t RotatedTriangleMesh::get_neighbour(index_t cell_index,
     assert(cell_index >= 0);
 
     return neighbors[3 * cell_index + surface_id];
+}
+
+index_t RotatedTriangleMesh::get_boundary_condition(index_t cell_index,
+                                                    index_t surface_id) const
+{
+    assert(surface_id < 3);
+    assert(cell_index < triangles.size());
+    assert(surface_id >= 0);
+    assert(cell_index >= 0);
+
+    return boundary_conditions[3 * cell_index + surface_id];
 }
 
 real_t RotatedTriangleMesh::get_surface_area(index_t cell_index,
@@ -348,7 +355,8 @@ real_t RotatedTriangleMesh::get_surface_area(index_t cell_index,
     // distance between the two points
     real_t s = std::sqrt((r2 - r1) * (r2 - r1) + (z2 - z1) * (z2 - z1));
 
-    // Surface area of the cone frustum (https://mathworld.wolfram.com/ConicalFrustum.html)
+    // Surface area of the cone frustum
+    // (https://mathworld.wolfram.com/ConicalFrustum.html)
     return M_PI * (r1 + r2) * s;
 }
 

@@ -75,6 +75,13 @@ class Mesh {
                                   index_t surface_id) const = 0;
 
     /**
+     * @brief Return the boundary condition of a given surface
+     * -1 if there is no boundary condition
+     */
+    virtual index_t get_boundary_condition(index_t cell_index,
+                                            index_t surface_id) const = 0;
+
+    /**
      * @brief Return the surface area of a given surface of a cell
      */
     virtual real_t get_surface_area(index_t cell_index,

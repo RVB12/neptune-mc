@@ -213,42 +213,95 @@ index_t NonUniformMesh::get_neighbour(index_t cell_index,
                 return tuple_to_linear(Index3D(ind.i - 1, ind.j, ind.k));
             }
             else {
-                return -1;
+                return  -1;
             }
         case 1:  // y == 0
             if (ind.j > 0) {
                 return tuple_to_linear(Index3D(ind.i, ind.j - 1, ind.k));
             }
             else {
-                return -2;
+                return -1;
             }
         case 2:  // z == 0
             if (ind.k > 0) {
                 return tuple_to_linear(Index3D(ind.i, ind.j, ind.k - 1));
             }
             else {
-                return -3;
+                return -1;
             }
         case 3:  // x == Lx
             if (ind.i < cb_x.size() - 2) {
                 return tuple_to_linear(Index3D(ind.i + 1, ind.j, ind.k));
             }
             else {
-                return -4;
+                return -1;
             }
         case 4:  // y == Ly
             if (ind.j < cb_y.size() - 2) {
                 return tuple_to_linear(Index3D(ind.i, ind.j + 1, ind.k));
             }
             else {
-                return -5;
+                return -1;
             }
         case 5:  // z == Lz
             if (ind.k < cb_z.size() - 2) {
                 return tuple_to_linear(Index3D(ind.i, ind.j, ind.k + 1));
             }
             else {
-                return -6;
+                return -1;
+            }
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
+}
+
+index_t NonUniformMesh::get_boundary_condition(index_t cell_index,
+                                               index_t surface_id) const
+{
+    Index3D ind = linear_to_tuple(cell_index);
+
+    switch (surface_id) {
+        case 0:  // x == 0
+            if (ind.i > 0) {
+                return -1;
+            }
+            else {
+                return 0;
+            }
+        case 1:  // y == 0
+            if (ind.j > 0) {
+                return -1;
+            }
+            else {
+                return 1;
+            }
+        case 2:  // z == 0
+            if (ind.k > 0) {
+                return -1;
+            }
+            else {
+                return 2;
+            }
+        case 3:  // x == Lx
+            if (ind.i < cb_x.size() - 2) {
+                return -1;
+            }
+            else {
+                return 3;
+            }
+        case 4:  // y == Ly
+            if (ind.j < cb_y.size() - 2) {
+                return -1;
+            }
+            else {
+                return 4;
+            }
+        case 5:  // z == Lz
+            if (ind.k < cb_z.size() - 2) {
+                return -1;
+            }
+            else {
+                return 5;
             }
         default:
             throw std::runtime_error("Invalid surface id");

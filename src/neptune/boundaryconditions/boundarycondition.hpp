@@ -7,6 +7,7 @@
 #include "neptune/geometry/vec3.hpp"
 #include "neptune/physics/particle.hpp"
 #include "neptune/physics/physicalconstants.hpp"
+#include "neptune/geometry/mesh.hpp"
 
 namespace neptune {
 
@@ -23,9 +24,13 @@ class BoundaryCondition {
      *
      * @param p      The particle to apply the boundary condition to
      *               It is assumed that the particle is on the boundary
-     * @param normal The normal vector of the boundary
+     * 
+     * @param mesh   The mesh that the particle is in
+     *               This is needed to get the normal of the surface that the particle is on
+     *               For some special boundary conditions, like transparent boundaries,
+     *               we also need to get the next cell that the particle will enter
      */
-    virtual void apply(Particle& p, Vec3 normal) = 0;
+    virtual void apply(Particle& p, const Mesh& mesh) = 0;
 };
 
 /**
@@ -36,9 +41,10 @@ class SpecularBC : public BoundaryCondition {
     SpecularBC() = default;
     ~SpecularBC() = default;
 
-    void apply(Particle& p, Vec3 normal) override
+    void apply(Particle& p, const Mesh& mesh) override
     {
         // Reflect the velocity of the particle
+        Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
         p.geometry.velocity -= 2 * (p.geometry.velocity.dot(normal)) * normal;
     }
 };
@@ -51,7 +57,7 @@ class AbsorbingBC : public BoundaryCondition {
     AbsorbingBC() = default;
     ~AbsorbingBC() = default;
 
-    void apply(Particle& p, Vec3 normal) override
+    void apply(Particle& p, const Mesh& mesh) override
     {
         p.weight = 0;  // Set the weight to zero to absorb the particle
     }
@@ -67,8 +73,9 @@ class PartiallySpecularBC : public BoundaryCondition {
     {}
     ~PartiallySpecularBC() = default;
 
-    void apply(Particle& p, Vec3 normal) override
+    void apply(Particle& p, const Mesh& mesh) override
     {
+        Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
         // Reflect the velocity of the particle
         p.geometry.velocity -= 2 * (p.geometry.velocity.dot(normal)) * normal;
         // Absorb a fraction of the particle's weight
@@ -97,8 +104,9 @@ class DiffuseBC : public BoundaryCondition {
     {}
     ~DiffuseBC() = default;
 
-    void apply(Particle& p, Vec3 normal) override
+    void apply(Particle& p, const Mesh& mesh) override
     {
+        Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
         // Generate the direction of the reflected particle using a cosine distribution
         std::uniform_real_distribution<real_t> dist_u(0, 1);
         real_t u = dist_u(p.rng);

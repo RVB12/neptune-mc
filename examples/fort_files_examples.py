@@ -27,11 +27,11 @@ import matplotlib.tri as tri
 
 from fort_files_io import read_eirene_output, read_neighbor_list, read_vertices, read_triangles, read_background, convert_background_to_neutral_grid, read_magnetic_field
 
-base_dir = "Slab_Case_Only_Atoms/Kinetic/baserun"
-run_dir = "Slab_Case_Only_Atoms/Kinetic/run_ao"
+# base_dir = "Slab_Case_Only_Atoms/Kinetic/baserun"
+# run_dir = "Slab_Case_Only_Atoms/Kinetic/run_ao"
 
-# base_dir = "CMOD-data"
-# run_dir = "CMOD-data"
+base_dir = "CMOD-data"
+run_dir = "CMOD-data"
 
 vertices = read_vertices(run_dir + "/fort.33")
 triangles = read_triangles(run_dir + "/fort.34")
@@ -54,6 +54,7 @@ n_particles = 10000
 
 
 # %%
+# %matplotlib inline
 # Plot the triangulation
 plt.figure(figsize=(8, 8))
 plt.triplot(triangulation, color='gray', lw=0.5)
@@ -61,26 +62,6 @@ plt.title('Triangulation')
 plt.xlabel('r')
 plt.ylabel('z')
 
-# Show the boundary conditions with different colors
-# bc_colors = np.max(-neighbors_bc, axis=1)
-# bc_plot = np.ma.masked_where(bc_colors == 0, bc_colors)
-# plt.figure(figsize=(8, 8))
-# plt.triplot(triangulation, color='gray', lw=0.8)
-# cmap = plt.cm.get_cmap('tab10').copy()
-# cmap.set_bad((1, 1, 1, 0))  # transparent where bc_colors == 0
-# plt.tripcolor(triangulation, facecolors=bc_plot, cmap=cmap, alpha=0.7, lw=0.1, vmin=0, vmax=10)
-# plt.title('Boundary Conditions')
-# plt.xlabel('r')
-# plt.ylabel('z')
-# plt.colorbar(label='Boundary Condition Type')
-# # Also put a tiny number in the middle of each triangle to indicate the cell number
-# for i, tri_indices in enumerate(triangles):
-#     # only label the triangles that are not masked (i.e., have a boundary condition)
-#     if bc_colors[i] == 0:
-#         continue
-#     tri_center_x = np.mean(x[tri_indices])
-#     tri_center_y = np.mean(y[tri_indices])
-#     plt.text(tri_center_x, tri_center_y, str(i), fontsize=6, ha='center', va='center')
 
 # Plot the background for each species
 for species, data in background.items():
@@ -127,11 +108,35 @@ for species, data in background.items():
         cell_centers_x = np.mean(x[triangles], axis=1)
         cell_centers_y = np.mean(y[triangles], axis=1)
         plt.figure()
-        plt.quiver(cell_centers_x, cell_centers_y, data["vel_x"], data["vel_z"], scale=1e4)
+        plt.quiver(cell_centers_x, cell_centers_y, data["vel_x"], data["vel_z"], scale=1e5)
         
 
 
         
+
+# %%
+# # %matplotlib qt
+# # Show the boundary conditions with different colors
+
+# bc_colors = np.max(-neighbors_bc, axis=1)
+# bc_plot = np.ma.masked_where(bc_colors == 0, bc_colors)
+# plt.figure(figsize=(8, 8))
+# plt.triplot(triangulation, color='gray', lw=0.8)
+# cmap = plt.cm.get_cmap('tab10').copy()
+# cmap.set_bad((1, 1, 1, 0))  # transparent where bc_colors == 0
+# plt.tripcolor(triangulation, facecolors=bc_plot, cmap=cmap, alpha=0.7, lw=0.1, vmin=0, vmax=10)
+# plt.title('Bound0ary Conditions')
+# plt.xlabel('r')
+# plt.ylabel('z')
+# plt.colorbar(label='Boundary Condition Type')
+# # Also put a tiny number in the middle of each triangle to indicate the cell number
+# for i, tri_indices in enumerate(triangles):
+#     # only label the triangles that are not masked (i.e., have a boundary condition)
+#     if bc_colors[i] == 0:
+#         continue
+#     tri_center_x = np.mean(x[tri_indices])
+#     tri_center_y = np.mean(y[tri_indices])
+#     plt.text(tri_center_x, tri_center_y, str(bc_colors[i]), fontsize=6, ha='center', va='center')
 
 # %%
 # Make Neptune input file
@@ -166,13 +171,8 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     mesh["type"] = "rotated_triangle"
     mesh["vertices"] = vertices
     mesh["triangles"] = np.array(triangles, dtype=np.int64)
-    # Construct the neighbor list for the mesh by merging the neighbor list and boundary conditions
-    neighbor_list_neptune = np.copy(neighbors)
-    for i, bc in enumerate(neighbors_bc):
-        for j in range(3):
-            if bc[j] < 0:
-                neighbor_list_neptune[i][j] = bc[j]
-    mesh["neighbors"] = neighbor_list_neptune
+    mesh["neighbors"] = neighbors.flatten()
+    mesh["boundary_conditions"] = (-neighbors_bc - 1).flatten()
     # Collisions
     collisions = f.create_group("collisions")
     coll0 = collisions.create_group("0")
@@ -259,13 +259,39 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     # Boundary conditions
     # TODO: actually read the boundary conditions from the file
     boundary_conditions = f.create_group("boundary_conditions")
-    for i in range(max(-neighbors_bc.flatten()) - 1):
-        bc = boundary_conditions.create_group(f"bc{i}")
-        bc["type"] = "trim" 
-        bc["trim_filename"] = "/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_W"
-    #     bc["type"] = "diffuse"
-    #     bc["fixed_energy"] = 1.0
-    #     bc["absorption_coefficient"] = 0.1
+    # bc1: absorbing bc at the plasma core
+    bc1 = boundary_conditions.create_group("bc1")
+    bc1["type"] = "absorbing"
+    # bc2: west wall
+    bc2 = boundary_conditions.create_group("bc2")
+    bc2["type"] = "trim"
+    bc2["trim_filename"] = "/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_Mo"
+    # bc3: east wall
+    bc3 = boundary_conditions.create_group("bc3")
+    bc3["type"] = "trim"
+    bc3["trim_filename"] = "/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_Mo"
+    # bc4, bc5, and bc6, no physical wall, just transfer to void region, model using diffuse reflection for now
+    bc4 = boundary_conditions.create_group("bc4")
+    bc4["type"] = "diffuse"
+    bc4["fixed_energy"] = 1.0
+    bc4["absorption_coefficient"] = 0.0
+    bc5 = boundary_conditions.create_group("bc5")
+    bc5["type"] = "diffuse"
+    bc5["fixed_energy"] = 1.0
+    bc5["absorption_coefficient"] = 0.0
+    bc6 = boundary_conditions.create_group("bc6")
+    bc6["type"] = "diffuse"
+    bc6["fixed_energy"] = 1.0
+    bc6["absorption_coefficient"] = 0.0
+
+    # for i in range(max(-neighbors_bc.flatten())):
+    #     bc = boundary_conditions.create_group(f"bc{i}")
+    #     bc["type"] = "absorbing"
+        # bc["type"] = "trim" 
+        # bc["trim_filename"] = "/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_W"
+        # bc["type"] = "diffuse"
+        # bc["fixed_energy"] = 1.0
+        # bc["absorption_coefficient"] = 0.1
     # Simulation parameters
     params = f.create_group("params")
     params["max_steps"] = 1000000
@@ -280,6 +306,7 @@ print(output)
 print(f"Simulation completed in {end_time - start_time:.2f} seconds")
 
 # %%
+# %matplotlib inline
 e = 1.602176634 * 1e-19 # Elementary charge
 Da_to_kg = 1.66053906892 * 1e-27 # Dalton (unified atomic mass unit) to kg
 m = 2. * Da_to_kg # Mass of deuterium
@@ -340,45 +367,46 @@ with h5py.File("output.h5", "r") as f:
     plt.title("Ionisation Rate (Neptune)")
     plt.xlabel("r")
     plt.ylabel("z")
-    # plt.figure()
-    # plt.tripcolor(triangulation,D_velocity_x/D_density, shading='flat', cmap="viridis")
-    # plt.colorbar(label="Velocity X (m/s)")
-    # plt.title("D Velocity X (Neptune)")
-    # plt.xlabel("r")
-    # plt.ylabel("z")
 
-    # plt.figure()
-    # plt.tripcolor(triangulation,eirene_output["vel_x"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
-    # plt.colorbar(label="Velocity X (m/s)")
-    # plt.title("D Velocity X (Eirene)")
-    # plt.xlabel("r")
-    # plt.ylabel("z")
+    plt.figure()
+    plt.tripcolor(triangulation,D_velocity_x/D_density, shading='flat', cmap="viridis")
+    plt.colorbar(label="Velocity X (m/s)")
+    plt.title("D Velocity X (Neptune)")
+    plt.xlabel("r")
+    plt.ylabel("z")
 
-    # plt.figure()
-    # plt.tripcolor(triangulation,D_velocity_y/D_density, shading='flat', cmap="viridis")
-    # plt.colorbar(label="Velocity Y (m/s)")
-    # plt.title("D Velocity Y (Neptune)")
-    # plt.xlabel("r")
-    # plt.ylabel("z")
+    plt.figure()
+    plt.tripcolor(triangulation,eirene_output["vel_x"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
+    plt.colorbar(label="Velocity X (m/s)")
+    plt.title("D Velocity X (Eirene)")
+    plt.xlabel("r")
+    plt.ylabel("z")
 
-    # plt.figure()
-    # plt.tripcolor(triangulation,eirene_output["vel_y"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
-    # plt.colorbar(label="Velocity Y (m/s)")
-    # plt.title("D Velocity Y (Eirene)")
-    # plt.xlabel("r")
-    # plt.ylabel("z")
+    plt.figure()
+    plt.tripcolor(triangulation,D_velocity_y/D_density, shading='flat', cmap="viridis")
+    plt.colorbar(label="Velocity Y (m/s)")
+    plt.title("D Velocity Y (Neptune)")
+    plt.xlabel("r")
+    plt.ylabel("z")
 
-    # plt.figure()
-    # plt.tripcolor(triangulation,D_velocity_z/D_density, shading='flat', cmap="viridis")
-    # plt.colorbar(label="Velocity Z (m/s)")
-    # plt.title("D Velocity Z (Neptune)")
-    # plt.xlabel("r")
-    # plt.ylabel("z")
+    plt.figure()
+    plt.tripcolor(triangulation,eirene_output["vel_y"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
+    plt.colorbar(label="Velocity Y (m/s)")
+    plt.title("D Velocity Y (Eirene)")
+    plt.xlabel("r")
+    plt.ylabel("z")
 
-    # plt.figure()
-    # plt.tripcolor(triangulation,eirene_output["vel_z"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
-    # plt.colorbar(label="Velocity Z (m/s)")
-    # plt.title("D Velocity Z (Eirene)")
-    # plt.xlabel("r")
-    # plt.ylabel("z")
+    plt.figure()
+    plt.tripcolor(triangulation,D_velocity_z/D_density, shading='flat', cmap="viridis")
+    plt.colorbar(label="Velocity Z (m/s)")
+    plt.title("D Velocity Z (Neptune)")
+    plt.xlabel("r")
+    plt.ylabel("z")
+
+    plt.figure()
+    plt.tripcolor(triangulation,eirene_output["vel_z"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
+    plt.colorbar(label="Velocity Z (m/s)")
+    plt.title("D Velocity Z (Eirene)")
+    plt.xlabel("r")
+    plt.ylabel("z")
 

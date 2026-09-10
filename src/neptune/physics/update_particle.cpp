@@ -133,7 +133,7 @@ EventType update_particle(
         dt = crossing.t;
         p.u -=
             collision_rate * dt;  // Update the scaled time till next collision
-        if (crossing.next_cell_id != -1) {
+        if (crossing.boundary_condition_id == -1) {
             // Regular grid crossing, move the particle to the next
             // cell
             p.geometry.position = crossing.position;
@@ -141,15 +141,13 @@ EventType update_particle(
             p.geometry.boundary_id = crossing.next_surface_id;
         }
         else {
-            // Boundary crossing
+            // There is a boundary condition to be applied
+
+            // First, move the particle to the boundary
             p.geometry.position = crossing.position;
             p.geometry.boundary_id = crossing.surface_id;
 
-            Vec3 normal = mesh.get_surface_normal(cell_id, crossing.surface_id,
-                                                  crossing.position);
-
-            boundary_conditions[crossing.boundary_condition_id]->apply(p,
-                                                                       normal);
+            boundary_conditions[crossing.boundary_condition_id]->apply(p, mesh);
         }
     }
 

@@ -102,7 +102,7 @@ index_t NonUniform1DMesh::get_neighbour(index_t cell_index,
 {
     if (surface_id == 0) {
         if (cell_index == 0) {
-            return -1;
+            return cb_x.size() - 2;  // Wrap around to the last cell
         }
         else {
             return cell_index - 1;
@@ -110,10 +110,33 @@ index_t NonUniform1DMesh::get_neighbour(index_t cell_index,
     }
     if (surface_id == 1) {
         if (cell_index == cb_x.size() - 2) {
-            return -1;
+            return 0;  // Wrap around to the first cell
         }
         else {
             return cell_index + 1;
+        }
+    }
+    throw std::runtime_error("Invalid surface id");
+}
+
+
+index_t NonUniform1DMesh::get_boundary_condition(index_t cell_index,
+                                        index_t surface_id) const
+{
+    if (surface_id == 0) {
+        if (cell_index == 0) {
+            return 0; // Boundary condition on the left
+        }
+        else {
+            return -1; // No interior boundary conditions
+        }
+    }
+    if (surface_id == 1) {
+        if (cell_index == cb_x.size() - 2) {
+            return 1; // Boundary condition on the right
+        }
+        else {
+            return -1; // No interior boundary conditions
         }
     }
     throw std::runtime_error("Invalid surface id");

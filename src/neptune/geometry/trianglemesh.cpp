@@ -146,19 +146,18 @@ CellCrossing TriangleMesh::get_next_crossing(ParticleGeometry& p) const
 
     CellCrossing crossing = CellCrossing(pos_new, t_new, surface_id);
 
-    if (id_new < 0) {
-        // If the id is negative, it is a boundary,
-        // so negate it and subtract 1 (zero based) to get the boundary id
-        crossing.boundary_condition_id = -id_new - 1;
-        return crossing;
-    }
 
-    crossing.next_cell_id = id_new;
-    // Find the surface id of the next cell
-    for (index_t i = 0; i < 3; i++) {
-        if (neighbors[3 * id_new + i] == p.cell_id) {
-            crossing.next_surface_id = i;
-            break;
+    crossing.boundary_condition_id =
+        get_boundary_condition(p.cell_id, surface_id);
+
+    if (id_new >= 0) {
+        crossing.next_cell_id = id_new;
+        // Find the surface id of the next cell
+        for (index_t i = 0; i < 3; i++) {
+            if (neighbors[3 * id_new + i] == p.cell_id) {
+                crossing.next_surface_id = i;
+                break;
+            }
         }
     }
 
@@ -339,6 +338,18 @@ index_t TriangleMesh::get_neighbour(index_t cell_index,
 
     return neighbors[3 * cell_index + surface_id];
 }
+
+index_t TriangleMesh::get_boundary_condition(index_t cell_index,
+                                            index_t surface_id) const
+{
+    assert(surface_id < 3);
+    assert(cell_index < triangles.size());
+    assert(surface_id >= 0);
+    assert(cell_index >= 0);
+
+    return boundary_conditions[3 * cell_index + surface_id];
+}
+
 
 real_t TriangleMesh::get_surface_area(index_t cell_index,
                                       index_t surface_id) const

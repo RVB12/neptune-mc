@@ -76,11 +76,14 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
             read_vec2_vector(mesh_group.openDataSet("vertices"));
         vector<TriangleIndices> triangles =
             read_triangle_indices_vector(mesh_group.openDataSet("triangles"));
-        if (mesh_group.exists("neighbors")) {
+        if (mesh_group.exists("neighbors") and
+            mesh_group.exists("boundary_conditions")) {
             vector<index_t> neighbors =
                 read_index_vector(mesh_group.openDataSet("neighbors"));
-            return std::make_unique<TriangleMesh>(
-                TriangleMesh(vertices, triangles, neighbors));
+            vector<index_t> boundary_conditions = read_index_vector(
+                mesh_group.openDataSet("boundary_conditions"));
+            return std::make_unique<TriangleMesh>(TriangleMesh(
+                vertices, triangles, neighbors, boundary_conditions));
         }
         else {
             return std::make_unique<TriangleMesh>(
@@ -92,11 +95,14 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
             read_vec2_vector(mesh_group.openDataSet("vertices"));
         vector<TriangleIndices> triangles =
             read_triangle_indices_vector(mesh_group.openDataSet("triangles"));
-        if (mesh_group.exists("neighbors")) {
+        if (mesh_group.exists("neighbors") and
+            mesh_group.exists("boundary_conditions")) {
             vector<index_t> neighbors =
                 read_index_vector(mesh_group.openDataSet("neighbors"));
-            return std::make_unique<RotatedTriangleMesh>(
-                RotatedTriangleMesh(vertices, triangles, neighbors));
+            vector<index_t> boundary_conditions = read_index_vector(
+                mesh_group.openDataSet("boundary_conditions"));
+            return std::make_unique<RotatedTriangleMesh>(RotatedTriangleMesh(
+                vertices, triangles, neighbors, boundary_conditions));
         }
         else {
             return std::make_unique<RotatedTriangleMesh>(

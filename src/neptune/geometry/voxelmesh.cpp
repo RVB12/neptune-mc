@@ -240,6 +240,59 @@ index_t VoxelMesh::get_neighbour(index_t cell_index, index_t surface_id) const
     }
 }
 
+
+index_t VoxelMesh::get_boundary_condition(index_t cell_index, index_t surface_id) const
+{
+    Index3D ind = linear_to_tuple(cell_index);
+
+    switch (surface_id) {
+        case 0:  // x == 0
+            if (ind.i > 0) {
+                return -1;
+            }
+            else {
+                return 0;
+            }
+        case 1:  // y == 0
+            if (ind.j > 0) {
+                return -1;
+            }
+            else {
+                return 1;
+            }
+        case 2:  // z == 0
+            if (ind.k > 0) {
+                return -1;
+            }
+            else {
+                return 2;
+            }
+        case 3:  // x == Lx
+            if (ind.i < nx - 1) {
+                return -1;
+            }
+            else {
+                return 3;
+            }
+        case 4:  // y == Ly
+            if (ind.j < ny - 1) {
+                return -1;
+            }
+            else {
+                return 4;
+            }
+        case 5:  // z == Lz
+            if (ind.k < nz - 1) {
+                return -1;
+            }
+            else {
+                return 5;
+            }
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
+}
+
 real_t VoxelMesh::get_surface_area(index_t, index_t surface_id) const
 {
     switch (surface_id) {

@@ -67,39 +67,42 @@ class TriangleMesh : public Mesh {
           spatialindex(vertices, triangles)
     {
         make_neighborlist(vertices, triangles, spatialindex, neighbors);
+        // Initialize boundary conditions to -1 (no boundary condition)
+        // and 0 for all edges that are on the boundary of the mesh
+        boundary_conditions.resize(3*triangles.size());
+        for (index_t i = 0; i < 3*triangles.size(); ++i) {
+            if(neighbors[i] == -1) {
+                boundary_conditions[i] = 0;
+            } else {
+                boundary_conditions[i] = -1;
+            }
+        }
     }
 
     TriangleMesh(vector<Vec2>& vertices_,
                  vector<TriangleIndices>& triangles_,
-                 vector<index_t>& neighbors_)
+                 vector<index_t>& neighbors_,
+                 vector<index_t>& boundary_conditions_)
         : Mesh(),
           vertices(vertices_),
           triangles(triangles_),
           spatialindex(vertices, triangles),
-          neighbors(neighbors_)
+          neighbors(neighbors_),
+          boundary_conditions(boundary_conditions_)
     {
     }
-
-    TriangleMesh(vector<Vec2>& vertices_,
-                 vector<TriangleIndices>& triangles_,
-                 SpatialIndex& spatialindex,
-                 vector<index_t>& neighbors_)
-        : Mesh(),
-          vertices(vertices_),
-          triangles(triangles_),
-          spatialindex(spatialindex),
-          neighbors(neighbors_)
-    {}
 
     TriangleMesh(vector<Vec2>&& vertices_,
                  vector<TriangleIndices>&& triangles_,
                  SpatialIndex&& spatialindex,
-                 vector<index_t>&& neighbors_)
+                 vector<index_t>&& neighbors_,
+                 vector<index_t>&& boundary_conditions_)
         : Mesh(),
           vertices(std::move(vertices_)),
           triangles(std::move(triangles_)),
           spatialindex(std::move(spatialindex)),
-          neighbors(std::move(neighbors_))
+          neighbors(std::move(neighbors_)),
+          boundary_conditions(std::move(boundary_conditions_))
     {}
 
     TriangleMesh(const TriangleMesh& other)
@@ -107,7 +110,8 @@ class TriangleMesh : public Mesh {
           vertices(other.vertices),
           triangles(other.triangles),
           spatialindex(other.spatialindex),
-          neighbors(other.neighbors)
+          neighbors(other.neighbors),
+          boundary_conditions(other.boundary_conditions)
     {}
 
     TriangleMesh(TriangleMesh&& other)
@@ -115,7 +119,8 @@ class TriangleMesh : public Mesh {
           vertices(std::move(other.vertices)),
           triangles(std::move(other.triangles)),
           spatialindex(std::move(other.spatialindex)),
-          neighbors(std::move(other.neighbors))
+          neighbors(std::move(other.neighbors)),
+          boundary_conditions(std::move(other.boundary_conditions))
     {}
 
     index_t n_cells() const;
@@ -158,6 +163,11 @@ class TriangleMesh : public Mesh {
      * @brief Return the index of the neighbour cell that shares a given surface
      */
     index_t get_neighbour(index_t cell_index, index_t surface_id) const;
+
+    /**
+     * @brief Return the boundary condition of a given surface
+     */
+    index_t get_boundary_condition(index_t cell_index, index_t surface_id) const;
 
     /**
      * @brief Return the number of surfaces of a given cell
@@ -221,6 +231,12 @@ class TriangleMesh : public Mesh {
     // Map from triangle edge to the triangle that shares the edge
     // used for fast traversal
     vector<index_t> neighbors;
+
+    // Map from triangle edge to the boundary condition of the edge
+    // -1 = no boundary condition
+    // note: this edge does not have to be a boundary edge, it can be an internal edge
+    // e.g. for transparent boundaries or some internal boundary conditions
+    vector<index_t> boundary_conditions;
 };
 
 }  // namespace neptune

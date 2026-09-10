@@ -111,6 +111,11 @@ class NonUniformMesh : public Mesh {
     index_t get_neighbour(index_t cell_index, index_t surface_id) const;
 
     /**
+     * @brief Return the boundary condition of a given surface
+     */
+    index_t get_boundary_condition(index_t cell_index, index_t surface_id) const;
+
+    /**
      * @brief Return the area of a given surface
      */
     real_t get_surface_area(index_t cell_index, index_t surface_id) const;

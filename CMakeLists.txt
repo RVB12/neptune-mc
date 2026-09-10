@@ -58,7 +58,7 @@ add_library(neptune ${neptune_SOURCES})
 target_include_directories(neptune PUBLIC src)
 target_compile_options(neptune PRIVATE -O3)
 target_compile_options(neptune PRIVATE -fPIC)
-target_compile_options(neptune PRIVATE -DNDEBUG)
+# target_compile_options(neptune PRIVATE -DNDEBUG)
 target_compile_definitions(neptune PUBLIC NEPTUNE_VERSION="${NEPTUNE_VERSION}")
 
 include(FetchContent)

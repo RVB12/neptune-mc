@@ -285,6 +285,45 @@ index_t RotatedNonUniformMesh::get_neighbour(index_t cell_index,
     }
 }
 
+index_t RotatedNonUniformMesh::get_boundary_condition(index_t cell_index,
+                                                     index_t surface_id) const
+{
+    Index3D ind = linear_to_tuple(cell_index);
+
+    switch (surface_id) {
+        case 0:  // r == inner
+            if (ind.i > 0) {
+                return -1;
+            }
+            else {
+                return 0;
+            }
+        case 1:  // z == lower
+            if (ind.j > 0) {
+                return -1;
+            }
+            else {
+                return 1;
+            }
+        case 2:  // r == outer
+            if (ind.i < cb_r.size() - 2) {
+                return -1;
+            }
+            else {
+                return 2;
+            }
+        case 3:  // z == upper
+            if (ind.j < cb_z.size() - 2) {
+                return -1;
+            }
+            else {
+                return 3;
+            }
+        default:
+            throw std::runtime_error("Invalid surface id");
+    }
+}
+
 real_t RotatedNonUniformMesh::get_surface_area(index_t cell_index,
                                                index_t surface_id) const
 {
