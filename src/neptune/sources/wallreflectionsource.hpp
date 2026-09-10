@@ -59,7 +59,11 @@ class WallReflectionSource : public Source {
     Species background_species;  // Species of the background particles that hit
                                  // the wall
     Species particle_species;    // Species of the generated particles
-    real_t sheath_potential = 3.1;
+    real_t sheath_potential =
+        3.1;  // The potential drop across the sheath in eV, used to accelerate
+              // the backscattered particles A component will be added to the
+              // velocity of the backscattered particles in the direction of the
+              // normal to account for this acceleration
     real_t franck_condon_temp =
         2.0;    // temperature of dissociated molecules in eV
     real_t Rt;  // fraction of ions that are reflected

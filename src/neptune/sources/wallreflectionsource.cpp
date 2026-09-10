@@ -7,18 +7,17 @@
 
 namespace neptune {
 
-WallReflectionSource::WallReflectionSource(
-    index_t num_particles_,
-    index_t cell_idx_,
-    index_t surface_id_,
-    real_t sheath_potential_,
-    real_t franck_condon_temp_,
-    real_t Rt_,
-    real_t Rr_,
-    Species background_species,
-    Species particle_species,
-    const Mesh& mesh,
-    const Background& background)
+WallReflectionSource::WallReflectionSource(index_t num_particles_,
+                                           index_t cell_idx_,
+                                           index_t surface_id_,
+                                           real_t sheath_potential_,
+                                           real_t franck_condon_temp_,
+                                           real_t Rt_,
+                                           real_t Rr_,
+                                           Species background_species,
+                                           Species particle_species,
+                                           const Mesh& mesh,
+                                           const Background& background)
     : Source(num_particles_),
       cell_idx(cell_idx_),
       surface_id(surface_id_),
@@ -35,9 +34,9 @@ WallReflectionSource::WallReflectionSource(
     real_t boundary_drift = -dot(boundary_drift_3d, normal);
 
     real_t ion_temp = background.temperature(background_species, cell_idx);
-    real_t boundary_bgk_stddev =
-        std::sqrt(ion_temp * constants::eV_to_Joules / (constants::m_p *
-                  SPECIES_MASS[static_cast<int>(background_species)]));
+    real_t boundary_bgk_stddev = std::sqrt(
+        ion_temp * constants::eV_to_Joules /
+        (constants::m_p * SPECIES_MASS[static_cast<int>(background_species)]));
 
     real_t ion_density = background.density(background_species, cell_idx);
 
@@ -97,12 +96,28 @@ Particle WallReflectionSource::generate_particle(uint64_t particle_id,
     std::uniform_real_distribution<real_t> dist_u(0, 1);
     real_t r = dist_u(p.rng);
     if (r < Rr) {
-        // The particle is backscattered, draw a velocity from the maxwellian of
-        // the ions but only consider particles that are moving towards the wall
-        // (this is a sample from a truncated normal distribution)
-        real_t x = truncated_normal_right_tail(
-            -boundary_drift / boundary_bgk_stddev, p.rng);
-        real_t vel_to_wall = x * boundary_bgk_stddev + boundary_drift;
+        // The particle is backscattered, draw a velocity from the truncated
+        // drifting maxwellian distribution of the ions
+        // An exact sample is difficult, so we sample from the non-drifting
+        // maxwellian with a modified temperature and then apply a re-weighting
+        // factor to account for the drift.
+
+        real_t Vn = boundary_drift / (std::sqrt(2.0) * boundary_bgk_stddev);
+        real_t boundary_bgk_stddev_tilde;
+        if (Vn >= 0.0 and Vn <= 1.0) {
+            real_t temperature_ratio = 1.0 - 0.6026 * Vn;
+            boundary_bgk_stddev_tilde =
+                boundary_bgk_stddev / std::sqrt(temperature_ratio);
+        }
+        else {
+            // Outside of the listed range for Vn, just use the original
+            // temperature. EIRENE appears to use rejection sampling for this
+            // case.
+            boundary_bgk_stddev_tilde = boundary_bgk_stddev;
+        }
+        real_t R = dist_u(p.rng);
+        real_t vel_to_wall =
+            std::sqrt(-2.0 * std::log(R)) * boundary_bgk_stddev_tilde;
 
         real_t drift_tangent_1 = dot(boundary_drift_3d, tangent1);
         real_t drift_tangent_2 = dot(boundary_drift_3d, tangent2);
@@ -115,16 +130,41 @@ Particle WallReflectionSource::generate_particle(uint64_t particle_id,
         real_t vel_tangent_1 = dist_v1(p.rng);
         real_t vel_tangent_2 = dist_v2(p.rng);
 
-        real_t alpha = 0.5;
-        vel_to_wall =
-            std::sqrt(alpha * (vel_to_wall * vel_to_wall +
-                               2 * sheath_potential * constants::eV_to_Joules /
-                                   constants::m_p));
+        // We have sampled from the non-drifting flux maxwellian, when we should
+        // have sampled from the drifting flux maxwellian. we can account for
+        // this by re-weighting the particle's intensity by the ratio of the two
+        // distributions.
+        real_t H =
+            std::exp(-Vn * Vn) + std::sqrt(M_PI) * Vn * (1 + std::erf(Vn));
+        real_t sigma_sq = boundary_bgk_stddev * boundary_bgk_stddev;
+        real_t sigma_tilde_sq =
+            boundary_bgk_stddev_tilde * boundary_bgk_stddev_tilde;
+        real_t weight_exponent =
+            vel_to_wall * boundary_drift / sigma_sq -
+            boundary_drift * boundary_drift / (2.0 * sigma_sq) +
+            vel_to_wall * vel_to_wall / 2.0 *
+                (1.0 / sigma_tilde_sq - 1.0 / sigma_sq);
+        real_t weight_factor =
+            (sigma_tilde_sq / sigma_sq) * std::exp(weight_exponent) / H;
 
+        p.intensity *= weight_factor;
+
+        // Acceleration of the particle because of the sheath potential
+        // A component is added to vel_to_wall so that the total energy of the
+        // particle is increased by the sheath potential
+        real_t sheath_vel =
+            std::sqrt(2.0 * sheath_potential * constants::eV_to_Joules /
+                      (constants::m_p *
+                       SPECIES_MASS[static_cast<int>(particle_species)]));
+        vel_to_wall =
+            std::sqrt(vel_to_wall * vel_to_wall + sheath_vel * sheath_vel);
+
+        // Assemble the full velocity vector
         p.geometry.velocity = -vel_to_wall * normal + vel_tangent_1 * tangent1 +
                               vel_tangent_2 * tangent2;
 
-        // Now reflect the velocity specularly
+        // TODO: apply the correct boundary condition
+        // just do specular reflection for now, but this should be a parameter
         p.geometry.velocity -= 2 * (p.geometry.velocity.dot(normal)) * normal;
     }
     else {
