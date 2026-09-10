@@ -43,11 +43,11 @@ def read_neighbor_list(filename):
             s = line.split()
             cell_index = int(s[0]) - 1
             neighbor_list[cell_index, :] = [int(s[1]) - 1, int(s[4]) - 1, int(s[7]) - 1]
-            boundary_conditions[cell_index, :] = [int(s[3]), int(s[6]), int(s[9])]
+            boundary_conditions[cell_index, :] = [-int(s[3])-1, -int(s[6])-1, -int(s[9])-1]
             # Not really sure what this next one is, might be surface id in next cell
             surf_id_next_cell = [int(s[2]), int(s[5]), int(s[8])]
 
-    return np.array(neighbor_list), np.array(boundary_conditions)
+    return neighbor_list, boundary_conditions
 
 # Convert species information from a list of atomic mass and charge to species names
 def convert_species(zamin, zamax, nuclear_charge, atomic_mass):

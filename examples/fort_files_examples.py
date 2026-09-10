@@ -41,6 +41,13 @@ magnetic_field = read_magnetic_field(base_dir + "/b2fgmtry")
 background = convert_background_to_neutral_grid(background, magnetic_field, run_dir + "/fort.35")
 eirene_output = read_eirene_output(run_dir + "/fort.46", run_dir + "/fort.35")
 
+# default neighbors_bc to 6 if the neighbor is -1 (i.e. no neighbor)
+# this overrides the neptune behavior of defaulting to 0, which would be an absorbing bc
+for i in range(len(triangles)):
+    for j in range(3):
+        if neighbors[i][j] == -1 and neighbors_bc[i][j] == -1:
+            neighbors_bc[i][j] = 6
+
 # Create the triangulation
 x = np.array([v[0] for v in vertices])
 y = np.array([v[1] for v in vertices])
@@ -49,7 +56,7 @@ ncells = len(triangles)
 xy = np.concatenate((x[:, None], y[:, None]), axis=1)
 triangulation = tri.Triangulation(xy[:, 0], xy[:, 1], triangles)
 
-n_particles = 10000
+n_particles = 100000
 
 
 # %%
@@ -117,12 +124,12 @@ for species, data in background.items():
 # # %matplotlib qt
 # # Show the boundary conditions with different colors
 
-# bc_colors = np.max(-neighbors_bc, axis=1)
+# bc_colors = np.max(neighbors_bc, axis=1)
 # bc_plot = np.ma.masked_where(bc_colors == 0, bc_colors)
 # plt.figure(figsize=(8, 8))
 # plt.triplot(triangulation, color='gray', lw=0.8)
 # cmap = plt.cm.get_cmap('tab10').copy()
-# cmap.set_bad((1, 1, 1, 0))  # transparent where bc_colors == 0
+# cmap.set_bad((1, 1, 1, 0))  # transparent where bc_colors == -1
 # plt.tripcolor(triangulation, facecolors=bc_plot, cmap=cmap, alpha=0.7, lw=0.1, vmin=0, vmax=10)
 # plt.title('Bound0ary Conditions')
 # plt.xlabel('r')
@@ -131,7 +138,7 @@ for species, data in background.items():
 # # Also put a tiny number in the middle of each triangle to indicate the cell number
 # for i, tri_indices in enumerate(triangles):
 #     # only label the triangles that are not masked (i.e., have a boundary condition)
-#     if bc_colors[i] == 0:
+#     if bc_colors[i] == -1:
 #         continue
 #     tri_center_x = np.mean(x[tri_indices])
 #     tri_center_y = np.mean(y[tri_indices])
@@ -171,7 +178,7 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     mesh["vertices"] = vertices
     mesh["triangles"] = np.array(triangles, dtype=np.int64)
     mesh["neighbors"] = neighbors.flatten()
-    mesh["boundary_conditions"] = (-neighbors_bc - 1).flatten()
+    mesh["boundary_conditions"] = neighbors_bc.flatten()
     # Collisions
     collisions = f.create_group("collisions")
     coll0 = collisions.create_group("0")
@@ -206,13 +213,13 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     cell_indices_wall = []
     surface_indices_wall = []
     for i, bc in enumerate(neighbors_bc):
-        if bc[0] == -2:
+        if bc[0] == 1:
             cell_indices_wall.append(i)
             surface_indices_wall.append(0)
-        if bc[1] == -2:
+        if bc[1] == 1:
             cell_indices_wall.append(i)
             surface_indices_wall.append(1)
-        if bc[2] == -2:
+        if bc[2] == 1:
             cell_indices_wall.append(i)
             surface_indices_wall.append(2)
     cell_indices_wall = np.array(cell_indices_wall, dtype=np.int64)
@@ -226,7 +233,7 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     wall_source["sheath_potential"] = 3.1
     wall_source["franck_condon_temp"] = 2.0
     wall_source["Rt"] = 0.9
-    wall_source["Rr"] = 0.8
+    wall_source["Rr"] = 0.9
 
     # Estimators
     estimators = f.create_group("estimators")
@@ -269,19 +276,18 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     bc3 = boundary_conditions.create_group("bc3")
     bc3["type"] = "trim"
     bc3["trim_filename"] = "/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_Mo"
-    # bc4, bc5, and bc6, no physical wall, just transfer to void region, model using diffuse reflection for now
+    # bc4, bc5, and bc6, no physical wall, just transfer to void region using transparent boundary conditions
     bc4 = boundary_conditions.create_group("bc4")
     bc4["type"] = "transparent"
-    bc4["fixed_energy"] = 1.0
-    bc4["absorption_coefficient"] = 0.0
     bc5 = boundary_conditions.create_group("bc5")
     bc5["type"] = "transparent"
-    bc5["fixed_energy"] = 1.0
-    bc5["absorption_coefficient"] = 0.0
     bc6 = boundary_conditions.create_group("bc6")
     bc6["type"] = "transparent"
-    bc6["fixed_energy"] = 1.0
-    bc6["absorption_coefficient"] = 0.0
+    # bc7: extra boundary condition for any cell that has no neighbor
+    bc7 = boundary_conditions.create_group("bc7")
+    bc7["type"] = "diffuse"
+    bc7["fixed_energy"] = 1.0
+    bc7["absorption_coefficient"] = 0.0
 
     # for i in range(max(-neighbors_bc.flatten())):
     #     bc = boundary_conditions.create_group(f"bc{i}")
@@ -328,6 +334,16 @@ with h5py.File("output.h5", "r") as f:
             D_velocity_y[index] = 0.0
             D_velocity_z[index] = 0.0
             D_energy[index] = 0.0
+
+    # # Set void region to 0 density and 0 velocity
+    # # This makes it easier to compare against the eirene output
+    # for index, value in np.ndenumerate(background["D+"]["density"]):
+    #     if value < 1e-10:
+    #         D_density[index] = 1e-10
+    #         D_velocity_x[index] = 0.0
+    #         D_velocity_y[index] = 0.0
+    #         D_velocity_z[index] = 0.0
+    #         D_energy[index] = 0.0
 
     for index, value in np.ndenumerate(eirene_output["density"]):
         if value < 1e-10:

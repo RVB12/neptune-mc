@@ -147,6 +147,8 @@ EventType update_particle(
             p.geometry.position = crossing.position;
             p.geometry.boundary_id = crossing.surface_id;
 
+            // Now apply the boundary condition
+            // this may change the particle's position, velocity, and even cell_id and surface_id
             boundary_conditions[crossing.boundary_condition_id]->apply(p, mesh, crossing);
         }
     }

@@ -6,10 +6,12 @@
 
 namespace neptune {
 
-Particle VolumeSource::generate_particle(uint64_t particle_id,
-                                         uint64_t seed,
-                                         const Mesh& mesh,
-                                         const Background& background)
+Particle VolumeSource::generate_particle(
+    uint64_t particle_id,
+    uint64_t seed,
+    const Mesh& mesh,
+    const Background& background,
+    const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions)
 {
     Particle p(particle_id, seed, species);
 

@@ -39,14 +39,16 @@ class SurfaceSource : public Source {
     /**
      * @brief Generate a particle
      */
-    Particle generate_particle(uint64_t particle_id,
-                               uint64_t seed,
-                               const Mesh& mesh,
-                               const Background& background);
+    Particle generate_particle(
+        uint64_t particle_id,
+        uint64_t seed,
+        const Mesh& mesh,
+        const Background& background,
+        const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions);
 
-    Species species;       // Species of the generated particles
-    real_t v_norm;         // Velocity magnitude of the particles
-    index_t cell_idx = 0;  // The cell index where the particles are generated
+    Species species;         // Species of the generated particles
+    real_t v_norm;           // Velocity magnitude of the particles
+    index_t cell_idx = 0;    // The cell index where the particles are generated
     index_t surface_id = 0;  // The surface id where the particles are generated
 };
 

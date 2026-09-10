@@ -34,10 +34,12 @@ class VolumeSource : public Source {
     /**
      * @brief Generate a particle
      */
-    Particle generate_particle(uint64_t particle_id,
-                               uint64_t seed,
-                               const Mesh& mesh,
-                               const Background& background);
+    Particle generate_particle(
+        uint64_t particle_id,
+        uint64_t seed,
+        const Mesh& mesh,
+        const Background& background,
+        const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions);
 
     Species species;
     Vec3 vel_mean;      // Mean velocity of the particles

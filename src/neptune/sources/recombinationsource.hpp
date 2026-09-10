@@ -32,10 +32,12 @@ class RecombinationSource : public Source {
     /**
      * @brief Generate a particle
      */
-    Particle generate_particle(uint64_t particle_id,
-                               uint64_t seed,
-                               const Mesh& mesh,
-                               const Background& background);
+    Particle generate_particle(
+        uint64_t particle_id,
+        uint64_t seed,
+        const Mesh& mesh,
+        const Background& background,
+        const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions);
 
     index_t cell_idx = 0;  // The cell index where the particles are generated
     Species background_species;  // Species of the background the recombines to

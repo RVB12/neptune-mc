@@ -6,7 +6,7 @@
 #include "neptune/geometry/vec2.hpp"
 #include "neptune/physics/background.hpp"
 #include "neptune/physics/particle.hpp"
-
+#include "neptune/boundaryconditions/boundarycondition.hpp"
 namespace neptune {
 
 /**
@@ -39,10 +39,13 @@ class Source {
      *
      * @param i The index of the particle to generate
      */
-    virtual Particle generate_particle(uint64_t particle_id,
-                                       uint64_t seed,
-                                       const Mesh& mesh,
-                                       const Background& background) = 0;
+    virtual Particle generate_particle(
+        uint64_t particle_id,
+        uint64_t seed,
+        const Mesh& mesh,
+        const Background& background,
+        const vector<std::unique_ptr<BoundaryCondition>>&
+            boundary_conditions) = 0;
 
     index_t
         num_particles_;  // the number of particles to generate from this source

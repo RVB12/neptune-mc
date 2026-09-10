@@ -581,7 +581,7 @@ void simulate_kdmc(
 
             Particle particle = sources[i_source]->generate_particle(
                 global_particle_index + i_batch * total_particles, params.seed,
-                mesh, background);
+                mesh, background, boundary_conditions);
 
             for (index_t i_step = 0; i_step < params.max_steps; i_step++) {
                 num_kd_steps++;

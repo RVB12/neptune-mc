@@ -6,13 +6,14 @@
 
 namespace neptune {
 
-AmjuelRecombinationSource::AmjuelRecombinationSource(index_t num_particles,
-                                         index_t cell_idx_,
-                                         Species background_species_,
-                                         Species species_,
-                                         const Mesh& mesh,
-                                         const Background& background,
-                                         const vector<real_t>& coef_matrix)
+AmjuelRecombinationSource::AmjuelRecombinationSource(
+    index_t num_particles,
+    index_t cell_idx_,
+    Species background_species_,
+    Species species_,
+    const Mesh& mesh,
+    const Background& background,
+    const vector<real_t>& coef_matrix)
     : Source(num_particles),
       cell_idx(cell_idx_),
       background_species(background_species_),
@@ -22,14 +23,14 @@ AmjuelRecombinationSource::AmjuelRecombinationSource(index_t num_particles,
     real_t n_e = background.density(Species::e, cell_idx);
     real_t n_Dplus = background.density(background_species, cell_idx);
 
-    if(n_e <= 0 || n_Dplus <= 0) {
+    if (n_e <= 0 || n_Dplus <= 0) {
         intensity_ = 0;
         return;
     }
 
-
     real_t logT = std::log(temperature);
-    real_t logE = std::log(n_e/1e8/1e6); // convert to cm^-3 and then to 10^8 cm^-3
+    real_t logE =
+        std::log(n_e / 1e8 / 1e6);  // convert to cm^-3 and then to 10^8 cm^-3
 
     // evaluate sum_i sum_j coef_matrix_[i][j] * logT^i * logE^j
     real_t rate = 0.0;
@@ -47,10 +48,12 @@ AmjuelRecombinationSource::AmjuelRecombinationSource(index_t num_particles,
     intensity_ = K_r * n_Dplus * n_e * vol;
 }
 
-Particle AmjuelRecombinationSource::generate_particle(uint64_t particle_id,
-                                                uint64_t seed,
-                                                const Mesh& mesh,
-                                                const Background& background)
+Particle AmjuelRecombinationSource::generate_particle(
+    uint64_t particle_id,
+    uint64_t seed,
+    const Mesh& mesh,
+    const Background& background,
+    const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions)
 {
     Particle p(particle_id, seed, species);
 

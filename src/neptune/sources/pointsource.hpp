@@ -36,10 +36,12 @@ class PointSource : public Source {
     /**
      * @brief Generate a particle
      */
-    Particle generate_particle(uint64_t particle_id,
-                               uint64_t seed,
-                               const Mesh& mesh,
-                               const Background& background);
+    Particle generate_particle(
+        uint64_t particle_id,
+        uint64_t seed,
+        const Mesh& mesh,
+        const Background& background,
+        const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions);
 
     Species species;    // Species of the generated particles
     Vec3 pos;           // Initial position of the particles

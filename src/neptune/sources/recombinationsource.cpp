@@ -21,7 +21,7 @@ RecombinationSource::RecombinationSource(index_t num_particles,
     real_t K_r =
         0.7e-19 *
         std::sqrt(13.6 / temperature);  // Recombination rate coefficient
-    if(temperature <= 0) {
+    if (temperature <= 0) {
         intensity_ = 0;
         return;
     }
@@ -31,10 +31,12 @@ RecombinationSource::RecombinationSource(index_t num_particles,
     intensity_ = K_r * n_Dplus * n_e * vol;
 }
 
-Particle RecombinationSource::generate_particle(uint64_t particle_id,
-                                                uint64_t seed,
-                                                const Mesh& mesh,
-                                                const Background& background)
+Particle RecombinationSource::generate_particle(
+    uint64_t particle_id,
+    uint64_t seed,
+    const Mesh& mesh,
+    const Background& background,
+    const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions)
 {
     Particle p(particle_id, seed, species);
 

@@ -53,10 +53,12 @@ WallReflectionSource::WallReflectionSource(index_t num_particles_,
     intensity_ = flux * Rt * surface_area;
 }
 
-Particle WallReflectionSource::generate_particle(uint64_t particle_id,
-                                                 uint64_t seed,
-                                                 const Mesh& mesh,
-                                                 const Background& background)
+Particle WallReflectionSource::generate_particle(
+    uint64_t particle_id,
+    uint64_t seed,
+    const Mesh& mesh,
+    const Background& background,
+    const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions)
 {
     Particle p(particle_id, seed, particle_species);
 
@@ -163,9 +165,16 @@ Particle WallReflectionSource::generate_particle(uint64_t particle_id,
         p.geometry.velocity = -vel_to_wall * normal + vel_tangent_1 * tangent1 +
                               vel_tangent_2 * tangent2;
 
-        // TODO: apply the correct boundary condition
-        // just do specular reflection for now, but this should be a parameter
-        p.geometry.velocity -= 2 * (p.geometry.velocity.dot(normal)) * normal;
+        // Get the boundary condition to apply to the particle
+        index_t boundary_condition_id =
+            mesh.get_boundary_condition(cell_idx, surface_id);
+
+        CellCrossing dummycrossing(p.geometry.position, 0, surface_id,
+                                   p.geometry.cell_id, surface_id,
+                                   boundary_condition_id);
+
+        boundary_conditions[boundary_condition_id]->apply(p, mesh,
+                                                          dummycrossing);
     }
     else {
         // The particle undergoes Franck-Condon dissociation, draw a new

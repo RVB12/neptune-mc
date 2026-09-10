@@ -6,10 +6,12 @@
 
 namespace neptune {
 
-Particle SurfaceSource::generate_particle(uint64_t particle_id,
-                                          uint64_t seed,
-                                          const Mesh& mesh,
-                                          const Background& background)
+Particle SurfaceSource::generate_particle(
+    uint64_t particle_id,
+    uint64_t seed,
+    const Mesh& mesh,
+    const Background& background,
+    const vector<std::unique_ptr<BoundaryCondition>>& boundary_conditions)
 {
     Particle p(particle_id, seed, species);
 
@@ -42,8 +44,7 @@ Particle SurfaceSource::generate_particle(uint64_t particle_id,
     real_t cos_theta = std::sqrt(dist_u(p.rng));
     real_t sin_theta = std::sqrt(1 - cos_theta * cos_theta);
 
-    Vec3 direction = cos_theta * normal +
-                     sin_theta * std::cos(phi) * tangent1 +
+    Vec3 direction = cos_theta * normal + sin_theta * std::cos(phi) * tangent1 +
                      sin_theta * std::sin(phi) * tangent2;
     direction /= direction.norm();
 
