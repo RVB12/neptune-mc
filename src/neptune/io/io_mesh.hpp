@@ -1,14 +1,14 @@
 #ifndef NEPTUNE_IO_MESH_HPP
 #define NEPTUNE_IO_MESH_HPP
 
-#include "neptune/io/io_common.hpp"
 #include "neptune/geometry/mesh.hpp"
+#include "neptune/geometry/nonuniform1Dmesh.hpp"
 #include "neptune/geometry/nonuniformmesh.hpp"
+#include "neptune/geometry/rotatednonuniformmesh.hpp"
 #include "neptune/geometry/rotatedtrianglemesh.hpp"
 #include "neptune/geometry/trianglemesh.hpp"
 #include "neptune/geometry/voxelmesh.hpp"
-#include "neptune/geometry/rotatednonuniformmesh.hpp"
-#include "neptune/geometry/nonuniform1Dmesh.hpp"
+#include "neptune/io/io_common.hpp"
 
 namespace neptune {
 
@@ -76,16 +76,32 @@ std::unique_ptr<Mesh> read_mesh(const H5::Group& mesh_group)
             read_vec2_vector(mesh_group.openDataSet("vertices"));
         vector<TriangleIndices> triangles =
             read_triangle_indices_vector(mesh_group.openDataSet("triangles"));
-        TriangleMesh mesh(vertices, triangles);
-        return std::make_unique<TriangleMesh>(mesh);
+        if (mesh_group.exists("neighbors")) {
+            vector<index_t> neighbors =
+                read_index_vector(mesh_group.openDataSet("neighbors"));
+            return std::make_unique<TriangleMesh>(
+                TriangleMesh(vertices, triangles, neighbors));
+        }
+        else {
+            return std::make_unique<TriangleMesh>(
+                TriangleMesh(vertices, triangles));
+        }
     }
     else if (mesh_type == "rotated_triangle") {
         vector<Vec2> vertices =
             read_vec2_vector(mesh_group.openDataSet("vertices"));
         vector<TriangleIndices> triangles =
             read_triangle_indices_vector(mesh_group.openDataSet("triangles"));
-        RotatedTriangleMesh mesh(vertices, triangles);
-        return std::make_unique<RotatedTriangleMesh>(mesh);
+        if (mesh_group.exists("neighbors")) {
+            vector<index_t> neighbors =
+                read_index_vector(mesh_group.openDataSet("neighbors"));
+            return std::make_unique<RotatedTriangleMesh>(
+                RotatedTriangleMesh(vertices, triangles, neighbors));
+        }
+        else {
+            return std::make_unique<RotatedTriangleMesh>(
+                RotatedTriangleMesh(vertices, triangles));
+        }
     }
     else if (mesh_type == "rotated_non_uniform") {
         vector<real_t> cb_r = read_real_vector(mesh_group.openDataSet("cb_r"));

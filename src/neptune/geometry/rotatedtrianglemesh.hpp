@@ -35,6 +35,17 @@ class RotatedTriangleMesh : public Mesh {
 
     RotatedTriangleMesh(vector<Vec2>& vertices_,
                         vector<TriangleIndices>& triangles_,
+                        vector<index_t>& neighbors_)
+        : Mesh(),
+          vertices(vertices_),
+          triangles(triangles_),
+          spatialindex(vertices, triangles),
+          neighbors(neighbors_)
+    {
+    }
+
+    RotatedTriangleMesh(vector<Vec2>& vertices_,
+                        vector<TriangleIndices>& triangles_,
                         SpatialIndex& spatialindex,
                         vector<index_t>& neighbors_)
         : Mesh(),

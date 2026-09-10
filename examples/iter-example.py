@@ -90,7 +90,7 @@ delta_pot_sh = 3.1
 
 
 # Number of particles to use in the simulation
-num_particles = int(1e7)
+num_particles = int(1e6)
 estimate_variance = False
 n_batches = 1
 
@@ -384,8 +384,12 @@ with h5py.File("output.h5", "r") as output_file:
     D_energy_x = output_file["D"]["track_length"]["energy_x"][:]
     energy_unit = output_file["D"]["track_length"]["energy_x"].attrs["unit"]
     energy_unit = energy_unit.decode("utf-8") if isinstance(energy_unit, bytes) else energy_unit
+
+    D_temperature = (D_energy_x/D_density * 2.0 - (D_velocity_x/D_density )**2) * m / e
+    D_fv_temperature = energy_fv * 2.0 - momentum_fv**2 * m / eV
+
     plt.figure(figsize=(12, 5))
-    plt.subplot(1,3,1)
+    plt.subplot(2,3,1)
     plt.plot(xc, D_density, label="D (MC)")
     plt.plot(xc, density_fv, label="D (FV)")
     plt.xlabel("x (m)")
@@ -395,7 +399,7 @@ with h5py.File("output.h5", "r") as output_file:
     plt.grid()
     plt.legend()
 
-    plt.subplot(1,3,2)
+    plt.subplot(2,3,2)
     plt.plot(xc, D_velocity_x/D_density, label="D (MC)")
     plt.plot(xc, momentum_fv, label="D (FV)")
     plt.xlabel("x (m)")
@@ -405,9 +409,7 @@ with h5py.File("output.h5", "r") as output_file:
     plt.grid()
     plt.legend()
     
-    D_temperature = (D_energy_x/D_density * 2.0 - (D_velocity_x/D_density )**2) * m / e
-    D_fv_temperature = energy_fv * 2.0 - momentum_fv**2 * m / eV
-    plt.subplot(1,3,3)
+    plt.subplot(2,3,3)
     plt.plot(xc, D_temperature, label="D (MC)")
     plt.plot(xc, D_fv_temperature, label="D (FV)")
     plt.plot(xc, ti, label="D+")
@@ -416,6 +418,39 @@ with h5py.File("output.h5", "r") as output_file:
     plt.title("Temperature")
     plt.grid()
     plt.legend()
-    plt.tight_layout()
 
+    plt.subplot(2,3,4)
+    plt.plot(xc, D_density, label="D (MC)")
+    plt.plot(xc, density_fv, label="D (FV)")
+    plt.xlabel("x (m)")
+    plt.ylabel("Density" + f" ({density_unit})")
+    plt.title("Density")
+    plt.xlim(0.99,1)
+    plt.grid()
+    plt.legend()
+
+    plt.subplot(2,3,5)
+    plt.plot(xc, D_velocity_x/D_density, label="D (MC)")
+    plt.plot(xc, momentum_fv, label="D (FV)")
+    plt.xlabel("x (m)")
+    plt.ylabel("Velocity" + f" ({velocity_unit})")
+    plt.title("Mean Velocity")
+    plt.xlim(0.99,1)
+    plt.ylim(-100,100)
+    plt.grid()
+    plt.legend()
+    
+    plt.subplot(2,3,6)
+    plt.plot(xc, D_temperature, label="D (MC)")
+    plt.plot(xc, D_fv_temperature, label="D (FV)")
+    plt.plot(xc, ti, label="D+")
+    plt.xlim(0.99,1)
+    plt.ylim(1.4,1.8)
+    plt.xlabel("x (m)")
+    plt.ylabel("eV")
+    plt.title("Temperature")
+    plt.grid()
+    plt.legend()
+
+    plt.tight_layout()
     plt.show()

@@ -25,21 +25,22 @@ import time
 import os
 import matplotlib.tri as tri
 
-from fort_files_io import read_eirene_output, read_vertices, read_triangles, read_background, convert_background_to_neutral_grid, read_magnetic_field, read_boundary_conditions
+from fort_files_io import read_eirene_output, read_neighbor_list, read_vertices, read_triangles, read_background, convert_background_to_neutral_grid, read_magnetic_field
 
-# base_dir = "Slab_Case_Only_Atoms/Kinetic/baserun"
-# run_dir = "Slab_Case_Only_Atoms/Kinetic/run_ao"
+base_dir = "Slab_Case_Only_Atoms/Kinetic/baserun"
+run_dir = "Slab_Case_Only_Atoms/Kinetic/run_ao"
 
-base_dir = "CMOD-data"
-run_dir = "CMOD-data"
+# base_dir = "CMOD-data"
+# run_dir = "CMOD-data"
 
 vertices = read_vertices(run_dir + "/fort.33")
 triangles = read_triangles(run_dir + "/fort.34")
+neighbors, neighbors_bc = read_neighbor_list(run_dir + "/fort.35")
 background = read_background(run_dir + "/b2fstati")
 magnetic_field = read_magnetic_field(base_dir + "/b2fgmtry")
 background = convert_background_to_neutral_grid(background, magnetic_field, run_dir + "/fort.35")
-boundary_conditions = read_boundary_conditions(run_dir + "/fort.35")
 eirene_output = read_eirene_output(run_dir + "/fort.46", run_dir + "/fort.35")
+
 
 # Create the triangulation
 x = np.array([v[0] for v in vertices])
@@ -57,6 +58,29 @@ n_particles = 10000
 plt.figure(figsize=(8, 8))
 plt.triplot(triangulation, color='gray', lw=0.5)
 plt.title('Triangulation')
+plt.xlabel('r')
+plt.ylabel('z')
+
+# Show the boundary conditions with different colors
+# bc_colors = np.max(-neighbors_bc, axis=1)
+# bc_plot = np.ma.masked_where(bc_colors == 0, bc_colors)
+# plt.figure(figsize=(8, 8))
+# plt.triplot(triangulation, color='gray', lw=0.8)
+# cmap = plt.cm.get_cmap('tab10').copy()
+# cmap.set_bad((1, 1, 1, 0))  # transparent where bc_colors == 0
+# plt.tripcolor(triangulation, facecolors=bc_plot, cmap=cmap, alpha=0.7, lw=0.1, vmin=0, vmax=10)
+# plt.title('Boundary Conditions')
+# plt.xlabel('r')
+# plt.ylabel('z')
+# plt.colorbar(label='Boundary Condition Type')
+# # Also put a tiny number in the middle of each triangle to indicate the cell number
+# for i, tri_indices in enumerate(triangles):
+#     # only label the triangles that are not masked (i.e., have a boundary condition)
+#     if bc_colors[i] == 0:
+#         continue
+#     tri_center_x = np.mean(x[tri_indices])
+#     tri_center_y = np.mean(y[tri_indices])
+#     plt.text(tri_center_x, tri_center_y, str(i), fontsize=6, ha='center', va='center')
 
 # Plot the background for each species
 for species, data in background.items():
@@ -65,40 +89,47 @@ for species, data in background.items():
     plt.tripcolor(triangulation, data["density"], norm="log")
     plt.colorbar(label=f'{species} Density')
     plt.title(f'{species} Density')
-    plt.xlabel('X')
-    plt.ylabel('Y')
+    plt.xlabel('r')
+    plt.ylabel('z')
 
     plt.subplot(1, 2, 2)
-    plt.tripcolor(triangulation, data["temp"])
+    plt.tripcolor(triangulation, data["temp"], norm="log")
     plt.colorbar(label=f'Temperature (eV)')
     plt.title(f'T {species}')
-    plt.xlabel('X')
-    plt.ylabel('Y')
+    plt.xlabel('r')
+    plt.ylabel('z')
     plt.tight_layout()
 
     if species == "D+":
         plt.figure()
         plt.tripcolor(triangulation, data["vel_x"])
         plt.colorbar(label=f'Velocity X (m/s)')
-        plt.title(f'Velocity X {species}')
-        plt.xlabel('X')
-        plt.ylabel('Y')
+        plt.title(f'Velocity X (radial) {species}')
+        plt.xlabel('r')
+        plt.ylabel('z')
 
         plt.figure()
         plt.tripcolor(triangulation, data["vel_y"])
         plt.colorbar(label=f'Velocity Y (m/s)')
-        plt.title(f'Velocity Y {species}')
-        plt.xlabel('X')
-        plt.ylabel('Y')
+        plt.title(f'Velocity Y (toroidal) {species}')
+        plt.xlabel('r')
+        plt.ylabel('z')
 
         plt.figure()
         plt.tripcolor(triangulation, data["vel_z"])
         plt.colorbar(label=f'Velocity Z (m/s)')
-        plt.title(f'Velocity Z {species}')
-        plt.xlabel('X')
-        plt.ylabel('Y')
+        plt.title(f'Velocity Z (poloidal) {species}')
+        plt.xlabel('r')
+        plt.ylabel('z')
 
-        plt.tight_layout()
+        # Quiver plot for velocity vectors
+
+        cell_centers_x = np.mean(x[triangles], axis=1)
+        cell_centers_y = np.mean(y[triangles], axis=1)
+        plt.figure()
+        plt.quiver(cell_centers_x, cell_centers_y, data["vel_x"], data["vel_z"], scale=1e4)
+        
+
 
         
 
@@ -135,20 +166,31 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     mesh["type"] = "rotated_triangle"
     mesh["vertices"] = vertices
     mesh["triangles"] = np.array(triangles, dtype=np.int64)
+    # Construct the neighbor list for the mesh by merging the neighbor list and boundary conditions
+    neighbor_list_neptune = np.copy(neighbors)
+    for i, bc in enumerate(neighbors_bc):
+        for j in range(3):
+            if bc[j] < 0:
+                neighbor_list_neptune[i][j] = bc[j]
+    mesh["neighbors"] = neighbor_list_neptune
     # Collisions
     collisions = f.create_group("collisions")
     coll0 = collisions.create_group("0")
     coll0["background_species"] = "D+"
     coll0["particle_species"] = "D"
     coll0["type"] = "charge_exchange"
+    # coll0["model"] = "simple"
     coll0["model"] = "amjuel"
     coll0["coef_matrix"] = np.array(amjuel_data["lookup"]["H.3"]["3.1.8"][0]["data_blocks"][0]["matrix_t_by_e"]).flatten()
+    coll0["output_collision_info"] = 1
     coll1 = collisions.create_group("1")
     coll1["background_species"] = "D+"
     coll1["particle_species"] = "D"
     coll1["type"] = "ionisation"
-    coll1["model"] = "amjuel"
-    coll1["coef_matrix"] = np.array(amjuel_data["lookup"]["H.4"]["2.1.5"][0]["data_blocks"][0]["matrix_t_by_e"]).flatten()
+    coll1["model"] = "simple"
+    # coll1["model"] = "amjuel"
+    # coll1["coef_matrix"] = np.array(amjuel_data["lookup"]["H.4"]["2.1.5"][0]["data_blocks"][0]["matrix_t_by_e"]).flatten()
+    coll1["output_collision_info"] = 1
     # Sources
     sources = f.create_group("sources")
     sources["n_particles"] = n_particles
@@ -161,16 +203,17 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     source["cell_indices"] = np.arange(ncells, dtype=np.int64)
     source["coef_matrix"] = np.array(amjuel_data["lookup"]["H.4"]["2.1.8"][0]["data_blocks"][0]["matrix_t_by_e"]).flatten()
     # Wall recycling source
+    # This is a bit of a manual hack, we apply surface recycling only on the cells with boundary condition -3
     cell_indices_wall = []
     surface_indices_wall = []
-    for i, bc in enumerate(boundary_conditions):
-        if bc[0] == -2 or bc[0] == -3:
+    for i, bc in enumerate(neighbors_bc):
+        if bc[0] == -2:
             cell_indices_wall.append(i)
             surface_indices_wall.append(0)
-        if bc[1] == -2 or bc[1] == -3:
+        if bc[1] == -2:
             cell_indices_wall.append(i)
             surface_indices_wall.append(1)
-        if bc[2] == -2 or bc[2] == -3:
+        if bc[2] == -2:
             cell_indices_wall.append(i)
             surface_indices_wall.append(2)
     cell_indices_wall = np.array(cell_indices_wall, dtype=np.int64)
@@ -213,12 +256,16 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     energy_estimator["qoi"] = "energy"
     energy_estimator["estimator_type"] = "track_length"
     energy_estimator["estimate_variance"] = 0
-    # Boundary conditions (specular everywhere)
+    # Boundary conditions
+    # TODO: actually read the boundary conditions from the file
     boundary_conditions = f.create_group("boundary_conditions")
-    bc = boundary_conditions.create_group(f"bc")
-    # bc["type"] = "specular"
-    bc["type"] = "trim" 
-    bc["trim_filename"] = "/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_W"
+    for i in range(max(-neighbors_bc.flatten()) - 1):
+        bc = boundary_conditions.create_group(f"bc{i}")
+        bc["type"] = "trim" 
+        bc["trim_filename"] = "/home/thijs/Documents/Git/Monte-Carlo/neptune/databases/TRIM/D_on_W"
+    #     bc["type"] = "diffuse"
+    #     bc["fixed_energy"] = 1.0
+    #     bc["absorption_coefficient"] = 0.1
     # Simulation parameters
     params = f.create_group("params")
     params["max_steps"] = 1000000
@@ -256,34 +303,82 @@ with h5py.File("output.h5", "r") as f:
             D_velocity_z[index] = 0.0
             D_energy[index] = 0.0
 
+    for index, value in np.ndenumerate(eirene_output["density"]):
+        if value < 1e-10:
+            eirene_output["density"][index] = 1e-10
+            eirene_output["vel_x"][index] = 0.0
+            eirene_output["vel_y"][index] = 0.0
+            eirene_output["vel_z"][index] = 0.0
+            eirene_output["energy"][index] = 0.0
 
     D_temperature = 2.0/3.0 * m / e * (D_energy/D_density - 0.5 * ((D_velocity_x/D_density )**2 + (D_velocity_y/D_density )**2+ (D_velocity_z/D_density )**2 ))
 
     plt.figure()
-    plt.tripcolor(triangulation,D_density, shading='flat', cmap="viridis", norm="log", vmin=1e12, vmax=1e21)
+    plt.tripcolor(triangulation,D_density, shading='flat', cmap="viridis", norm="log", vmin=1e14, vmax=1e21)
     plt.colorbar(label="Density (m^-3)")
     plt.title("D Density (Neptune)")
     plt.xlabel("r")
     plt.ylabel("z")
 
     plt.figure()
-    plt.tripcolor(triangulation,eirene_output["density"], shading='flat', cmap="viridis", norm="log", vmin=1e12, vmax=1e21)
+    plt.tripcolor(triangulation,eirene_output["density"], shading='flat', cmap="viridis", norm="log", vmin=1e14, vmax=1e21)
     plt.colorbar(label="Density (m^-3)")
     plt.title("D Density (Eirene)")
     plt.xlabel("r")
     plt.ylabel("z")
 
     plt.figure()
-    plt.tripcolor(triangulation,D_velocity_x/D_density, shading='flat', cmap="viridis")
-    plt.colorbar(label="Velocity X (m/s)")
-    plt.title("D Velocity X (Neptune)")
+    plt.tripcolor(triangulation,f["collision_info"]["charge_exchange_0"]["collision_rate"], shading='flat', cmap="viridis", norm="log")
+    plt.colorbar(label="Collision Rate (s^-1)")
+    plt.title("Charge Exchange Rate (Neptune)")
     plt.xlabel("r")
     plt.ylabel("z")
 
     plt.figure()
-    plt.tripcolor(triangulation,eirene_output["vel_x"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
-    plt.colorbar(label="Velocity X (m/s)")
-    plt.title("D Velocity X (Eirene)")
+    plt.tripcolor(triangulation,f["collision_info"]["ionisation_0"]["collision_rate"], shading='flat', cmap="viridis", norm="log")
+    plt.colorbar(label="Collision Rate (s^-1)")
+    plt.title("Ionisation Rate (Neptune)")
     plt.xlabel("r")
     plt.ylabel("z")
+    # plt.figure()
+    # plt.tripcolor(triangulation,D_velocity_x/D_density, shading='flat', cmap="viridis")
+    # plt.colorbar(label="Velocity X (m/s)")
+    # plt.title("D Velocity X (Neptune)")
+    # plt.xlabel("r")
+    # plt.ylabel("z")
+
+    # plt.figure()
+    # plt.tripcolor(triangulation,eirene_output["vel_x"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
+    # plt.colorbar(label="Velocity X (m/s)")
+    # plt.title("D Velocity X (Eirene)")
+    # plt.xlabel("r")
+    # plt.ylabel("z")
+
+    # plt.figure()
+    # plt.tripcolor(triangulation,D_velocity_y/D_density, shading='flat', cmap="viridis")
+    # plt.colorbar(label="Velocity Y (m/s)")
+    # plt.title("D Velocity Y (Neptune)")
+    # plt.xlabel("r")
+    # plt.ylabel("z")
+
+    # plt.figure()
+    # plt.tripcolor(triangulation,eirene_output["vel_y"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
+    # plt.colorbar(label="Velocity Y (m/s)")
+    # plt.title("D Velocity Y (Eirene)")
+    # plt.xlabel("r")
+    # plt.ylabel("z")
+
+    # plt.figure()
+    # plt.tripcolor(triangulation,D_velocity_z/D_density, shading='flat', cmap="viridis")
+    # plt.colorbar(label="Velocity Z (m/s)")
+    # plt.title("D Velocity Z (Neptune)")
+    # plt.xlabel("r")
+    # plt.ylabel("z")
+
+    # plt.figure()
+    # plt.tripcolor(triangulation,eirene_output["vel_z"]/eirene_output["density"]/(m*1000)*1e-2, shading='flat', cmap="viridis")
+    # plt.colorbar(label="Velocity Z (m/s)")
+    # plt.title("D Velocity Z (Eirene)")
+    # plt.xlabel("r")
+    # plt.ylabel("z")
 

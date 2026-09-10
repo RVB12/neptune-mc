@@ -30,6 +30,25 @@ def read_triangles(filename):
 
     return np.array(triangles)
 
+# Read neighbor list from a fort.35 file
+def read_neighbor_list(filename):
+    with open(filename, "r") as f:
+        # Skip the first line (it is the number of triangles)
+        s = f.readline()
+        ncells = int(s.split()[0])
+
+        neighbor_list = np.zeros((ncells, 3), dtype=int)
+        boundary_conditions = np.zeros((ncells, 3), dtype=int)
+        for line in f:
+            s = line.split()
+            cell_index = int(s[0]) - 1
+            neighbor_list[cell_index, :] = [int(s[1]) - 1, int(s[4]) - 1, int(s[7]) - 1]
+            boundary_conditions[cell_index, :] = [int(s[3]), int(s[6]), int(s[9])]
+            # Not really sure what this next one is, might be surface id in next cell
+            surf_id_next_cell = [int(s[2]), int(s[5]), int(s[8])]
+
+    return np.array(neighbor_list), np.array(boundary_conditions)
+
 # Convert species information from a list of atomic mass and charge to species names
 def convert_species(zamin, zamax, nuclear_charge, atomic_mass):
     species = []
@@ -149,26 +168,13 @@ def read_magnetic_field(filename):
                 magnetic_field.extend(numbers)
 
     # TODO: verify the order that cvEb is written in the file
-    magnetic_field = np.array(magnetic_field).reshape(-1, 3)  # Reshape to (N, 3) for x, y, z components
+    magnetic_field = np.array(magnetic_field).reshape(3, -1)  # Reshape to (N, 3) for x, y, z components
+    magnetic_field = magnetic_field.T  # Transpose to get shape (N, 3)
     for i in range(len(magnetic_field)):
         norm = np.linalg.norm(magnetic_field[i, :])
         if norm != 0:
             magnetic_field[i, :] /= norm  # Normalize the vector
     return magnetic_field
-
-def read_boundary_conditions(filename):
-    with open(filename, "r") as f:
-        # Read the number of points in the neutral grid
-        num_points = int(f.readline().strip())
-        boundary_conditions = np.zeros((num_points, 3))
-        for line in f:
-            s = line.split()
-            index_neutral_grid = int(s[0]) - 1
-            boundary_conditions[index_neutral_grid][0] = float(s[3])
-            boundary_conditions[index_neutral_grid][1] = float(s[6])
-            boundary_conditions[index_neutral_grid][2] = float(s[9])
-
-    return boundary_conditions
 
 
 # Using a fort.35 file, convert the plasma background from the
