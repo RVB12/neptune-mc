@@ -40,12 +40,24 @@ class AmjuelChargeExchangeCollision : public ChargeExchangeCollision {
 
         real_t p_energy =
             0.5 * SPECIES_MASS[static_cast<index_t>(particle_species_)] *
-            constants::m_p * rel_vel.norm2() / constants::eV_to_Joules;
+            constants::m_u * rel_vel.norm2() / constants::eV_to_Joules;
         real_t b_temp = b.temperature(background_species(), p.geometry.cell_id);
         real_t b_dens = b.density(background_species(), p.geometry.cell_id);
 
-        if(p_energy <= 0.0 or b_temp <= 0.0 or b_dens <= 0.0) {
+        if(b_dens <= 0.0) {
             return 0.0;
+        }
+        // Clamp energy values between 0.1 and 1e4 eV
+        // Note that I'm not that sure if this is the best way to handle this
+        if(p_energy <= 0.1){
+            p_energy = 0.1;
+        } else if(p_energy >= 1e4){
+            p_energy = 1e4;
+        }
+        if(b_temp <= 0.1){
+            b_temp = 0.1;
+        } else if(b_temp >= 1e4){
+            b_temp = 1e4;
         }
 
         real_t logT = std::log(p_energy);
@@ -135,6 +147,11 @@ class AmjuelIonisationCollision : public IonisationCollision {
 
         if(b_temp <= 0.0 or b_dens <= 0.0) {
             return 0.0;
+        }
+        if(b_temp <= 0.1){
+            b_temp = 0.1;
+        } else if(b_temp >= 1e4){
+            b_temp = 1e4;
         }
 
         real_t logT = std::log(b_temp);

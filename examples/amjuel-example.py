@@ -17,8 +17,7 @@
 # %% [markdown]
 # # 1D test case
 #
-# In this test case, we implement the third test case from the paper "Hilbert expansion based fluid models for kinetic equations describing
-# neutral particles in the plasma edge of a fusion device" V. Maes et al.
+# In this test case, we modify the 1d example to use rates from the amjuel database.
 
 # %%
 import numpy as np
