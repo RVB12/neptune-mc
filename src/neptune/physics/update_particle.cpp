@@ -64,7 +64,7 @@ EventType update_particle(
             if (mesh.is_toroidal()) {
                 // If the mesh uses toroidal coordinates, we need to
                 // transform the velocity
-                new_velocity_notransform = transform_tor_dir_to_cart(
+                p.geometry.velocity = transform_tor_dir_to_cart(
                     p.geometry.position, new_velocity_notransform);
             }
             else {
@@ -82,7 +82,7 @@ EventType update_particle(
                 if (mesh.is_toroidal()) {
                     // If the mesh uses toroidal coordinates, we need to
                     // transform the velocity
-                    new_velocity_notransform = transform_tor_dir_to_cart(
+                    p.geometry.velocity = transform_tor_dir_to_cart(
                         p.geometry.position, new_velocity_notransform);
                 }
                 else {
@@ -108,7 +108,7 @@ EventType update_particle(
                         if (mesh.is_toroidal()) {
                             // If the mesh uses toroidal coordinates, we need to
                             // transform the velocity
-                            new_velocity_notransform =
+                            p.geometry.velocity =
                                 transform_tor_dir_to_cart(
                                     p.geometry.position,
                                     new_velocity_notransform);
