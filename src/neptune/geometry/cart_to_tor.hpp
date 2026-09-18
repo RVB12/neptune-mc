@@ -29,8 +29,8 @@ inline Vec3 transform_tor_dir_to_cart(Vec3 position, Vec3 direction)
     real_t s = position.y / r;
 
     // Rotate the direction vector
-    real_t x_new = direction.x * c + direction.y * s;
-    real_t y_new = -direction.x * s + direction.y * c;
+    real_t x_new = direction.x * c - direction.y * s;
+    real_t y_new = direction.x * s + direction.y * c;
     real_t z_new = direction.z;
 
     return Vec3(x_new, y_new, z_new);
@@ -60,8 +60,8 @@ inline Vec3 transform_cart_to_tor(Vec3 position, Vec3 direction)
     real_t s = position.y / r;
 
     // Inverse rotation of the direction vector
-    real_t x_new = direction.x * c - direction.y * s;
-    real_t y_new = direction.x * s + direction.y * c;
+    real_t x_new = direction.x * c + direction.y * s;
+    real_t y_new = -direction.x * s + direction.y * c;
     real_t z_new = direction.z;
 
     return Vec3(x_new, y_new, z_new);
