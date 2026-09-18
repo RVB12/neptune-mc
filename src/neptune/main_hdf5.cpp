@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <chrono>
 
 #include "neptune/boundaryconditions/boundarycondition.hpp"
 #include "neptune/boundaryconditions/trim.hpp"
@@ -57,6 +58,7 @@ int main(int argc, char** argv)
         output_file_name = argv[2];
     }
 
+    auto start_time_total = std::chrono::high_resolution_clock::now();
     H5::H5File input_file(input_file_name, H5F_ACC_RDONLY);
 
     Background background =
@@ -80,6 +82,7 @@ int main(int argc, char** argv)
         read_simulation_params(input_file.openGroup("/params"));
 
     ExecutionStatistics stats;
+    auto start_time = std::chrono::high_resolution_clock::now();
     if (params.algorithm == AlgorithmType::MC) {
         simulate(*mesh, background, cx_collisions, ionisation_collisions,
                  sources, estimator_group, boundary_conditions, params, stats);
@@ -93,6 +96,17 @@ int main(int argc, char** argv)
     else {
         throw std::runtime_error("Unknown algorithm type");
     }
+    auto end_time = std::chrono::high_resolution_clock::now();
+    stats.trace_time =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() /
+        1000.0;
+
+    auto end_time_total = std::chrono::high_resolution_clock::now();
+    stats.total_time =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end_time_total - start_time_total).count() /
+        1000.0;
+
+    stats.grid_building_time = stats.total_time - stats.trace_time;
 
     // Now write the results to the output file
     H5::H5File output_file(output_file_name, H5F_ACC_TRUNC);
@@ -109,6 +123,9 @@ int main(int argc, char** argv)
     // (this is optional for debugging/post-processing)
     write_collision_rates(output_file, cx_collisions, ionisation_collisions,
                           *mesh, background);
+
+    // Output sources
+    write_sources(output_file, sources, *mesh, background);
 
     return 0;
 }
