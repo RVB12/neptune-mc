@@ -281,7 +281,7 @@ CellCrossing RotatedTriangleMesh::get_next_crossing(ParticleGeometry& p) const
         surface_id = 2;
     }
     else {
-        throw std::runtime_error("Failed to find next crossing");
+        throw NoNextCrossingException();
     }
 
     Vec3 pos_new = p.position + p.velocity * t_new;

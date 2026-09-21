@@ -13,6 +13,21 @@ namespace neptune {
 #define BOUNDARY_TOLERANCE 1e-12
 
 /**
+ * @brief A custom exception for when the next crossing cannot be found. This is
+ * usually due to a particle being outside of the mesh or having a velocity that
+ * does not point into any cell.
+ */
+class NoNextCrossingException : public std::exception {
+   public:
+    const char* what() const noexcept override
+    {
+        return "No next crossing could be found. This is usually due to a "
+               "particle being outside of the mesh or having a velocity that "
+               "does not point into any cell.";
+    }
+};
+
+/**
  * @brief This is a very general class for a mesh
  *
  */

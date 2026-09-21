@@ -31,7 +31,32 @@ EventType update_particle(
     real_t tc = p.u / collision_rate;
 
     // Calculate the next cell crossing
-    CellCrossing crossing = mesh.get_next_crossing(p.geometry);
+    CellCrossing crossing;
+    try {
+        crossing = mesh.get_next_crossing(p.geometry);
+    }
+    catch (const NoNextCrossingException& e) {
+        // We failed to find the next crossing.
+        // Sometimes, this can be remedied by resetting the particle's cell_id and boundary_id, and trying again.
+        mesh.find_particle(p.geometry);
+        try {
+            crossing = mesh.get_next_crossing(p.geometry);
+        }
+        catch (const NoNextCrossingException& e) {
+            // If we still can't find the next crossing, we have to give up.
+            throw std::runtime_error(
+                "Failed to find next crossing for particle with id " +
+                std::to_string(p.id) + ". Particle position: " +
+                std::to_string(p.geometry.position.x) + ", " +
+                std::to_string(p.geometry.position.y) + ", " +
+                std::to_string(p.geometry.position.z) + ". Particle velocity: " +
+                std::to_string(p.geometry.velocity.x) + ", " +
+                std::to_string(p.geometry.velocity.y) + ", " +
+                std::to_string(p.geometry.velocity.z) + ". Particle cell_id: " +
+                std::to_string(p.geometry.cell_id) + ". Particle boundary_id: " +
+                std::to_string(p.geometry.boundary_id));
+        }
+    }
 
     // Check which one is earlier, charge exchange, cell crossing or final time
     if (t_final > 0) {
@@ -108,10 +133,8 @@ EventType update_particle(
                         if (mesh.is_toroidal()) {
                             // If the mesh uses toroidal coordinates, we need to
                             // transform the velocity
-                            p.geometry.velocity =
-                                transform_tor_dir_to_cart(
-                                    p.geometry.position,
-                                    new_velocity_notransform);
+                            p.geometry.velocity = transform_tor_dir_to_cart(
+                                p.geometry.position, new_velocity_notransform);
                         }
                         else {
                             p.geometry.velocity = new_velocity_notransform;
@@ -148,8 +171,10 @@ EventType update_particle(
             p.geometry.boundary_id = crossing.surface_id;
 
             // Now apply the boundary condition
-            // this may change the particle's position, velocity, and even cell_id and surface_id
-            boundary_conditions[crossing.boundary_condition_id]->apply(p, mesh, crossing);
+            // this may change the particle's position, velocity, and even
+            // cell_id and surface_id
+            boundary_conditions[crossing.boundary_condition_id]->apply(
+                p, mesh, crossing);
         }
     }
 
