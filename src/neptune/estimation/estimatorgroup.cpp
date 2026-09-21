@@ -71,7 +71,7 @@ void EstimatorGroup::tally_track_length(
     for (auto* estimator :
          track_length_estimators_by_species[static_cast<size_t>(
              p_old.species)]) {
-        estimator->tally(p_old, s, mesh.is_toroidal());
+        estimator->tally(p_old, p, s, mesh.is_toroidal());
     }
 }
 
@@ -90,7 +90,7 @@ void EstimatorGroup::tally_final(const Particle& p, const Mesh& mesh)
     // them
     for (auto* estimator :
          final_estimators_by_species[static_cast<size_t>(p.species)]) {
-        estimator->tally(p, weight, mesh.is_toroidal());
+        estimator->tally(p, p, weight, mesh.is_toroidal());
     }
 }
 
@@ -113,10 +113,10 @@ void EstimatorGroup::tally_fluid(const Particle& p,
     for (auto* estimator :
          kdmc_estimators_by_species[static_cast<size_t>(p.species)]) {
         if (estimator->qoi == QOI::KDMC_Fluid_Start_Density) {
-            estimator->tally(p_old, weight_old, mesh.is_toroidal());
+            estimator->tally(p_old, p, weight_old, mesh.is_toroidal());
         }
         else if (estimator->qoi == QOI::KDMC_Fluid_End_Density) {
-            estimator->tally(p, weight, mesh.is_toroidal());
+            estimator->tally(p, p, weight, mesh.is_toroidal());
         }
     }
 }

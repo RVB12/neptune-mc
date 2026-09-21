@@ -53,6 +53,8 @@ class Estimator {
      *          Note, for track-length estimators, this should be the particle
      * before the move For final-time estimators, this should be the particle at
      * the final time of the simulation
+     * @param p_new The particle after the move, only used for track-length
+     * estimators, for final-time estimators, this should be the same as p
      * @param weight The weight to use for this contribution
      *               For Track-length, this should be \int_t^t+time_in_cell
      * weight(t) dt * intensity / volume For Final-time, this should be
@@ -60,7 +62,7 @@ class Estimator {
      * @param is_toroidal Whether the velocity should be transformed from
      * Carthesian to toroidal coordinates
      */
-    void tally(const Particle& p, real_t weighted, bool is_toroidal);
+    void tally(const Particle& p, const Particle& p_new, real_t weight, bool is_toroidal);
 
     void combine(const Estimator& other);
 

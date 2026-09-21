@@ -48,7 +48,10 @@ void Estimator::combine(const Estimator& other)
     }
 }
 
-void Estimator::tally(const Particle& p, real_t weight, bool is_toroidal)
+void Estimator::tally(const Particle& p,
+                      const Particle& p_new,
+                      real_t weight,
+                      bool is_toroidal)
 {
     switch (qoi) {
         case QOI::Density:
@@ -56,12 +59,28 @@ void Estimator::tally(const Particle& p, real_t weight, bool is_toroidal)
             break;
         case QOI::Velocity_x:
             if (is_toroidal) {
-                // Note, this calculation is not perfect,
-                // even if the velocity is constant, the toroidal velocity
-                // can still vary so we should actually integrate
-                Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
-                                                     p.geometry.velocity);
-                tally_vector[p.geometry.cell_id] += vel_tor.x * weight;
+                if (p_new.t != p.t) {
+                    // The integral int_0^s v_r dt, with v_r the radial
+                    // velocity, is equal to: int_0^s dr/dt dt = int_0^s dr =
+                    // r(s) - r(0)
+                    real_t r1 = std::sqrt(
+                        p.geometry.position.x * p.geometry.position.x +
+                        p.geometry.position.y * p.geometry.position.y);
+                    real_t r2 = std::sqrt(
+                        p_new.geometry.position.x * p_new.geometry.position.x +
+                        p_new.geometry.position.y * p_new.geometry.position.y);
+                    real_t dr = r2 - r1;
+                    // Note, the weight given to this routine already contains
+                    // the time step, so we should divide by the time step to
+                    // get the average velocity over the time step
+                    tally_vector[p.geometry.cell_id] +=
+                        dr / (p_new.t - p.t) * weight;
+                }
+                else {
+                    Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
+                                                         p.geometry.velocity);
+                    tally_vector[p.geometry.cell_id] += vel_tor.x * weight;
+                }
             }
             else {
                 tally_vector[p.geometry.cell_id] +=
