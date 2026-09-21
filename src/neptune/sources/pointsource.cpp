@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "neptune/physics/physicalconstants.hpp"
+#include "neptune/geometry/cart_to_tor.hpp"
 
 namespace neptune {
 
@@ -33,6 +34,10 @@ Particle PointSource::generate_particle(
     std::normal_distribution<real_t> dist_vz(vel_mean.z, vel_stddev);
 
     p.geometry.velocity = Vec3(dist_vx(p.rng), dist_vy(p.rng), dist_vz(p.rng));
+
+    if(mesh.is_toroidal()){
+        p.geometry.velocity = transform_tor_dir_to_cart(p.geometry.position, p.geometry.velocity);
+    }
 
     std::exponential_distribution<real_t> dist_t(1.0);
     p.u = dist_t(p.rng);

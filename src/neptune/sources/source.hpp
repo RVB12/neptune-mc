@@ -51,6 +51,7 @@ class Source {
         num_particles_;  // the number of particles to generate from this source
     real_t intensity_ =
         0;  // the intensity of the source (particles per second)
+    bool output_info_ = false;  // whether to output info for this source
 };
 
 }  // namespace neptune

@@ -2,17 +2,18 @@
 #define NEPTUNE_IO_SOURCES_HPP
 
 #include "neptune/io/io_common.hpp"
+#include "neptune/sources/amjuelrecombinationsource.hpp"
+#include "neptune/sources/pointsource.hpp"
 #include "neptune/sources/recombinationsource.hpp"
 #include "neptune/sources/source.hpp"
 #include "neptune/sources/volumesource.hpp"
 #include "neptune/sources/wallreflectionsource.hpp"
-#include "neptune/sources/pointsource.hpp"
-#include "neptune/sources/amjuelrecombinationsource.hpp"
 namespace neptune {
 
-inline vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_group,
-                                             const Mesh& mesh,
-                                             const Background& background)
+inline vector<std::unique_ptr<Source>> read_sources(
+    const H5::Group& sources_group,
+    const Mesh& mesh,
+    const Background& background)
 {
     std::vector<std::unique_ptr<Source>> sources;
 
@@ -39,7 +40,8 @@ inline vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_gro
                     0, cell_index, background_species, particle_species, mesh,
                     background));
             }
-        } else if (source_type == "amjuel_recombination") {
+        }
+        else if (source_type == "amjuel_recombination") {
             // Read Amjuel recombination source data
             Species background_species =
                 read_species(source_group.openDataSet("background_species"));
@@ -105,18 +107,24 @@ inline vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_gro
                     0, species, intensity, cell_index,
                     Vec3(velocity_x, velocity_y, velocity_z), velocity_std));
             }
-        } else if(source_type == "point") {
+        }
+        else if (source_type == "point") {
             Species species = read_species(source_group.openDataSet("species"));
             Vec3 position;
             position.x = read_real_number(source_group.openDataSet("pos_x"));
             position.y = read_real_number(source_group.openDataSet("pos_y"));
             position.z = read_real_number(source_group.openDataSet("pos_z"));
-            real_t intensity = read_real_number(source_group.openDataSet("intensity"));
+            real_t intensity =
+                read_real_number(source_group.openDataSet("intensity"));
             Vec3 velocity;
-            velocity.x = read_real_number(source_group.openDataSet("vel_mean_x"));
-            velocity.y = read_real_number(source_group.openDataSet("vel_mean_y"));
-            velocity.z = read_real_number(source_group.openDataSet("vel_mean_z"));
-            real_t velocity_std = read_real_number(source_group.openDataSet("vel_std"));
+            velocity.x =
+                read_real_number(source_group.openDataSet("vel_mean_x"));
+            velocity.y =
+                read_real_number(source_group.openDataSet("vel_mean_y"));
+            velocity.z =
+                read_real_number(source_group.openDataSet("vel_mean_z"));
+            real_t velocity_std =
+                read_real_number(source_group.openDataSet("vel_std"));
 
             sources.push_back(std::make_unique<PointSource>(
                 0, intensity, species, position, velocity, velocity_std));
@@ -154,6 +162,18 @@ inline vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_gro
                                  stratification_method);
     }
 
+    // Just set the output_info_ flag for each source based on the value in the
+    // HDF5 file
+    
+    if(sources_group.nameExists("output_info")) {
+        bool output_info = read_bool(sources_group.openDataSet("output_info"));
+        if (output_info) {
+            for (auto& source : sources) {
+                source->output_info_ = true;
+            }
+        }
+    }
+
     // Convert std::vector to neptune::vector
     vector<std::unique_ptr<Source>> sources_vector(sources.size());
     for (size_t i = 0; i < sources.size(); i++) {
@@ -161,6 +181,67 @@ inline vector<std::unique_ptr<Source>> read_sources(const H5::Group& sources_gro
     }
     return sources_vector;
 }
+
+inline void write_sources(const H5::H5File& output_file,
+                          const vector<std::unique_ptr<Source>>& sources,
+                          const Mesh& mesh,
+                          const Background& background)
+{
+    bool output_info = false;
+    for (index_t i = 0; i < sources.size(); ++i) {
+        if (sources[i]->output_info_) {
+            output_info = true;
+            break;
+        }
+    }
+    if (!output_info) {
+        return;
+    }
+
+    H5::Group sources_group = output_file.createGroup("sources");
+    vector<real_t> intensities(mesh.n_cells(), 0.0);
+
+    for (index_t i = 0; i < sources.size(); ++i) {
+        if (sources[i]->output_info_) {
+            index_t cell_index = -1;
+            if (dynamic_cast<AmjuelRecombinationSource*>(sources[i].get())) {
+                cell_index =
+                    dynamic_cast<AmjuelRecombinationSource*>(sources[i].get())
+                        ->cell_idx;
+            }
+            else if (dynamic_cast<RecombinationSource*>(sources[i].get())) {
+                cell_index =
+                    dynamic_cast<RecombinationSource*>(sources[i].get())
+                        ->cell_idx;
+            }
+            else if (dynamic_cast<WallReflectionSource*>(sources[i].get())) {
+                cell_index =
+                    dynamic_cast<WallReflectionSource*>(sources[i].get())
+                        ->cell_idx;
+            }
+            else if (dynamic_cast<VolumeSource*>(sources[i].get())) {
+                cell_index =
+                    dynamic_cast<VolumeSource*>(sources[i].get())->cell_idx;
+            }
+            else if (dynamic_cast<PointSource*>(sources[i].get())) {
+                cell_index =
+                    dynamic_cast<PointSource*>(sources[i].get())->cell_idx;
+            }
+
+            if (cell_index != -1) {
+                intensities[cell_index] += sources[i]->intensity() / mesh.get_volume(cell_index);
+            }
+        }
+    }
+
+    hsize_t dim = intensities.size();
+    H5::DataSpace dataspace(1, &dim);  // 1D array
+
+    H5::DataSet intensity_dataset = sources_group.createDataSet(
+        "intensity", H5::PredType::NATIVE_DOUBLE, dataspace);
+    intensity_dataset.write(intensities.data(), H5::PredType::NATIVE_DOUBLE);
+}
+
 }  // namespace neptune
 
 #endif

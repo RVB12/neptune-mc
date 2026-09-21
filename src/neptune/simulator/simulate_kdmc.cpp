@@ -284,7 +284,7 @@ void kdmc_fluid_step(
             time_left -= crossing.t;
             p.geometry.position = crossing.position;
 
-            if (crossing.next_cell_id != -1) {
+            if (crossing.boundary_condition_id == -1) {
                 // Regular grid crossing, move the particle to the next
                 // cell
                 p.geometry.boundary_id = crossing.next_surface_id;

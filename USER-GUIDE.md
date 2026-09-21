@@ -12,6 +12,8 @@ You should build using CMake. You'll need:
 - OpenMP (Optional, but highly recommended to run in parallel)
 - HDF5 (Required for the io, easily installed on linux using apt install libhdf5-dev)
 
+Note, if you are running this on VSC, remember to load the right modules for this, e.g. `module load foss/2025a`
+
 The code also depends on a few libraries that will be downloaded automatically by CMake:
 - random123
 - pcg cpp

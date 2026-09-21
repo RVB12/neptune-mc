@@ -4,6 +4,7 @@
 
 #include "neptune/common/utils.hpp"
 #include "neptune/physics/physicalconstants.hpp"
+#include "neptune/geometry/cart_to_tor.hpp"
 
 namespace neptune {
 
@@ -85,6 +86,9 @@ Particle WallReflectionSource::generate_particle(
     // tangent2 /= tangent2.norm();
 
     Vec3 boundary_drift_3d = background.velocity(background_species, cell_idx);
+    if(mesh.is_toroidal()){
+        boundary_drift_3d = transform_tor_dir_to_cart(p.geometry.position, boundary_drift_3d);
+    }
     real_t boundary_drift = -dot(boundary_drift_3d, normal);
 
     real_t ion_temp = background.temperature(background_species, cell_idx);
