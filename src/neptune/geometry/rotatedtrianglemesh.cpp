@@ -40,6 +40,72 @@ index_t RotatedTriangleMesh::get_cell_index(Vec3 pos) const
     return -1;
 }
 
+void RotatedTriangleMesh::find_particle(ParticleGeometry& p) const
+{
+    index_t cell_index = get_cell_index(p.position);
+    if (cell_index == -1) {
+        throw std::runtime_error(
+            "Particle is outside of the mesh. Cannot find cell.");
+    }
+
+    // Get distance to each edge of the triangle
+    TriangleIndices tind = triangles[cell_index];
+    Vec2 p1 = vertices[tind.ind1];
+    Vec2 p2 = vertices[tind.ind2];
+    Vec2 p3 = vertices[tind.ind3];
+
+    Vec2 pos2d = carthesian_to_section(p.position);
+
+    real_t d0 = std::abs((p2.y - p1.y) * pos2d.x - (p2.x - p1.x) * pos2d.y +
+                         p2.x * p1.y - p2.y * p1.x) /
+                std::sqrt((p2.y - p1.y) * (p2.y - p1.y) +
+                          (p2.x - p1.x) * (p2.x - p1.x));
+    real_t d1 = std::abs((p3.y - p2.y) * pos2d.x - (p3.x - p2.x) * pos2d.y +
+                         p3.x * p2.y - p3.y * p2.x) /
+                std::sqrt((p3.y - p2.y) * (p3.y - p2.y) +
+                          (p3.x - p2.x) * (p3.x - p2.x));
+    real_t d2 = std::abs((p1.y - p3.y) * pos2d.x - (p1.x - p3.x) * pos2d.y +
+                         p1.x * p3.y - p1.y * p3.x) /
+                std::sqrt((p1.y - p3.y) * (p1.y - p3.y) +
+                          (p1.x - p3.x) * (p1.x - p3.x));
+
+    index_t boundary_id = -1;
+    if (d0 < BOUNDARY_TOLERANCE) {
+        boundary_id = 0;
+    }
+    else if (d1 < BOUNDARY_TOLERANCE) {
+        boundary_id = 1;
+    }
+    else if (d2 < BOUNDARY_TOLERANCE) {
+        boundary_id = 2;
+    }
+
+    if (boundary_id != -1) {
+        // Check if the particle should be in the current cell or the neighbor
+        // cell
+        Vec3 normal = get_surface_normal(cell_index, boundary_id, p.position);
+        // normal points into the cell, so if component in direction of normal
+        // is negative, the particle is moving out of the cell
+        if (normal.dot(p.velocity) < 0) {
+            p.cell_id = neighbors[3 * cell_index + boundary_id];
+            // Find boundary id corresponding to this edge
+            for (index_t i = 0; i < 3; ++i) {
+                if (neighbors[3 * p.cell_id + i] == cell_index) {
+                    p.boundary_id = i;
+                    break;
+                }
+            }
+        }
+        else {
+            p.cell_id = cell_index;
+            p.boundary_id = 0;
+        }
+    }
+    else {
+        p.boundary_id = -1;
+    }
+}
+
 real_t RotatedTriangleMesh::get_volume(index_t cell_index) const
 {
     TriangleIndices t = triangles[cell_index];

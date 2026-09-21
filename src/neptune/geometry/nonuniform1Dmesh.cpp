@@ -29,6 +29,21 @@ index_t NonUniform1DMesh::get_cell_index(Vec3 p) const
     return binary_search(cb_x, p.x);
 }
 
+void NonUniform1DMesh::find_particle(ParticleGeometry& p) const
+{
+    index_t cell_index = get_cell_index(p.position);
+    if (cell_index == -1) {
+        throw std::runtime_error(
+            "Particle is outside of the mesh. Cannot find cell.");
+    }
+
+    // TODO: check boundary, not necessary for now.
+
+    p.boundary_id = -1;
+    p.cell_id = cell_index;
+}
+
+
 CellCrossing NonUniform1DMesh::get_next_crossing(ParticleGeometry& p) const
 {
     index_t ind = p.cell_id;

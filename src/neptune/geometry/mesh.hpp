@@ -10,6 +10,8 @@
 
 namespace neptune {
 
+#define BOUNDARY_TOLERANCE 1e-12
+
 /**
  * @brief This is a very general class for a mesh
  *
@@ -42,8 +44,21 @@ class Mesh {
      * Note: this may be very slow for unstructured meshes.
      *
      * returns -1 if no cell was found.
+     *
+     * @deprecated You should use find_particle instead,
+     * as it is more robust
      */
     virtual index_t get_cell_index(Vec3 position) const = 0;
+
+    /**
+     * @brief Modify the particle geometry to set the cell_id and boundary_id of
+     * the particle. If a particle is on a boundary (or very close to a
+     * boundary), the particle may be considered to be in either of the two
+     * cells that share the boundary. In this case, the velocity of the particle
+     * is used to determine which cell the particle is considered to be in.
+     * (velocity pointing into the cell)
+     */
+    virtual void find_particle(ParticleGeometry& p) const = 0;
 
     /**
      * @brief Return the volume of a given cell
@@ -52,7 +67,8 @@ class Mesh {
 
     /**
      * @brief Return the normal of a given surface
-     * This normal should point into the cell, i.e. in the direction of the cell center.
+     * This normal should point into the cell, i.e. in the direction of the cell
+     * center.
      *
      * @param cell_index The index of the cell
      * @param surface_id The id of the surface within the cell
@@ -79,7 +95,7 @@ class Mesh {
      * -1 if there is no boundary condition
      */
     virtual index_t get_boundary_condition(index_t cell_index,
-                                            index_t surface_id) const = 0;
+                                           index_t surface_id) const = 0;
 
     /**
      * @brief Return the surface area of a given surface of a cell

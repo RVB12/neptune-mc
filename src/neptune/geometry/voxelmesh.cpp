@@ -49,6 +49,75 @@ index_t VoxelMesh::get_cell_index(Vec3 p) const
     return tuple_to_linear(ind);
 }
 
+void VoxelMesh::find_particle(ParticleGeometry& p) const
+{
+    index_t cell_index = get_cell_index(p.position);
+    if (cell_index == -1) {
+        throw std::runtime_error(
+            "Particle is outside of the mesh. Cannot find cell.");
+    }
+    // Check if the particle is on a boundary
+    Index3D ind = linear_to_tuple(cell_index);
+    if (std::abs(p.position.x - ind.i * dx) < BOUNDARY_TOLERANCE) {
+        if(ind.i > 0 and p.velocity.x < 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i - 1, ind.j, ind.k));
+            p.boundary_id = 3;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 0;
+        }
+    }
+    else if (std::abs(p.position.x - (ind.i + 1) * dx) < BOUNDARY_TOLERANCE) {
+        if(ind.i < nx - 1 and p.velocity.x > 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i + 1, ind.j, ind.k));
+            p.boundary_id = 0;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 3;
+        }
+    }
+    else if (std::abs(p.position.y - ind.j * dy) < BOUNDARY_TOLERANCE) {
+        if(ind.j > 0 and p.velocity.y < 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i, ind.j - 1, ind.k));
+            p.boundary_id = 4;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 1;
+        }
+    }
+    else if (std::abs(p.position.y - (ind.j + 1) * dy) < BOUNDARY_TOLERANCE) {
+        if(ind.j < ny - 1 and p.velocity.y > 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i, ind.j + 1, ind.k));
+            p.boundary_id = 1;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 4;
+        }
+    }
+    else if (std::abs(p.position.z - ind.k * dz) < BOUNDARY_TOLERANCE) {
+        if(ind.k > 0 and p.velocity.z < 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i, ind.j, ind.k - 1));
+            p.boundary_id = 5;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 2;
+        }
+    }
+    else if (std::abs(p.position.z - (ind.k + 1) * dz) < BOUNDARY_TOLERANCE) {
+        if(ind.k < nz - 1 and p.velocity.z > 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i, ind.j, ind.k + 1));
+            p.boundary_id = 2;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 5;
+        }
+    }
+    else {
+        p.cell_id = cell_index;
+        p.boundary_id = -1;
+    }
+}
+
 CellCrossing VoxelMesh::get_next_crossing(ParticleGeometry& p) const
 {
     Index3D ind = linear_to_tuple(p.cell_id);

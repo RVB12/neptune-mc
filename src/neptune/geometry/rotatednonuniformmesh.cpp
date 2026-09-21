@@ -65,6 +65,36 @@ index_t RotatedNonUniformMesh::get_cell_index(Vec3 p) const
     return tuple_to_linear(ind);
 }
 
+void RotatedNonUniformMesh::find_particle(ParticleGeometry& p) const
+{
+
+    Index3D ind;
+
+    Vec3 pos = p.position;
+
+    real_t r = std::sqrt(pos.x * pos.x + pos.y * pos.y);
+    real_t z = pos.z;
+
+    if (r >= cb_r[cb_r.size() - 1] || z >= cb_z[cb_z.size() - 1] || r < 0 ||
+        z < cb_z[0]) {
+        throw std::runtime_error(
+            "Particle is outside of the mesh. Cannot find cell.");
+    }
+
+    // Use binary search to find the cell index
+    ind.i = binary_search(cb_r, r);
+    ind.j = binary_search(cb_z, z);
+    ind.k = 0;
+
+
+    // Check if the particle is on a boundary
+    // TODO: implement this, not currently needed for the simulations we are running
+
+    index_t cell_index = tuple_to_linear(ind);
+    p.cell_id = cell_index;
+    p.boundary_id = -1;
+}
+
 /**
  * @brief Calculate the first positive intersection of a ray with a cylinder of
  * radius r_cyl centered on the z axis.

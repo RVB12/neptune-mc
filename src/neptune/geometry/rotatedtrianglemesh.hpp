@@ -110,6 +110,12 @@ class RotatedTriangleMesh : public Mesh {
     index_t get_cell_index(Vec3 position) const;
 
     /**
+     * @brief Modify the particle geometry to set the cell_id and boundary_id of
+     * the particle.
+     */
+    void find_particle(ParticleGeometry& p) const;
+
+    /**
      * @brief Return the triangle indices corresponding to the given index
      */
     TriangleIndices get_triangle_indices(index_t cell_index) const;

@@ -63,6 +63,75 @@ index_t NonUniformMesh::get_cell_index(Vec3 p) const
     return tuple_to_linear(ind);
 }
 
+void NonUniformMesh::find_particle(ParticleGeometry& p) const
+{
+    index_t cell_index = get_cell_index(p.position);
+    if (cell_index == -1) {
+        throw std::runtime_error(
+            "Particle is outside of the mesh. Cannot find cell.");
+    }
+    // Check if the particle is on a boundary
+    Index3D ind = linear_to_tuple(cell_index);
+    if (std::abs(p.position.x - cb_x[ind.i]) < BOUNDARY_TOLERANCE) {
+        if(ind.i > 0 and p.velocity.x < 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i - 1, ind.j, ind.k));
+            p.boundary_id = 3;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 0;
+        }
+    }
+    else if (std::abs(p.position.x - cb_x[ind.i + 1]) < BOUNDARY_TOLERANCE) {
+        if(ind.i < cb_x.size() - 2 and p.velocity.x > 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i + 1, ind.j, ind.k));
+            p.boundary_id = 3;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 3;
+        }
+    }
+    else if (std::abs(p.position.y - cb_y[ind.j]) < BOUNDARY_TOLERANCE) {
+        if(ind.j > 0 and p.velocity.y < 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i, ind.j - 1, ind.k));
+            p.boundary_id = 4;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 1;
+        }
+    }
+    else if (std::abs(p.position.y - cb_y[ind.j + 1]) < BOUNDARY_TOLERANCE) {
+        if(ind.j < cb_y.size() - 2 and p.velocity.y > 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i, ind.j + 1, ind.k));
+            p.boundary_id = 4;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 4;
+        }
+    }
+    else if (std::abs(p.position.z - cb_z[ind.k]) < BOUNDARY_TOLERANCE) {
+        if(ind.k > 0 and p.velocity.z < 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i, ind.j, ind.k - 1));
+            p.boundary_id = 5;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 2;
+        }
+    }
+    else if (std::abs(p.position.z - cb_z[ind.k + 1]) < BOUNDARY_TOLERANCE) {
+        if(ind.k < cb_z.size() - 2 and p.velocity.z > 0) {
+            p.cell_id = tuple_to_linear(Index3D(ind.i, ind.j, ind.k + 1));
+            p.boundary_id = 5;
+        } else {
+            p.cell_id = cell_index;
+            p.boundary_id = 5;
+        }
+    }
+    else {
+        p.cell_id = cell_index;
+        p.boundary_id = -1;
+    }
+}
+
 CellCrossing NonUniformMesh::get_next_crossing(ParticleGeometry& p) const
 {
     Index3D ind = linear_to_tuple(p.cell_id);
