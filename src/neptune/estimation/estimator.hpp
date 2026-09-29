@@ -124,6 +124,9 @@ class Estimator {
 
     void finalize()
     {
+        if(is_finalized) {
+            throw std::runtime_error("Estimator is already finalized");
+        }
         if (estimate_variance) {
             for (index_t i = 0; i < tally_variance.size(); i++) {
                 tally_variance[i] /= i_batch - 1;
@@ -136,6 +139,7 @@ class Estimator {
                 }
             }
         }
+        is_finalized = true;
     }
 
     // If true, we run in multiple batches and estimate the mean and variance of
@@ -146,6 +150,7 @@ class Estimator {
     // more complex statistics on the QOI, e.g. covariance between batches.
     // Note that this will significantly increase memory usage, so use with caution.
     const bool keep_all_batches = false;
+    bool is_finalized = false;
     const Species species;
     const QOI qoi;
     const EstimatorType estimator_type;

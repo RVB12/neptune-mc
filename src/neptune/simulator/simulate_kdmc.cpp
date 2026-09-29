@@ -556,9 +556,10 @@ void simulate_kdmc(
     real_t dt = params.kdmc_dt;
 
     // History based simulation (because its easy)
+    for (index_t i_batch = 0; i_batch < params.n_batches; i_batch++) {
 #pragma omp parallel reduction(+ : num_crossings, num_collisions) \
     reduction(EstimatorGroupReduction : estimator_group)
-    for (index_t i_batch = 0; i_batch < params.n_batches; i_batch++) {
+        {
 #pragma omp for schedule(guided, 100)
         for (index_t global_particle_index = 0;
              global_particle_index < total_particles; global_particle_index++) {
@@ -779,6 +780,7 @@ void simulate_kdmc(
                     }
                 }
             }
+        }
         }
         estimator_group.finalize_batch();
     }
