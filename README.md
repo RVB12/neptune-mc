@@ -34,4 +34,11 @@ Also note that the background parameters like temperature and the definition of 
 
 ### Contributors
 
-NEPTUNE is mainly developed by Thijs Steel, with some debugging help from Vince Maes.
+NEPTUNE is mainly developed by Thijs Steel.
+
+The following people have tested out the code and provided valuable feedback:
+- Vince Maes
+- Remi Van Biesen
+- Wim Van Uytven
+
+Wouter Dekeyser has contributed greatly by explaining many of the more complicated physical processes.

@@ -459,7 +459,8 @@ Running the code would not be very useful if it didn't generate any output. You 
             "species": "H" or "D",
             "estimator_type": "track_length" or "final_time",
             "qoi": see below,
-            "estimate_variance": 0 or 1
+            "estimate_variance": 0 or 1 (default, 0)
+            "keep_all_batches": 0 or 1 (default, 0)
         },
     ]
 }
@@ -481,9 +482,11 @@ Each estimator type can handle several different quantities of interest:
 - `energy_z`: The energy density in a cell, only taking the z direction into account, divide by the density to get the average energy of the particle (m^2/s^2 m^{-3})
 
 ### Variance
-For each of these estimates, you can also ask to get an estimate of the variance. This is useful to estimate how many particles you should be using. This variance is estimated by running the algorithm in multiple batches. The calculated variance is an estimate of the variance of a single batch. Note that the returned estimate of the QOI will be the mean over all the batches, which will have significantly lower variance than a single batch.
+For each of these estimates, you can also ask to get an estimate of the variance. This is useful to estimate how many particles you should be using. This variance is estimated by running the algorithm in multiple batches. The calculated variance is an estimate of the variance of a single batch. Note that the returned estimate of the QOI will be the mean over all the batches, which will have significantly lower variance than a single batch. If you want to compare variances with different runs, make sure to convert this into a meaningfull quantity, e.g. variance per particle, ...
 
 An important note is that this can have a meaningful impact on the runtime of the algorithm. If you split 10000 particles into 100 batches of 100 particles, the code can only parallelise over 100 particles at a time. Storing a vector with all the variances also means more memory is used.
+
+For some applications, simply getting the mean and variance estimates may not be enough. For those applications, you can ask to keep all the batches. This will significantly increase the ram usage and the size of the output, so use with caution.
 
 ### The output
 
@@ -496,6 +499,7 @@ The output of the requested estimators will be written to an output file structu
             "density": [float],
             "energy": [float],
             "density_variance": [float],
+            "density_all_batches": [float] // 2D array
         }
     }
 }
@@ -511,16 +515,18 @@ We also have a special estimator for KDMC. This stores the required input for a 
             "species": "H" or "D",
             "estimator_type": "KDMC",
             "qoi": "kdmc_fluid_start_density",
-            "estimate_variance": 0 or 1
+            "estimate_variance": 0 or 1 (default, 0)
+            "keep_all_batches": 0 or 1 (default, 0)
         },
         {
             "species": "H" or "D",
             "estimator_type": "KDMC",
             "qoi": "kdmc_fluid_end_density",
-            "estimate_variance": 0 or 1
+            "estimate_variance": 0 or 1 (default, 0)
+            "keep_all_batches": 0 or 1 (default, 0)
         },
     ]
 }
 ```
 
-Getting the final estimate requires some extra post-processing with a fluid solver.
+Getting the final estimate requires some extra post-processing with a fluid solver. This fluid solver is (no longer) included in the C++ code, though you may find the very simple python implementation in the examples folder useful.
