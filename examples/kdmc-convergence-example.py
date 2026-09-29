@@ -53,10 +53,10 @@ xb[-1] = 100000000.0
 eps_array = [100, 30, 10, 3, 1, 0.3, 0.1, 0.03, 0.01, 0.003, 0.001]
 eps_array_plots = [100, 1, 0.01]
 
-n_particles = int(1e3)
+n_particles = int(5e3)
 estimate_variance = True
-n_batches = 100
-# Note: 1e3*100 = 1e5 particles is not enough to really see the convergence
+n_batches = 20
+# Note: 5e3*20 = 1e5 particles is not enough to really see the convergence
 # 4e7 particles should be better, but that takes a while to run (2 hours on my laptop)
 # Note that the variance is only a problem for the diffusive limit, in the kinetic limit, because both method use the same random seed,
 # they are actually highly correlated, and the variance is not a problem.
@@ -129,6 +129,7 @@ for eps in eps_array:
         density_estimator["qoi"] = "density"
         density_estimator["estimator_type"] = "final_time"
         density_estimator["estimate_variance"] = 1 if estimate_variance else 0
+        density_estimator["keep_all_batches"] = 1
 
         # Boundary conditions
         boundary_conditions = f.create_group("boundary_conditions")
@@ -209,6 +210,23 @@ for eps in eps_array:
 
         error = np.linalg.norm(density_mc - density_kdmc) / np.linalg.norm(density_mc)
         errors.append(error)
+
+# For the first eps, plot the batches individually
+# Just to show how the batches output looks like
+output_file_mc = f"output-mc-eps{eps_array[0]}.h5"
+with h5py.File(output_file_mc, "r") as f_mc:
+    density_mc_batches = f_mc["H"]["final_time"]["density_all_batches"][:]
+
+    print(f"MC batches shape: {density_mc_batches.shape}")
+
+    plt.figure(figsize=(10, 6))
+    for i in range(n_batches):
+        plt.plot(xc, density_mc_batches[i, :], label=f'MC Batch {i+1}', linestyle='-', alpha=0.5)
+    plt.xlabel('x')
+    plt.ylabel('Density')
+    plt.title(f'Density Comparison for eps={eps_array[0]} (Individual Batches)')
+    plt.legend()
+    plt.grid()
 
 plt.figure(figsize=(10, 6))
 plt.loglog(eps_array, errors, marker='o', label='Relative Error')

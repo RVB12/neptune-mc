@@ -61,6 +61,9 @@ int main(int argc, char** argv)
     auto start_time_total = std::chrono::high_resolution_clock::now();
     H5::H5File input_file(input_file_name, H5F_ACC_RDONLY);
 
+    SimulationParams params =
+        read_simulation_params(input_file.openGroup("/params"));
+
     Background background =
         read_background(input_file.openGroup("/background"));
 
@@ -73,13 +76,10 @@ int main(int argc, char** argv)
         read_sources(input_file.openGroup("/sources"), *mesh, background);
 
     EstimatorGroup estimator_group =
-        read_estimators(input_file.openGroup("/estimators"), mesh->n_cells());
+        read_estimators(input_file.openGroup("/estimators"), mesh->n_cells(), params.n_batches);
 
     vector<std::unique_ptr<BoundaryCondition>> boundary_conditions =
         read_boundary_conditions(input_file.openGroup("/boundary_conditions"));
-
-    SimulationParams params =
-        read_simulation_params(input_file.openGroup("/params"));
 
     ExecutionStatistics stats;
     auto start_time = std::chrono::high_resolution_clock::now();

@@ -17,7 +17,7 @@ namespace neptune {
  */
 class EstimatorGroup {
    public:
-    EstimatorGroup(std::vector<std::tuple<Species, QOI, EstimatorType, bool>>
+    EstimatorGroup(std::vector<std::tuple<Species, QOI, EstimatorType, bool, bool, index_t>>
                        estimators_definitions,
                    index_t n_cells);
 

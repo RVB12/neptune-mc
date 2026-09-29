@@ -8,9 +8,10 @@
 namespace neptune {
 
 inline EstimatorGroup read_estimators(const H5::Group& estimators_group,
-                                      index_t n_cells)
+                                      index_t n_cells,
+                                      index_t n_batches)
 {
-    std::vector<std::tuple<Species, QOI, EstimatorType, bool>>
+    std::vector<std::tuple<Species, QOI, EstimatorType, bool, bool, index_t>>
         estimators_definitions;
 
     // Go over all the subgroups of the estimators group, each subgroup
@@ -31,9 +32,16 @@ inline EstimatorGroup read_estimators(const H5::Group& estimators_group,
             estimate_variance =
                 read_bool(estimator_group.openDataSet("estimate_variance"));
         }
+        bool keep_all_batches = false;
+        if (H5Lexists(estimator_group.getId(), "keep_all_batches",
+                      H5P_DEFAULT)) {
+            keep_all_batches =
+                read_bool(estimator_group.openDataSet("keep_all_batches"));
+        }
 
         estimators_definitions.emplace_back(species, qoi, estimator_type,
-                                            estimate_variance);
+                                            estimate_variance, keep_all_batches,
+                                            n_batches);
     }
 
     return EstimatorGroup(estimators_definitions, n_cells);
@@ -101,6 +109,21 @@ inline void write_estimators(H5::H5File& output_file,
                     variance_dataset.write(variance_vector.data(),
                                            H5::PredType::NATIVE_DOUBLE);
                 }
+
+                if (estimator->keep_all_batches) {
+                    H5::DataSpace dataspace_batches(
+                        2, std::array<hsize_t, 2>{(hsize_t) estimator->all_batches.size() /
+                                                       estimator->tally_vector.size(),
+                                                   (hsize_t) estimator->tally_vector.size()}
+                               .data());  // 2D array
+
+                    H5::DataSet batches_dataset = tl_group.createDataSet(
+                        dataset_name + "_all_batches",
+                        H5::PredType::NATIVE_DOUBLE, dataspace_batches);
+
+                    batches_dataset.write(estimator->all_batches.data(),
+                                          H5::PredType::NATIVE_DOUBLE);
+                }
             }
         }
 
@@ -140,6 +163,21 @@ inline void write_estimators(H5::H5File& output_file,
                     variance_dataset.write(variance_vector.data(),
                                            H5::PredType::NATIVE_DOUBLE);
                 }
+
+                if (estimator->keep_all_batches) {
+                    H5::DataSpace dataspace_batches(
+                        2, std::array<hsize_t, 2>{(hsize_t) estimator->all_batches.size() /
+                                                       estimator->tally_vector.size(),
+                                                   (hsize_t) estimator->tally_vector.size()}
+                               .data());  // 2D array
+
+                    H5::DataSet batches_dataset = final_group.createDataSet(
+                        dataset_name + "_all_batches",
+                        H5::PredType::NATIVE_DOUBLE, dataspace_batches);
+
+                    batches_dataset.write(estimator->all_batches.data(),
+                                          H5::PredType::NATIVE_DOUBLE);
+                }
             }
         }
 
@@ -178,6 +216,21 @@ inline void write_estimators(H5::H5File& output_file,
 
                     variance_dataset.write(variance_vector.data(),
                                            H5::PredType::NATIVE_DOUBLE);
+                }
+
+                if (estimator->keep_all_batches) {
+                    H5::DataSpace dataspace_batches(
+                        2, std::array<hsize_t, 2>{(hsize_t) estimator->all_batches.size() /
+                                                       estimator->tally_vector.size(),
+                                                   (hsize_t) estimator->tally_vector.size()}
+                               .data());  // 2D array
+
+                    H5::DataSet batches_dataset = kdmc_group.createDataSet(
+                        dataset_name + "_all_batches",
+                        H5::PredType::NATIVE_DOUBLE, dataspace_batches);
+
+                    batches_dataset.write(estimator->all_batches.data(),
+                                          H5::PredType::NATIVE_DOUBLE);
                 }
             }
         }

@@ -8,14 +8,19 @@ Estimator::Estimator(Species species,
                      QOI qoi,
                      EstimatorType estimator_type,
                      index_t n_cells,
-                     bool estimate_variance)
+                     bool estimate_variance,
+                     bool keep_all_batches,
+                     index_t n_batches)
     : species(species),
       qoi(qoi),
       estimator_type(estimator_type),
       estimate_variance(estimate_variance),
+      keep_all_batches(keep_all_batches),
       tally_vector(n_cells),
       tally_mean(estimate_variance ? n_cells : 0),
-      tally_variance(estimate_variance ? n_cells : 0)
+      tally_variance(estimate_variance ? n_cells : 0),
+      all_batches(keep_all_batches ? n_cells * n_batches : 0),
+      n_batches(n_batches)
 {
     for (index_t i = 0; i < n_cells; ++i) {
         tally_vector[i] = 0;
@@ -24,6 +29,13 @@ Estimator::Estimator(Species species,
         for (index_t i = 0; i < n_cells; ++i) {
             tally_mean[i] = 0;
             tally_variance[i] = 0;
+        }
+    }
+    if (keep_all_batches) {
+        // Initializing is not strictly necessary, since it will be overwritten
+        // later
+        for (index_t i = 0; i < n_cells * n_batches; ++i) {
+            all_batches[i] = 0;
         }
     }
 }
@@ -36,7 +48,7 @@ void Estimator::combine(const Estimator& other)
     // Note, in principle, the number of samples should really be the same
     // but this may not be the case if the counter has been reset
     // in the reduction
-    n_samples = std::max(n_samples, other.n_samples);
+    i_batch = std::max(i_batch, other.i_batch);
     for (index_t i = 0; i < tally_vector.size(); ++i) {
         tally_vector[i] += other.tally_vector[i];
     }
@@ -44,6 +56,12 @@ void Estimator::combine(const Estimator& other)
         for (index_t i = 0; i < tally_vector.size(); ++i) {
             tally_mean[i] += other.tally_mean[i];
             tally_variance[i] += other.tally_variance[i];
+        }
+    }
+    if (keep_all_batches) {
+        assert(all_batches.size() == other.all_batches.size());
+        for (index_t i = 0; i < all_batches.size(); ++i) {
+            all_batches[i] += other.all_batches[i];
         }
     }
 }

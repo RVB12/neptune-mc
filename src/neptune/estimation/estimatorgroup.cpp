@@ -3,7 +3,7 @@
 namespace neptune {
 
 EstimatorGroup::EstimatorGroup(
-    std::vector<std::tuple<Species, QOI, EstimatorType, bool>>
+    std::vector<std::tuple<Species, QOI, EstimatorType, bool, bool, index_t>>
         estimators_definitions,
     index_t n_cells)
     : estimators()
@@ -11,7 +11,8 @@ EstimatorGroup::EstimatorGroup(
     for (const auto& estimator : estimators_definitions) {
         estimators.emplace_back(std::get<0>(estimator), std::get<1>(estimator),
                                 std::get<2>(estimator), n_cells,
-                                std::get<3>(estimator));
+                                std::get<3>(estimator), std::get<4>(estimator),
+                                std::get<5>(estimator));
     }
 
     // Fill the track-length estimator pointers
@@ -145,12 +146,13 @@ void EstimatorGroup::finalize()
 
 EstimatorGroup EstimatorGroup::make_new()
 {
-    std::vector<std::tuple<Species, QOI, EstimatorType, bool>>
+    std::vector<std::tuple<Species, QOI, EstimatorType, bool, bool, index_t>>
         estimator_definitions;
     for (const auto& estimator : estimators) {
         estimator_definitions.emplace_back(estimator.species, estimator.qoi,
                                            estimator.estimator_type,
-                                           estimator.estimate_variance);
+                                           estimator.estimate_variance, estimator.keep_all_batches,
+                                           estimator.n_batches);
     }
     return EstimatorGroup(estimator_definitions,
                           estimators[0].tally_vector.size());

@@ -44,7 +44,9 @@ class Estimator {
               QOI qoi,
               EstimatorType estimator_type,
               index_t n_cells,
-              bool estimate_variance);
+              bool estimate_variance,
+              bool keep_all_batches,
+              index_t n_batches);
 
     /**
      * @brief Tally the contribution
@@ -62,7 +64,10 @@ class Estimator {
      * @param is_toroidal Whether the velocity should be transformed from
      * Carthesian to toroidal coordinates
      */
-    void tally(const Particle& p, const Particle& p_new, real_t weight, bool is_toroidal);
+    void tally(const Particle& p,
+               const Particle& p_new,
+               real_t weight,
+               bool is_toroidal);
 
     void combine(const Estimator& other);
 
@@ -94,14 +99,20 @@ class Estimator {
      */
     void finalize_batch()
     {
-        n_samples += 1;
+        i_batch += 1;
+        if(keep_all_batches) {
+            for (index_t i = 0; i < tally_vector.size(); i++) {
+                all_batches[i + (i_batch - 1) * tally_vector.size()] =
+                    tally_vector[i];
+            }
+        }
         if (estimate_variance) {
             for (index_t i = 0; i < tally_vector.size(); i++) {
                 real_t mean = tally_mean[i];
                 real_t M2 = tally_variance[i];
                 real_t new_value = tally_vector[i];
                 real_t delta = new_value - mean;
-                mean += delta / n_samples;
+                mean += delta / i_batch;
                 M2 += delta * (new_value - mean);
                 tally_mean[i] = mean;
                 tally_variance[i] = M2;
@@ -115,26 +126,35 @@ class Estimator {
     {
         if (estimate_variance) {
             for (index_t i = 0; i < tally_variance.size(); i++) {
-                tally_variance[i] /= n_samples - 1;
+                tally_variance[i] /= i_batch - 1;
             }
         }
         else {
-            if (n_samples > 1) {
+            if (i_batch > 1) {
                 for (index_t i = 0; i < tally_vector.size(); i++) {
-                    tally_vector[i] /= n_samples;
+                    tally_vector[i] /= i_batch;
                 }
             }
         }
     }
 
+    // If true, we run in multiple batches and estimate the mean and variance of
+    // the QOI
     const bool estimate_variance;
+    // To be used in tandem with estimate_variance, if true, we also keep a copy
+    // of the tally vector for each batch. Can be useful for debugging, or if you want
+    // more complex statistics on the QOI, e.g. covariance between batches.
+    // Note that this will significantly increase memory usage, so use with caution.
+    const bool keep_all_batches = false;
     const Species species;
     const QOI qoi;
     const EstimatorType estimator_type;
     vector<real_t> tally_vector;
     vector<real_t> tally_mean;
     vector<real_t> tally_variance;
-    index_t n_samples = 0;
+    vector<real_t> all_batches;
+    index_t i_batch = 0;
+    index_t n_batches = 1;
 };
 
 }  // namespace neptune
