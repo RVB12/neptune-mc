@@ -45,8 +45,14 @@ inline vector<std::unique_ptr<BoundaryCondition>> read_boundary_conditions(
         else if (bc_type == "trim") {
             std::string trim_filename =
                 read_string(bc_group.openDataSet("trim_filename"));
+            real_t E_wall = read_real_number(
+                bc_group.openDataSet("E_wall"));
+            real_t absorption_coefficient = read_real_number(
+                bc_group.openDataSet("absorption_coefficient"));
+            real_t fast_reflection_multiplier = read_real_number(
+                bc_group.openDataSet("fast_reflection_multiplier"));
             boundary_conditions.push_back(
-                std::make_unique<TrimReflection>(trim_filename));
+                std::make_unique<TrimReflection>(trim_filename, E_wall, absorption_coefficient, fast_reflection_multiplier));
         }
         else if (bc_type == "transparent") {
             boundary_conditions.push_back(std::make_unique<TransparentBC>());

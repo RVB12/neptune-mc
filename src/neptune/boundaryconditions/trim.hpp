@@ -30,7 +30,8 @@ class TrimReflectionData {
                        vector<real_t>&& reflected_polar_angle,
                        vector<real_t>&& reflected_azimuthal_angle);
 
-    std::pair<real_t, Vec3> sample_reflection(Particle& p, Vec3 surface_normal) const;
+    std::pair<real_t, Vec3> sample_reflection(Particle& p,
+                                              Vec3 surface_normal) const;
 
    private:
     // The species of the incident particle
@@ -59,19 +60,87 @@ TrimReflectionData read_trim_data(const std::string& filename);
 
 class TrimReflection : public BoundaryCondition {
    public:
-    TrimReflection(const std::string& filename) : data(read_trim_data(filename)) {}
+    TrimReflection(const std::string& filename,
+                   real_t E_wall,
+                   real_t absorption_coefficient,
+                   real_t fast_reflection_multiplier)
+        : data(read_trim_data(filename)),
+          E_wall(E_wall),
+          absorption_coefficient(absorption_coefficient),
+          fast_reflection_multiplier(fast_reflection_multiplier)
+    {}
     ~TrimReflection() = default;
 
-    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
+    void apply(Particle& p,
+               const Mesh& mesh,
+               const CellCrossing& crossing) override
     {
-        Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
+        Vec3 normal = mesh.get_surface_normal(
+            p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
+        // Determine if the particle undergoes fast reflection or thermal
+        // reflection
         auto [probability, velocity] = data.sample_reflection(p, normal);
-        p.geometry.velocity = velocity;
-        p.weight *= probability;
+
+        real_t Rt = 1.0 - absorption_coefficient;
+        real_t Rfast = std::min(fast_reflection_multiplier * probability, Rt);
+        real_t Rthermal = Rt - Rfast;
+        // Determine if we should keep the sampled velocity from trim, or if we
+        // should sample a thermal velocity
+
+        std::uniform_real_distribution<real_t> dist_u(0, 1);
+        real_t u = dist_u(p.rng);
+        if (u * Rt < Rthermal) {
+            // Sample thermal velocity from cosine distribution
+            Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id,
+                                                  p.geometry.boundary_id,
+                                                  p.geometry.position);
+            // Generate the direction of the reflected particle using a cosine
+            // distribution
+            std::uniform_real_distribution<real_t> dist_u(0, 1);
+            real_t u = dist_u(p.rng);
+            Vec3 tangent1;
+            if (std::abs(normal.z) < 0.9) {
+                tangent1 = Vec3(0, 0, 1).cross(normal);
+            }
+            else {
+                tangent1 = Vec3(1, 0, 0).cross(normal);
+            }
+            tangent1 /= tangent1.norm();
+            Vec3 tangent2 = normal.cross(tangent1);
+
+            real_t phi = 2 * M_PI * dist_u(p.rng);
+            real_t cos_theta = std::sqrt(dist_u(p.rng));
+            real_t sin_theta = std::sqrt(1 - cos_theta * cos_theta);
+
+            Vec3 direction = cos_theta * normal +
+                             sin_theta * std::cos(phi) * tangent1 +
+                             sin_theta * std::sin(phi) * tangent2;
+            direction /= direction.norm();
+
+            // Set the speed of the particle to the fixed energy
+            // Note, I was initially confused about the eirene documentation
+            // It says EWALL = 𝐸𝑚𝑒𝑎𝑛 = 1.5 · 𝑇𝑊
+            // but the 1.5 factor is already included in the definition of the temperature
+            real_t fixed_energy = E_wall;
+            real_t mass =
+                constants::m_u * SPECIES_MASS[static_cast<size_t>(p.species)];
+            real_t velocity_magnitude =
+                std::sqrt(2 * fixed_energy * constants::eV_to_Joules / mass);
+
+            p.geometry.velocity = direction * velocity_magnitude;
+        }
+        else {
+            p.geometry.velocity = velocity;
+        }
+
+        p.weight *= Rt;
     }
 
    private:
     const TrimReflectionData data;
+    const real_t E_wall;
+    const real_t fast_reflection_multiplier;
+    const real_t absorption_coefficient;
 };
 
 }  // namespace neptune
