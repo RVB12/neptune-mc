@@ -1,0 +1,64 @@
+#ifndef NEPTUNE_SPECIES_HPP
+#define NEPTUNE_SPECIES_HPP
+#include <stdexcept>
+#include <string>
+
+#include "neptune/common/utils.hpp"
+
+namespace neptune {
+
+const index_t NUM_SPECIES = 5;
+
+enum class Species {
+    e = 0,
+    H = 1,
+    Hplus = 2,
+    D = 3,
+    Dplus = 4,
+};
+
+inline Species stringtospecies(const std::string& s)
+{
+    if (s == "e") return Species::e;
+    if (s == "H") return Species::H;
+    if (s == "H+") return Species::Hplus;
+    if (s == "D") return Species::D;
+    if (s == "D+") return Species::Dplus;
+    throw std::invalid_argument("Invalid species string: " + s);
+}
+
+inline std::string speciestostring(const Species& species)
+{
+    switch (species) {
+        case Species::e:
+            return "e";
+        case Species::H:
+            return "H";
+        case Species::Hplus:
+            return "H+";
+        case Species::D:
+            return "D";
+        case Species::Dplus:
+            return "D+";
+        default:
+            throw std::invalid_argument("Invalid species enum value");
+    }
+}
+
+inline index_t get_index(const Species& species)
+{
+    return static_cast<index_t>(species);
+}
+
+// Mass of the species in atomic mass units (u)
+const real_t SPECIES_MASS[] = {
+    0.00054858,  // e
+    1.00784,  // H
+    1.00784,  // H+
+    2.01410,  // D
+    2.01410,  // D+
+};
+
+}  // namespace neptune
+
+#endif

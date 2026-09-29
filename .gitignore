@@ -3,6 +3,7 @@
 *.out
 build/
 .vscode
+*.h5
 
 output.json
 input.json

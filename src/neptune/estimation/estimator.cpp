@@ -1,0 +1,156 @@
+#include "neptune/estimation/estimator.hpp"
+
+#include "neptune/geometry/cart_to_tor.hpp"
+#include "neptune/physics/physicalconstants.hpp"
+namespace neptune {
+
+Estimator::Estimator(Species species,
+                     QOI qoi,
+                     EstimatorType estimator_type,
+                     index_t n_cells,
+                     bool estimate_variance)
+    : species(species),
+      qoi(qoi),
+      estimator_type(estimator_type),
+      estimate_variance(estimate_variance),
+      tally_vector(n_cells),
+      tally_mean(estimate_variance ? n_cells : 0),
+      tally_variance(estimate_variance ? n_cells : 0)
+{
+    for (index_t i = 0; i < n_cells; ++i) {
+        tally_vector[i] = 0;
+    }
+    if (estimate_variance) {
+        for (index_t i = 0; i < n_cells; ++i) {
+            tally_mean[i] = 0;
+            tally_variance[i] = 0;
+        }
+    }
+}
+
+void Estimator::combine(const Estimator& other)
+{
+    assert(qoi == other.qoi);
+    assert(estimator_type == other.estimator_type);
+    assert(tally_vector.size() == other.tally_vector.size());
+    // Note, in principle, the number of samples should really be the same
+    // but this may not be the case if the counter has been reset
+    // in the reduction
+    n_samples = std::max(n_samples, other.n_samples);
+    for (index_t i = 0; i < tally_vector.size(); ++i) {
+        tally_vector[i] += other.tally_vector[i];
+    }
+    if (estimate_variance) {
+        for (index_t i = 0; i < tally_vector.size(); ++i) {
+            tally_mean[i] += other.tally_mean[i];
+            tally_variance[i] += other.tally_variance[i];
+        }
+    }
+}
+
+void Estimator::tally(const Particle& p,
+                      const Particle& p_new,
+                      real_t weight,
+                      bool is_toroidal)
+{
+    switch (qoi) {
+        case QOI::Density:
+            tally_vector[p.geometry.cell_id] += weight;
+            break;
+        case QOI::Velocity_x:
+            if (is_toroidal) {
+                if (p_new.t != p.t) {
+                    // The integral int_0^s v_r dt, with v_r the radial
+                    // velocity, is equal to: int_0^s dr/dt dt = int_0^s dr =
+                    // r(s) - r(0)
+                    real_t r1 = std::sqrt(
+                        p.geometry.position.x * p.geometry.position.x +
+                        p.geometry.position.y * p.geometry.position.y);
+                    real_t r2 = std::sqrt(
+                        p_new.geometry.position.x * p_new.geometry.position.x +
+                        p_new.geometry.position.y * p_new.geometry.position.y);
+                    real_t dr = r2 - r1;
+                    // Note, the weight given to this routine already contains
+                    // the time step, so we should divide by the time step to
+                    // get the average velocity over the time step
+                    tally_vector[p.geometry.cell_id] +=
+                        dr / (p_new.t - p.t) * weight;
+                }
+                else {
+                    Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
+                                                         p.geometry.velocity);
+                    tally_vector[p.geometry.cell_id] += vel_tor.x * weight;
+                }
+            }
+            else {
+                tally_vector[p.geometry.cell_id] +=
+                    p.geometry.velocity.x * weight;
+            }
+            break;
+        case QOI::Velocity_y:
+            if (is_toroidal) {
+                // Note, this calculation is not perfect,
+                // even if the velocity is constant, the toroidal velocity
+                // can still vary so we should actually integrate
+                Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
+                                                     p.geometry.velocity);
+                tally_vector[p.geometry.cell_id] += vel_tor.y * weight;
+            }
+            else {
+                tally_vector[p.geometry.cell_id] +=
+                    p.geometry.velocity.y * weight;
+            }
+            break;
+        case QOI::Velocity_z:
+            tally_vector[p.geometry.cell_id] += p.geometry.velocity.z * weight;
+            break;
+        case QOI::Energy:
+            tally_vector[p.geometry.cell_id] +=
+                (0.5 * p.geometry.velocity.norm2()) * weight;
+            break;
+        case QOI::Energy_x:
+            if (is_toroidal) {
+                // Note, this calculation is not perfect,
+                // even if the velocity is constant, the toroidal velocity
+                // can still vary so we should actually integrate
+                Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
+                                                     p.geometry.velocity);
+                tally_vector[p.geometry.cell_id] +=
+                    (0.5 * vel_tor.x * vel_tor.x) * weight;
+            }
+            else {
+                tally_vector[p.geometry.cell_id] +=
+                    (0.5 * p.geometry.velocity.x * p.geometry.velocity.x) *
+                    weight;
+            }
+            break;
+        case QOI::Energy_y:
+            if (is_toroidal) {
+                // Note, this calculation is not perfect,
+                // even if the velocity is constant, the toroidal velocity
+                // can still vary so we should actually integrate
+                Vec3 vel_tor = transform_cart_to_tor(p.geometry.position,
+                                                     p.geometry.velocity);
+                tally_vector[p.geometry.cell_id] +=
+                    (0.5 * vel_tor.y * vel_tor.y) * weight;
+            }
+            else {
+                tally_vector[p.geometry.cell_id] +=
+                    (0.5 * p.geometry.velocity.y * p.geometry.velocity.y) *
+                    weight;
+            }
+            break;
+        case QOI::Energy_z:
+            tally_vector[p.geometry.cell_id] +=
+                (0.5 * p.geometry.velocity.z * p.geometry.velocity.z) * weight;
+            break;
+        case QOI::KDMC_Fluid_Start_Density:
+            tally_vector[p.geometry.cell_id] += weight;
+            break;
+        case QOI::KDMC_Fluid_End_Density:
+            tally_vector[p.geometry.cell_id] += weight;
+            break;
+    }
+}
+
+}  // namespace neptune

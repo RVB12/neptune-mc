@@ -29,37 +29,57 @@ set(NEPTUNE_VERSION "${PROJECT_VERSION}-${GIT_COMMIT_HASH}")
 # Main library
 #
 list(APPEND neptune_SOURCES
-    src/geometry/vec2.cpp
-    src/geometry/vec3.cpp
-    src/geometry/voxelmesh.cpp
-    src/simulator/simulator.cpp
-    src/geometry/trianglemesh.cpp
-    src/geometry/rotatedtrianglemesh.cpp
-    src/geometry/nonuniformmesh.cpp
-    src/geometry/rotatednonuniformmesh.cpp
-    src/physics/pointsource.cpp
-    src/physics/surfacesource.cpp
-    src/physics/volumesource.cpp
-    src/physics/source.cpp
-    src/physics/update_particle.cpp
-    src/common/json_conversions.cpp
-    src/geometry/triangle.cpp
-    src/simulator/simulate_kdmc.cpp
-    src/estimation/estimators.cpp
-    src/finitevolume/advectiondiffusionsolver.cpp
-    src/simulator/simulate_arcmc.cpp
-    src/physics/wallreflectionsource.cpp
+    src/neptune/boundaryconditions/trim.cpp
+    src/neptune/geometry/vec2.cpp
+    src/neptune/geometry/vec3.cpp
+    src/neptune/geometry/voxelmesh.cpp
+    src/neptune/simulator/simulator.cpp
+    src/neptune/geometry/trianglemesh.cpp
+    src/neptune/geometry/rotatedtrianglemesh.cpp
+    src/neptune/geometry/nonuniformmesh.cpp
+    src/neptune/geometry/nonuniform1Dmesh.cpp
+    src/neptune/geometry/rotatednonuniformmesh.cpp
+    src/neptune/physics/update_particle.cpp
+    src/neptune/geometry/triangle.cpp
+    src/neptune/simulator/simulate_kdmc.cpp
+    src/neptune/estimation/estimators.cpp
+    src/neptune/simulator/simulate_arcmc.cpp
+    src/neptune/estimation/estimator.cpp
+    src/neptune/estimation/estimatorgroup.cpp
+    src/neptune/sources/pointsource.cpp
+    src/neptune/sources/surfacesource.cpp
+    src/neptune/sources/volumesource.cpp
+    src/neptune/sources/wallreflectionsource.cpp
+    src/neptune/sources/recombinationsource.cpp
+    src/neptune/sources/amjuelrecombinationsource.cpp
 )
 
 add_library(neptune ${neptune_SOURCES})
-target_include_directories(neptune PUBLIC include)
+target_include_directories(neptune PUBLIC src)
 target_compile_options(neptune PRIVATE -O3)
 target_compile_options(neptune PRIVATE -fPIC)
-target_compile_options(neptune PRIVATE -DNDEBUG)
+# target_compile_options(neptune PRIVATE -DNDEBUG)
 target_compile_definitions(neptune PUBLIC NEPTUNE_VERSION="${NEPTUNE_VERSION}")
 
-# JSON
 include(FetchContent)
+
+# Random123
+FetchContent_Declare(
+    random123
+    GIT_REPOSITORY https://github.com/DEShawResearch/random123.git
+    GIT_TAG main
+)
+
+FetchContent_MakeAvailable(random123)
+
+add_library(Random123 INTERFACE)
+target_include_directories(Random123 INTERFACE
+    ${random123_SOURCE_DIR}/include
+)
+
+target_link_libraries(neptune PRIVATE Random123)
+
+# JSON
 
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
@@ -72,19 +92,26 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(neptune PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-# Eigen
-find_package(Eigen3 REQUIRED NO_MODULE)
-target_link_libraries(neptune PUBLIC Eigen3::Eigen)
+# PCG
+
+FetchContent_Declare(
+    pcg_cpp
+    URL https://github.com/imneme/pcg-cpp/archive/428802d1a5634f96bcd0705fab379ff0113bcf13.tar.gz
+)
+FetchContent_MakeAvailable(pcg_cpp)
+
+add_library(PCGCPP INTERFACE)
+target_include_directories(PCGCPP INTERFACE
+    ${pcg_cpp_SOURCE_DIR}/include
+)
+
+target_link_libraries(neptune PUBLIC PCGCPP)
 
 # Main runner
-add_executable(neptune-generate-neighborlist src/generate_neighborlist.cpp)
-target_link_libraries(neptune-generate-neighborlist PRIVATE neptune)
-
-add_executable(neptune-mc src/main_json.cpp)
+add_executable(neptune-mc src/neptune/main_hdf5.cpp)
 target_link_libraries(neptune-mc PRIVATE neptune)
-
-add_executable(neptune-fv src/fv_json.cpp)
-target_link_libraries(neptune-fv PRIVATE neptune)
+find_package(HDF5 REQUIRED COMPONENTS CXX)
+target_link_libraries(neptune-mc PRIVATE HDF5::HDF5)
 
 #
 # Tests
@@ -97,9 +124,7 @@ if(Catch2_FOUND)
         tests/cpp/test_vec3.cpp
         tests/cpp/test_voxelmesh.cpp
         tests/cpp/test_trianglemesh.cpp
-        tests/cpp/test_json.cpp
         tests/cpp/test_spatialindex.cpp
-        tests/cpp/test_first_exit_time.cpp
         tests/cpp/test_rotatedtrianglemesh.cpp
     )
 

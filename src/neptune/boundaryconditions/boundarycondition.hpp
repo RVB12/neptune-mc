@@ -1,0 +1,185 @@
+#ifndef NEPTUNE_BOUNDARYCONDITION_HPP
+#define NEPTUNE_BOUNDARYCONDITION_HPP
+
+#include <cassert>
+
+#include "neptune/common/utils.hpp"
+#include "neptune/geometry/vec3.hpp"
+#include "neptune/physics/particle.hpp"
+#include "neptune/physics/physicalconstants.hpp"
+#include "neptune/geometry/mesh.hpp"
+
+namespace neptune {
+
+/**
+ * Abstract class for a boundary condition
+ */
+class BoundaryCondition {
+   public:
+    BoundaryCondition() = default;
+    ~BoundaryCondition() = default;
+
+    /**
+     * Apply the boundary condition to a particle
+     *
+     * @param p      The particle to apply the boundary condition to
+     *               It is assumed that the particle is on the boundary
+     * 
+     * @param mesh   The mesh that the particle is in
+     *               This is needed to get the normal of the surface that the particle is on
+     *               For some special boundary conditions, like transparent boundaries,
+     *               we also need to get the next cell that the particle will enter
+     */
+    virtual void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) = 0;
+};
+
+/**
+ * Reflective boundary condition
+ */
+class SpecularBC : public BoundaryCondition {
+   public:
+    SpecularBC() = default;
+    ~SpecularBC() = default;
+
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
+    {
+        // Reflect the velocity of the particle
+        Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
+        p.geometry.velocity -= 2 * (p.geometry.velocity.dot(normal)) * normal;
+    }
+};
+
+/**
+ * Absorbing boundary condition
+ */
+class AbsorbingBC : public BoundaryCondition {
+   public:
+    AbsorbingBC() = default;
+    ~AbsorbingBC() = default;
+
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
+    {
+        p.weight = 0;  // Set the weight to zero to absorb the particle
+    }
+};
+
+/**
+ * Partially reflecting boundary condition
+ */
+class PartiallySpecularBC : public BoundaryCondition {
+   public:
+    PartiallySpecularBC(real_t absorption_coefficient)
+        : absorption_coefficient(absorption_coefficient)
+    {}
+    ~PartiallySpecularBC() = default;
+
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
+    {
+        Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
+        // Reflect the velocity of the particle
+        p.geometry.velocity -= 2 * (p.geometry.velocity.dot(normal)) * normal;
+        // Absorb a fraction of the particle's weight
+        p.weight *= (1 - absorption_coefficient);
+    }
+
+    real_t absorption_coefficient;
+};
+
+/**
+ * Diffuse boundary condition with fixed energy. The particle is reflected in a
+ * random direction, and its speed is set to a fixed value. A specified fraction
+ * of the particle's weight is absorbed.
+ */
+class DiffuseBC : public BoundaryCondition {
+   public:
+    /**
+     * @brief Construct a new DiffuseBC object
+     * 
+     * @param fixed_energy The fixed kinetic energy of the reflected particle in eV
+     * @param absorption_coefficient The fraction of the particle's weight to be absorbed
+     */
+    DiffuseBC(real_t fixed_energy, real_t absorption_coefficient)
+        : fixed_energy(fixed_energy),
+          absorption_coefficient(absorption_coefficient)
+    {}
+    ~DiffuseBC() = default;
+
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
+    {
+        Vec3 normal = mesh.get_surface_normal(p.geometry.cell_id, p.geometry.boundary_id, p.geometry.position);
+        // Generate the direction of the reflected particle using a cosine distribution
+        std::uniform_real_distribution<real_t> dist_u(0, 1);
+        real_t u = dist_u(p.rng);
+        Vec3 tangent1;
+        if (std::abs(normal.z) < 0.9) {
+            tangent1 = Vec3(0, 0, 1).cross(normal);
+        }
+        else {
+            tangent1 = Vec3(1, 0, 0).cross(normal);
+        }
+        tangent1 /= tangent1.norm();
+        Vec3 tangent2 = normal.cross(tangent1);
+
+        real_t phi = 2 * M_PI * dist_u(p.rng);
+        real_t cos_theta = std::sqrt(dist_u(p.rng));
+        real_t sin_theta = std::sqrt(1 - cos_theta * cos_theta);
+
+        Vec3 direction = cos_theta * normal +
+                         sin_theta * std::cos(phi) * tangent1 +
+                         sin_theta * std::sin(phi) * tangent2;
+        direction /= direction.norm();
+
+        // Set the speed of the particle to the fixed energy
+        real_t mass = constants::m_u * SPECIES_MASS[static_cast<size_t>(p.species)];
+        real_t velocity_magnitude = std::sqrt(2 * fixed_energy * constants::eV_to_Joules / mass);
+
+        p.geometry.velocity = direction * velocity_magnitude;
+
+        // Absorb a fraction of the particle's weight
+        p.weight *= (1 - absorption_coefficient);
+    }
+
+   private:
+    real_t fixed_energy;
+    real_t absorption_coefficient;
+};
+
+
+/**
+ * Transparent boundary condition
+ */
+class TransparentBC : public BoundaryCondition {
+   public:
+    TransparentBC() = default;
+    ~TransparentBC() = default;
+
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
+    {
+        // Move the particle to the next cell
+        p.geometry.cell_id = crossing.next_cell_id;
+        p.geometry.boundary_id = crossing.next_surface_id;
+    }
+};
+
+/**
+ * Periodic boundary condition
+ */
+class PeriodicBC : public BoundaryCondition {
+   public:
+    PeriodicBC() = default;
+    ~PeriodicBC() = default;
+
+    void apply(Particle& p, const Mesh& mesh, const CellCrossing& crossing) override
+    {
+        // Move the particle to the next cell
+        p.geometry.cell_id = crossing.next_cell_id;
+        p.geometry.boundary_id = crossing.next_surface_id;
+
+        // Also update the position and velocity of the particle to account for the periodicity
+        throw std::runtime_error("Periodic boundary condition not implemented yet");
+    }
+};
+
+}  // namespace neptune
+
+#endif

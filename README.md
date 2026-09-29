@@ -32,28 +32,6 @@ The main loop is parallelized using OpenMP with private grids, this means that e
 
 Also note that the background parameters like temperature and the definition of the grids are not copied, so that already saves some space over a normal MPI parallelisation.
 
-### Features
-
-The following features are currently supported
-
-- Rectangular grid (structured)
-- Triangular mesh grid in x-z direction, extended in y direction with straight lines
-- Collision rate and BGK parameters based on background temperature, momentum and density
-- time averaged estimates for density, momentum, and energy
-- estimates at a certain time
-- KD (only final density)
-- Line source
-- Point source
-- Fluid estimator
-
-The following features are planned
-
-- Surface source
-- Volume source
-- Triangular mesh, rotated around z axis to form cells confined by toroidal shaped
-- Magnetic sheath BC for the sources
-- ...
-
 ### Contributors
 
 NEPTUNE is mainly developed by Thijs Steel, with some debugging help from Vince Maes.
