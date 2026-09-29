@@ -84,8 +84,18 @@ inline vector<std::unique_ptr<Source>> read_sources(
         }
         else if (source_type == "volume") {
             Species species = read_species(source_group.openDataSet("species"));
-            vector<index_t> cell_indices =
-                read_index_vector(source_group.openDataSet("cell_indices"));
+            vector<index_t> cell_indices;
+            if (source_group.nameExists("cell_indices")) {
+                cell_indices =
+                    read_index_vector(source_group.openDataSet("cell_indices"));
+            }
+            else {
+                // If cell_indices is not provided, assume all cells are used
+                cell_indices.resize(mesh.n_cells());
+                for (index_t i = 0; i < mesh.n_cells(); ++i) {
+                    cell_indices[i] = i;
+                }
+            }
             vector<real_t> intensities =
                 read_real_vector(source_group.openDataSet("intensities"));
             vector<real_t> vel_x =
@@ -229,7 +239,7 @@ inline void write_sources(const H5::H5File& output_file,
             }
 
             if (cell_index != -1) {
-                intensities[cell_index] += sources[i]->intensity() / mesh.get_volume(cell_index);
+                intensities[cell_index] += sources[i]->intensity();
             }
         }
     }

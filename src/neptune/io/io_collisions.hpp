@@ -255,12 +255,17 @@ inline void write_collision_rates(
                 Particle particle(0, 0,
                                   ionisation_collisions[i]->particle_species());
                 particle.geometry.cell_id = j;
-                Vec3 vel_mean = cx_collisions[i]->post_collision_velocity_mean(
-                    particle, background);
-                real_t vel_variance =
-                    cx_collisions[i]->post_collision_velocity_var(particle,
-                                                                  background);
-                particle.geometry.velocity = vel_mean + Vec3(2*std::sqrt(vel_variance), 0, 0);
+                if(cx_collisions.size() > 0) {
+                    Vec3 vel_mean = cx_collisions[i]->post_collision_velocity_mean(
+                        particle, background);
+                    real_t vel_variance =
+                        cx_collisions[i]->post_collision_velocity_var(particle,
+                                                                      background);
+                    particle.geometry.velocity = vel_mean + Vec3(2*std::sqrt(vel_variance), 0, 0);
+                }
+                else {
+                    particle.geometry.velocity = Vec3(0, 0, 0);
+                }
                 real_t rate = ionisation_collisions[i]->collision_rate(
                     particle, background);
                 rates[j] = rate;
