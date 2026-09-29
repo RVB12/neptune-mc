@@ -28,10 +28,12 @@ import matplotlib.pyplot as plt
 import h5py
 import subprocess
 
-if(not os.path.exists("fusion_bg_for_MC_uniform_400.npz")):
+if(not os.path.exists("fusion_bg_for_MC_uniform_4000.npz")):
     raise FileNotFoundError("fusion_bg_for_MC_uniform_400.npz not found. It is not included in the repository. Please request it by email.")
-fusion_bg_for_MC_uniform_400 = np.load("fusion_bg_for_MC_uniform_400.npz")
+fusion_bg_for_MC_uniform_400 = np.load("fusion_bg_for_MC_uniform_4000.npz")
 
+# print all the keys in the npz file
+print(fusion_bg_for_MC_uniform_400.files)
 
 # Physics constants
 e = 1.602176634 * 1e-19 # Elementary charge
@@ -206,7 +208,7 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     # 
     sources = f.create_group("sources")
     sources["n_particles"] = num_particles
-    sources["stratification"] = "equal"
+    sources["stratification"] = "source_strength"
     
     recombination_source = sources.create_group("R_recomb")
     recombination_source["type"] = "recombination"
@@ -234,8 +236,8 @@ with h5py.File(os.path.join("input.h5"), "w") as f:
     wall_source["surface_indices"] = [1]  # The right wall is surface 1
     wall_source["sheath_potential"] = delta_pot_sh
     wall_source["franck_condon_temp"] = 2.0
-    wall_source["Rt"] = 0.9
-    wall_source["Rr"] = 0.8
+    wall_source["Rt"] = R_i_t
+    wall_source["Rr"] = R_r
     wall_source["background_species"] = "D+"
     wall_source["particle_species"] = "D"
 
@@ -285,7 +287,7 @@ print(f"Simulation completed in {end_time - start_time:.2f} seconds")
 #
 # STEP 3: Finite volume fluid simulation
 #
-# This uses a python fluid solver, might be more efficient to use NEPTUNE-FV, not sure
+# This uses a python fluid solver
 
 # Diffusion rate bgk_stddev**2/R_cx is split into rate and factor
 # Because they appear separately in the heterogeneous fluid equation
@@ -325,8 +327,14 @@ bcL = [alpha_left, beta_left, gamma_left]
 # Calculate the flux of particles hitting the right boundary using the BGK distribution at the last cell
 neutral_flux_right = calc_flux_bgk(bgk_mean_corr[-1], bgk_stddev[-1])
 # Also calculate the ion flux, as these recombine into neutrals
-ion_flux_right = calc_flux_bgk(bgk_mean_corr[-1], bgk_stddev[-1]) * ni[-1] * R_i_t * R_r
+ion_flux_right = calc_flux_bgk(bgk_mean_corr[-1], bgk_stddev[-1]) * ni[-1] * R_i_t
 # ion_flux_right = 0
+print(f"Neutral flux right: {neutral_flux_right:.3e}, Ion flux right: {ion_flux_right:.3e}")
+
+# Also calculate ion_flux using values at the face for comparison
+bgk_stddev_face = np.sqrt(fusion_bg_for_MC_uniform_400["ti_faces"][-1] * e / m)
+ion_flux_right_v2 = calc_flux_bgk(fusion_bg_for_MC_uniform_400["up_faces"][-1]*fusion_bg_for_MC_uniform_400["pit_faces"][-1], bgk_stddev_face) * ni[-1] * R_i_t
+print(f"Ion flux right (v2): {ion_flux_right_v2:.3e}")
 
 # At right boundary: -v_mean * u + Df*Dr * du = drift according to fluid equation = absorption flux = neutral_flux_right * u * (1-R_n_t)
 # => alpha = -v_mean - neutral_flux_right * (1-R_n_t)
@@ -341,6 +349,9 @@ bcR = [alpha_right, beta_right, gamma_right]
 # Now solve the fluid equations
 # Even though the equations are linear, the discretization we use (MUSCL) is nonlinear, so we need a nonlinear solver
 
+
+
+# %%
 import advection_diffusion
 from scipy.integrate import solve_ivp
 from scipy.optimize import fsolve
