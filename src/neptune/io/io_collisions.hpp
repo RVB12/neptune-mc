@@ -112,6 +112,9 @@ read_collisions(const H5::Group& collisions_group)
                 throw std::runtime_error(
                     "Unsupported model for ionisation collision: " + model);
             }
+        } else {
+            throw std::runtime_error(
+                "Unknown collision type: " + collision_type);
         }
 
         if (H5Lexists(collision_group.getId(), "output_collision_info",
