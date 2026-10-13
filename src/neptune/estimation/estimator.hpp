@@ -120,6 +120,14 @@ class Estimator {
                     0;  // reset the tally vector for the next batch
             }
         }
+        if (qoi == QOI::KDMC_Fluid_Start_Density || qoi == QOI::KDMC_Fluid_End_Density) {
+            KDMC_avg_fluid_step_duration /= KDMC_nb_fluid_steps;
+            if(keep_all_batches) {
+                KDMC_avg_fluid_step_duration_all_batches[i_batch - 1] = KDMC_avg_fluid_step_duration;
+                KDMC_avg_fluid_step_duration = 0.0;
+                KDMC_nb_fluid_steps = 0;
+            }
+        }
     }
 
     void finalize()
@@ -160,6 +168,9 @@ class Estimator {
     vector<real_t> all_batches;
     index_t i_batch = 0;
     index_t n_batches = 1;
+    real_t KDMC_avg_fluid_step_duration = 0.0;
+    index_t KDMC_nb_fluid_steps = 0;
+    vector<real_t> KDMC_avg_fluid_step_duration_all_batches;
 };
 
 }  // namespace neptune

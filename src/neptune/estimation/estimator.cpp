@@ -20,7 +20,8 @@ Estimator::Estimator(Species species,
       tally_mean(estimate_variance ? n_cells : 0),
       tally_variance(estimate_variance ? n_cells : 0),
       all_batches(keep_all_batches ? n_cells * n_batches : 0),
-      n_batches(n_batches)
+      n_batches(n_batches),
+      KDMC_avg_fluid_step_duration_all_batches(keep_all_batches ? n_batches : 0)
 {
     for (index_t i = 0; i < n_cells; ++i) {
         tally_vector[i] = 0;
@@ -36,6 +37,9 @@ Estimator::Estimator(Species species,
         // later
         for (index_t i = 0; i < n_cells * n_batches; ++i) {
             all_batches[i] = 0;
+        }
+        for (index_t i = 0; i < n_batches; ++i) {
+            KDMC_avg_fluid_step_duration_all_batches[i] = 0;
         }
     }
 }
@@ -63,6 +67,10 @@ void Estimator::combine(const Estimator& other)
         for (index_t i = 0; i < all_batches.size(); ++i) {
             all_batches[i] += other.all_batches[i];
         }
+    }
+    if(qoi == QOI::KDMC_Fluid_Start_Density || qoi == QOI::KDMC_Fluid_End_Density) {
+        KDMC_avg_fluid_step_duration += other.KDMC_avg_fluid_step_duration;
+        KDMC_nb_fluid_steps += other.KDMC_nb_fluid_steps;
     }
 }
 
@@ -164,9 +172,13 @@ void Estimator::tally(const Particle& p,
             break;
         case QOI::KDMC_Fluid_Start_Density:
             tally_vector[p.geometry.cell_id] += weight;
+            KDMC_avg_fluid_step_duration += p_new.t - p.t;
+            KDMC_nb_fluid_steps++;
             break;
         case QOI::KDMC_Fluid_End_Density:
-            tally_vector[p.geometry.cell_id] += weight;
+            tally_vector[p_new.geometry.cell_id] += weight;
+            KDMC_avg_fluid_step_duration += p_new.t - p.t;
+            KDMC_nb_fluid_steps++;
             break;
     }
 }

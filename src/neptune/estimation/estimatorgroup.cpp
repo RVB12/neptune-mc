@@ -113,12 +113,7 @@ void EstimatorGroup::tally_fluid(const Particle& p,
     // Loop over the relevant fluid estimators for this particle and tally them
     for (auto* estimator :
          kdmc_estimators_by_species[static_cast<size_t>(p.species)]) {
-        if (estimator->qoi == QOI::KDMC_Fluid_Start_Density) {
-            estimator->tally(p_old, p, weight_old, mesh.is_toroidal());
-        }
-        else if (estimator->qoi == QOI::KDMC_Fluid_End_Density) {
-            estimator->tally(p, p, weight, mesh.is_toroidal());
-        }
+        estimator->tally(p_old, p, weight_old, mesh.is_toroidal());
     }
 }
 

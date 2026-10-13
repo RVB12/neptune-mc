@@ -206,6 +206,27 @@ inline void write_estimators(H5::H5File& output_file,
                     dataset.createAttribute("unit", strType, H5::DataSpace());
                 unit_attr.write(strType, unit);
 
+                // Write average fluid step duration
+                // H5::DataSpace kdmc_avg_fluid_step_duration_dataspace = H5::DataSpace();
+                // H5::DataSet kdmc_avg_fluid_step_duration_dataset = kdmc_group.
+                //     createDataSet(dataset_name + "_avg_fluid_step_duration", 
+                //         H5::PredType::NATIVE_DOUBLE, 
+                //         kdmc_avg_fluid_step_duration_dataspace);
+                // kdmc_avg_fluid_step_duration_dataset.write(&estimator->
+                //     KDMC_avg_fluid_step_duration, H5::PredType::NATIVE_DOUBLE);
+                // strType = H5::StrType(H5::PredType::C_S1, 1);
+                // unit_attr = dataset.createAttribute("unit", strType, 
+                //     H5::DataSpace());
+                // unit_attr.write(strType, "s");
+
+                H5::DataSpace kdmc_avg_fluid_step_duration_dataspace = H5::DataSpace();
+                H5::DataSet kdmc_avg_fluid_step_duration_dataset = kdmc_group.
+                    createDataSet(dataset_name + "_avg_fluid_step_duration", 
+                        H5::PredType::NATIVE_DOUBLE, 
+                        kdmc_avg_fluid_step_duration_dataspace);
+                kdmc_avg_fluid_step_duration_dataset.write(&estimator->
+                    KDMC_avg_fluid_step_duration, H5::PredType::NATIVE_DOUBLE);
+
                 if (estimator->estimate_variance) {
                     H5::DataSpace dataspace_var(1, &dim);  // 1D array
                     H5::DataSet variance_dataset = kdmc_group.createDataSet(
@@ -231,6 +252,16 @@ inline void write_estimators(H5::H5File& output_file,
 
                     batches_dataset.write(estimator->all_batches.data(),
                                           H5::PredType::NATIVE_DOUBLE);
+
+                    // Write average fluid step duration over all batches
+                    H5::DataSpace dataspace_kdmc_avg_fluid_step_duration_all_batches(1, std::array<hsize_t, 1>{(hsize_t) estimator->n_batches}.data());
+                    H5::DataSet kdmc_avg_fluid_step_duration_all_batches_dataset = kdmc_group.
+                        createDataSet(dataset_name + "_avg_fluid_step_duration_all_batches", 
+                            H5::PredType::NATIVE_DOUBLE, 
+                            dataspace_kdmc_avg_fluid_step_duration_all_batches);
+                    kdmc_avg_fluid_step_duration_all_batches_dataset.write(
+                        estimator->KDMC_avg_fluid_step_duration_all_batches.data(),
+                        H5::PredType::NATIVE_DOUBLE);
                 }
             }
         }
